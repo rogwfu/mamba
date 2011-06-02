@@ -1,4 +1,5 @@
 require 'daemons'
+require 'yaml'
 
 class Fuzz < Thor
 	desc "start", "Start a Mamba Fuzzer"
@@ -19,6 +20,11 @@ class Fuzz < Thor
 		}
 
 		#
+		# Read environments configuration
+		#
+		mambaConfiguration = read_config()
+
+		#
 		# Create a daemon process
 		#
 		Daemons.daemonize(daemonOptions)
@@ -34,7 +40,7 @@ class Fuzz < Thor
 	desc "stop", "Stop a Mamba Fuzzer"
 	# Stop the Mamba Fuzzing Framework 
 	def stop()
-		puts "Mamba Fuzzing Framework Starting...."
+		puts "Mamba Fuzzing Framework Stopping...."
 		pidFiles = Daemons::PidFile.find_files(FileUtils.pwd(), "MambaFuzzingFramework")
 		if(pidFiles.length == 1) then
 			Process.kill('SIGINT', File.open(pidFiles[0]).readline().chomp().to_i())
@@ -51,5 +57,15 @@ class Fuzz < Thor
 	desc "unpackage", "Unpackage Fuzzer Configuration Files"
 	def unpackage()
 		puts "Unpackaging Files"
+	end
+
+
+	no_tasks do
+		# Reads the Mamba configuration file from the current environment
+		# @return [Hash] configuration settings
+		def read_config()
+			config = YAML.load_file("configs/fuzzer.yml")
+			return(config)
+		end
 	end
 end
