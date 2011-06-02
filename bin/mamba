@@ -29,15 +29,15 @@ class Mamba < Thor
 		#
 		validate_params()
 
-		["configs", "databases", "disassemblies", "logs", "models", "queues", "tasks", "tests"].each do |dirname|
+		["configs", "databases", "disassemblies", "logs", "models", "queues", "tests"].each do |dirname|
 			empty_directory name + "/" + dirname
 		end
 
 		#
 		# Copy the Thor Tasks
 		#
-#		directory "doc", "docs"
-		puts "#{File.dirname(__FILE__)}/../../tasks"
+		Mamba.source_root(File.dirname(__FILE__))
+		directory "../lib/mamba-refactor/tasks", "#{name}/tasks"
 
 		#
 		# Create the Mamba Configuration File
