@@ -1,29 +1,46 @@
+require 'daemons'
+
 class Fuzz < Thor
 	desc "start", "Start a Mamba Fuzzer"
+	# Start the Mamba Fuzzing Framework 
 	def start()
-		puts "Starting Mamba"
+		puts "Mamba Fuzzing Framework Starting...."
 
 		#
 		# Daemonize the current process
 		#
-		daemon_options = {
-			:app_name	=> "Mamba File Fuzzer",
+		daemonOptions = {
+			:app_name	=> "MambaFuzzingFramework",
 			:multiple	=> false,
 			:dir_mode	=> :normal,
 			:dir		=> FileUtils.pwd(),
+			:log_dir   => "#{FileUtils.pwd()}/logs",
 			:backtrace  => true
 		}
 
-		Daemons.run_proc("mambafuzzer", daemon_options) do
-			sleep(5000)
+		#
+		# Create a daemon process
+		#
+		Daemons.daemonize(daemonOptions)
+
+		#
+		# Hand over control to fuzzer
+		#
+		loop do
+			sleep(1000)
 		end
 	end
 
 	desc "stop", "Stop a Mamba Fuzzer"
+	# Stop the Mamba Fuzzing Framework 
 	def stop()
-		puts "Stopping Mamba"
-		pid_files = Daemons::PidFile.find_files(FileUtils.pwd(), "mambafuzzer")
-		Process.kill('SIGINT', File.open(pid_files[0]).readline().chomp().to_i())
+		puts "Mamba Fuzzing Framework Starting...."
+		pidFiles = Daemons::PidFile.find_files(FileUtils.pwd(), "MambaFuzzingFramework")
+		if(pidFiles.length == 1) then
+			Process.kill('SIGINT', File.open(pidFiles[0]).readline().chomp().to_i())
+		else
+			puts "Error: Mamba Fuzzing Framework not running!!!"
+		end
 	end
 
 	desc "package", "Package Fuzzer Configuration Files"
