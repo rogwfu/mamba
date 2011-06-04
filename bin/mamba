@@ -24,6 +24,7 @@ class Mamba < Thor
 	# Create a fuzzing environment with the associated settings 
 	# @param [Name] top-level directory to create for the fuzzing envionment (defaults to: mamba-fuzzer)
 	def create(name="mamba-fuzzer")
+		say "Mamba Fuzzing Framework Initializing Environment....", :blue
 		#
 		# Validate Parameters Given
 		#
