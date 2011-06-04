@@ -59,7 +59,7 @@ class Mamba < Thor
 		# Validates parameters given to the mamba command line tool for illegal values
 		def validate_params()
 			if(options[:executor] != "appscript" and options[:executor] !~ /^cli#/) then
-				puts "Unsupported Executor"
+				say "Error: Unsupported Executor", :red
 				exit(1)	
 			end
 
