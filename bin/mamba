@@ -2,6 +2,7 @@
 require 'thor'
 require 'uuidtools'
 require 'yaml'
+require 'rbconfig'
 
 #@author Roger Seagle
 class Mamba < Thor
@@ -23,6 +24,15 @@ class Mamba < Thor
 	# @param [Name] top-level directory to create for the fuzzing envionment (defaults to: mamba-fuzzer)
 	def create(name="mamba-fuzzer")
 		say "Mamba Fuzzing Framework Initializing Environment....", :blue
+
+		#
+		# Check for Operating System Support
+		#
+		if(!supported_os?()) then
+			say "Error: Unsupported Operating System (#{Config::CONFIG["host_os"]})", :red
+			exit(1)
+		end
+
 		#
 		# Validate Parameters Given
 		#
@@ -54,8 +64,13 @@ class Mamba < Thor
 		end
 	end
 
-
 	no_tasks do
+		# Validate whether Mamba supports the running OS
+		# @return [Fixnum] nil if not supported, offset of string otherwise 
+		def supported_os?()
+			return(Config::CONFIG["host_os"] =~ /darwin10\.\d+\.\d+$/)
+		end
+
 		# Validates parameters given to the mamba command line tool for illegal values
 		def validate_params()
 			if(options[:executor] != "appscript" and options[:executor] !~ /^cli#/) then
