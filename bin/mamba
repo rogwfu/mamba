@@ -14,11 +14,9 @@ class Mamba < Thor
 	method_option :app,          :default => "/Applications/Preview.app/Contents/MacOS/Preview", :option => :required, :aliases => "-a", :desc => "Path to an executable (ex. /Applications/Preview.app/Contents/MacOS/Preview)" 
 	method_option :distributed,  :default => false,		:type => :boolean, 	:aliases => "-d", :desc => "Set the fuzzer type as distributed " 
 	method_option :executor,     :default => "appscript", 	:aliases => "-e", :desc => "Type of executor to use (cli, appscript)" 
-	method_option :organizer,    :type => :boolean, :default => true, 	:aliases => "-o", :desc => "Sets the fuzzer instance as the organizer of the distributed fuzzing" 
 	method_option :port,         :default => 27017, 	:type => :numeric, 	:aliases => "-p", :desc => "Port for distributed fuzzing"  
 	method_option :timeout,      :default => 0, 		:type => :numeric, 	:aliases => "-t", :desc => "Time to run an executable for each testcase in seconds (ex. 20)" 
 	method_option :server,       :default => "fuzz.io", :aliases => "-s", :desc => "Server address for distributed fuzzing (ex. fuzz.io)" 
-	method_option :uuid,         :default => "", 		:aliases => "-u", :desc => "Unique ID for a distributed fuzzing job" 
 	method_option :type,         :default => "Mangle", 	:aliases => "-y", :desc => "Type of fuzzer to create" 
 
 	# Create a fuzzing environment with the associated settings 
@@ -30,7 +28,7 @@ class Mamba < Thor
 		#
 		validate_params()
 
-		["configs", "databases", "disassemblies", "logs", "models", "queues", "tests"].each do |dirname|
+		%w(configs databases disassemblies logs models queues tests).each do |dirname|
 			empty_directory name + "/" + dirname
 		end
 
@@ -82,7 +80,7 @@ class Mamba < Thor
 			#
 			if(options[:distributed]) then
 				fuzzerType =  "Distributed" + options[:type]
-				config = {app: options[:app], executor: options[:executor], timeout: options[:timeout], type: fuzzerType, uuid: uuid, organizer: options[:organizer],  port: options[:port], server: options[:server]}
+				config = {app: options[:app], executor: options[:executor], timeout: options[:timeout], type: fuzzerType, uuid: uuid, organizer: true,  port: options[:port], server: options[:server]}
 			end
 
 			return(config)

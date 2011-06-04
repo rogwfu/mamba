@@ -89,21 +89,43 @@ class Fuzz < Thor
 	end
 
 	desc "unpackage", "Unpackage Fuzzer Configuration Files"
-	def unpackage()
-		say "Mamba Fuzzing Framework Unpackaging Environment..."
+	# Unpackage a mamba file to configure a fuzzing environment
+	def unpackage(archive=nil)
+		say "Mamba Fuzzing Framework Unpackaging Environment...", :blue
+		say "Warning: Old configurations, databases, disassembles, logs, models, queues, and tests will be erased!", :yellow
+
+		#
+		# Error check no configuration file given
+		#
+		if(!archive) then
+			say "Error: No package file provided!", :red
+			exit(1)
+		end
+
+		#
+		# Cleanup Fuzzer's Environment 
+		#
+		cleanup_old_environment()
+
+		#
+		# Unzip the archive
+		# 
 		Zip::ZipFile.open(archive) do |zipfile|
 			zipfile.each do |entry|
 				#
-				# Sanity check the packaged filename
+				# Sanity check the packaged filename (Whitelist)
 				#
-				if (entry.name =~ /^configs\/\w+\.yml/ or entry.name. =~ /^disassemblies\/w+.fz/ or entry.name =~ /models\/w+.ml/) then
+				if (entry.name =~ /^configs\/\w+\.yml/ or entry.name =~ /^disassemblies\/w+.fz/ or entry.name =~ /models\/w+.ml/) then
 					#
 					# Packaged file superseeds all other files
 					#
 					if(File.exists?(entry.name)) then
-						FileUtils.rm(entry.name)
+						FileUtils.rm(entry.name, :secure => true)
 					end
 
+					#
+					# Extract the contents
+					#
 					zipfile.extract(entry, entry.name)
 				else
 					next
@@ -138,6 +160,14 @@ class Fuzz < Thor
 			end
 		end
 
+		# Removes all configurations, databases, disassembles, logs, models, queues, and tests
+		# Ensures a clean environment for starting a new fuzzer
+		def cleanup_old_environment()
+			%w(configs databases disassembles logs models queues tests).each do |dir|
+				FileUtils.rm_rf(Dir.glob("#{dir}/*"), :secure => true)
+			end
+		end
+
 		# Swap roles from being organizer to package configuration files
 		# @param [Config] Hash of the current configuration
 		# @param [Swapped] Status of configuration, if it has been changed (default: false)
@@ -149,6 +179,7 @@ class Fuzz < Thor
 				mambaConfigFile = File.new("configs/fuzzer.yml", "w+")
 				mambaConfigFile.write(YAML::dump(config))
 				mambaConfigFile.close()
+				return(true)
 			end
 
 			return(false)
