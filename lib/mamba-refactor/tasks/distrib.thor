@@ -2,14 +2,17 @@ require 'mkmf'
 
 module Mamba
 	class Distrib < Thor
+		@@version = "0.0.0"
 		namespace :distrib
 
 		desc "dstart", "Start the Mongodb database for distribution"
 		# Starts the Mongodb database for distributed test case filesystem
 		# @todo Redirect the output of find_executable to not show up on the screen 
+		# @todo Better method for tracking mamba version information
+		# @todo Switch on mongodb os information
 		def dstart() 
 			say "Mamba Fuzzing Framework: Starting Mongodb database", :blue
-			mongoPath = [ENV['GEM_HOME'], "gems", "mamba-refactor-0.0.0", "ext", "mongodb", "mongodb-osx-x86_64-1.6.5", "bin"].join(File::SEPARATOR)
+			mongoPath = [ENV['GEM_HOME'], "gems", "mamba-refactor-" + @@version, "ext", "mongodb", "mongodb-osx-x86_64-1.6.5", "bin"].join(File::SEPARATOR)
 			mongod = find_executable("mongod", mongoPath + File::PATH_SEPARATOR + ENV['PATH'])
 			storageDir = Dir.pwd + "/databases/"
 			logFile = storageDir + "mongodb.log"
