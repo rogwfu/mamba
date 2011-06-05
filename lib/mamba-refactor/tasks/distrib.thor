@@ -1,19 +1,25 @@
+require 'mkmf'
+
 module Mamba
 	class Distrib < Thor
 		namespace :distrib
 
 		desc "dstart", "Start the Mongodb database for distribution"
+		# Starts the Mongodb database for distributed test case filesystem
+		# @todo Redirect the output of find_executable to not show up on the screen 
 		def dstart() 
-			puts "Starting Mongodb database"
-			mongod = File.dirname(__FILE__) + "/../../../ext/mongodb/mongodb-osx-x86_64-1.6.5/bin/mongod"
+			say "Mamba Fuzzing Framework: Starting Mongodb database", :blue
+			mongoPath = [ENV['GEM_HOME'], "gems", "mamba-refactor-0.0.0", "ext", "mongodb", "mongodb-osx-x86_64-1.6.5", "bin"].join(File::SEPARATOR)
+			mongod = find_executable("mongod", mongoPath + File::PATH_SEPARATOR + ENV['PATH'])
 			storageDir = Dir.pwd + "/databases/"
 			logFile = storageDir + "mongodb.log"
 			system("#{mongod} --fork --logpath #{logFile} --logappend --dbpath #{storageDir}")
 		end	
 
 		desc "dstop", "Stop the Mongodb database for distribution"
+		# Stops a running instance of the Mongodb database
 		def dstop() 
-			puts "Stopping Mongodb database"
+			say "Mamba Fuzzing Framework: Stopping Mongodb database", :blue
 			storageDir = Dir.pwd + "/databases/"
 			lockFile = storageDir + "mongod.lock"
 			lock = File.new(lockFile, "r")
@@ -52,7 +58,7 @@ module Mamba
 			#		end
 		end
 
-		desc "dstop", "Stop all distributed fuzzing components"
+		desc "stop", "Stop all distributed fuzzing components"
 		def stop() 
 			puts "Stopped the distributed environment"
 			#		%w(queue_stop, database_stop).each |distTask| do
