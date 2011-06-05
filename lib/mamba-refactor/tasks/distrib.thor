@@ -10,6 +10,7 @@ module Mamba
 		# @todo Redirect the output of find_executable to not show up on the screen 
 		# @todo Better method for tracking mamba version information
 		# @todo Switch on mongodb os information
+		# @todo Fix the mkmf.log file from being created
 		def dstart() 
 			say "Mamba Fuzzing Framework: Starting Mongodb database", :blue
 			mongoPath = [ENV['GEM_HOME'], "gems", "mamba-refactor-" + @@version, "ext", "mongodb", "mongodb-osx-x86_64-1.8.2-rc3", "bin"].join(File::SEPARATOR)
@@ -65,6 +66,7 @@ module Mamba
 		end
 
 		desc "start", "Start all distributed fuzzing components"
+		# Start all components of the distributed fuzzing environment
 		def start() 
 			say "Mamba Fuzzing Framework: Starting Distributed Environment", :blue
 			%w(dstart qstart).each do |distTask| 
@@ -73,6 +75,7 @@ module Mamba
 		end
 
 		desc "stop", "Stop all distributed fuzzing components"
+		# Stop all components of the distributed fuzzing environment
 		def stop() 
 			say "Mamba Fuzzing Framework: Stopping Distributed Environment", :blue
 			%w(dstop qstop).each do |distTask| 
