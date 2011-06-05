@@ -20,7 +20,7 @@ Jeweler::Tasks.new do |gem|
   gem.summary = %Q{Mamba Fuzzer Refactor}
   gem.description = %Q{File format fuzzing framework including genetic algorithms and a distributed fuzzing environment.  The refactor improves by leveraging thor.}
   gem.email = "roger.seagle@gmail.com"
-  gem.authors = ["rogwfu"]
+  gem.authors = ["Roger Seagle, Jr."]
   # dependencies defined in Gemfile
   gem.extensions          = FileList['ext/**/extconf.rb']
 end
