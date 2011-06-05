@@ -12,7 +12,7 @@ module Mamba
 		# @todo Switch on mongodb os information
 		def dstart() 
 			say "Mamba Fuzzing Framework: Starting Mongodb database", :blue
-			mongoPath = [ENV['GEM_HOME'], "gems", "mamba-refactor-" + @@version, "ext", "mongodb", "mongodb-osx-x86_64-1.6.5", "bin"].join(File::SEPARATOR)
+			mongoPath = [ENV['GEM_HOME'], "gems", "mamba-refactor-" + @@version, "ext", "mongodb", "mongodb-osx-x86_64-1.8.2-rc3", "bin"].join(File::SEPARATOR)
 			mongod = find_executable("mongod", mongoPath + File::PATH_SEPARATOR + ENV['PATH'])
 			storageDir = Dir.pwd + "/databases/"
 			logFile = storageDir + "mongodb.log"

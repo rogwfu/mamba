@@ -19,7 +19,7 @@ end
 mongodURL = ""
 case Config::CONFIG["host_os"]
 when /^darwin10\.\d+\.\d+$/
-	mongodURL = "http://fastdl.mongodb.org/osx/mongodb-osx-x86_64-1.6.5.tgz"
+	mongodURL = "http://fastdl.mongodb.org/osx/mongodb-osx-x86_64-1.8.2-rc3.tgz"
 else
 	raise "Error: Unsupported Operating System (#{Config::CONFIG["host_os"]})"
 end
