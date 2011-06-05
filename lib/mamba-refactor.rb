@@ -1,2 +1,1 @@
-module Mamba
-end
+require 'mamba-refactor/fuzzer'

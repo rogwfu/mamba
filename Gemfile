@@ -15,4 +15,5 @@ group :development do
   gem "daemons", ">=1.1.3"
   gem "uuidtools", ">=2.1.2"
   gem "zip", ">=2.0.2"
+  gem "log4r", ">=1.1.9"
 end
