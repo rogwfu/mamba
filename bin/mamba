@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+require 'mamba-refactor'
 require 'thor'
 require 'uuidtools'
 require 'yaml'

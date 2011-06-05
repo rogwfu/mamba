@@ -22,7 +22,7 @@ Jeweler::Tasks.new do |gem|
   gem.email = "roger.seagle@gmail.com"
   gem.authors = ["Roger Seagle, Jr."]
   # dependencies defined in Gemfile
-  gem.extensions          = FileList['ext/**/extconf.rb']
+#  gem.extensions          = FileList['ext/**/extconf.rb']
 end
 Jeweler::RubygemsDotOrgTasks.new
 
