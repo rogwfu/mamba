@@ -39,6 +39,12 @@ class Fuzz < Thor
 		# Hand over control to fuzzer
 		#
 		fuzzer = Kernel.const_get("Mamba").const_get(mambaConfiguration[:type]).new()
+		sleep(10)
+		2000000.times do
+
+		end
+#		fuzzer.fuzz()
+		fuzzer.report()
 	end
 
 	desc "stop", "Stop a Mamba Fuzzer"
