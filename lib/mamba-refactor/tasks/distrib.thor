@@ -41,7 +41,7 @@ module Mamba
 			queueBaseDir = Dir.pwd + "/queues"
 			queueLogDir = Dir.pwd + "/logs/rabbitmq"
 			system("export RABBITMQ_MNESIA_BASE=#{queueBaseDir}; export RABBITMQ_LOG_BASE=#{queueLogDir}; #{rabbitmq} -detached")
-			FileUtils.rm("mkmf.log")
+			FileUtils.rm("mkmf.log") if File.exists?("mkmf.log")
 		end	
 
 		desc "qreset", "Resetting the rabbitmq queueing system"
@@ -61,23 +61,23 @@ module Mamba
 			rabbitmqPath = [ENV['GEM_HOME'], "gems", "mamba-refactor-" + @@version, "ext", "rabbitmq", "rabbitmq-server-2.3.1", "scripts"].join(File::SEPARATOR)
 			rabbitmqctl = find_executable("rabbitmqctl", rabbitmqPath + File::PATH_SEPARATOR + ENV['PATH'])
 			system("#{rabbitmqctl} stop")
-			FileUtils.rm("mkmf.log")
+			FileUtils.rm("mkmf.log") if File.exists?("mkmf.log")
 		end
 
 		desc "start", "Start all distributed fuzzing components"
 		def start() 
-			puts "Started the distributed environment"
-			#		%w(queue_start database_start).each |distTask| do
-			#			invoke :task
-			#		end
+			say "Mamba Fuzzing Framework: Starting Distributed Environment", :blue
+			%w(dstart qstart).each do |distTask| 
+				invoke distTask.to_sym() 
+			end
 		end
 
 		desc "stop", "Stop all distributed fuzzing components"
 		def stop() 
-			puts "Stopped the distributed environment"
-			#		%w(queue_stop, database_stop).each |distTask| do
-			#			invoke :
-			#		end
+			say "Mamba Fuzzing Framework: Stopping Distributed Environment", :blue
+			%w(dstop qstop).each do |distTask| 
+				invoke distTask.to_sym()
+			end
 		end
 	end
 end
