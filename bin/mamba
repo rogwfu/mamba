@@ -5,102 +5,104 @@ require 'yaml'
 require 'rbconfig'
 
 #@author Roger Seagle
-class Mamba < Thor
-	include Thor::Actions
+module Mamba
+	class CLI < Thor
+		include Thor::Actions
 
-	default_task :create
-	check_unknown_options!()
+		default_task :create
+		check_unknown_options!()
 
-	desc "create", "Create a Mamba instance"
-	method_option :app,          :default => "/Applications/Preview.app/Contents/MacOS/Preview", :option => :required, :aliases => "-a", :desc => "Path to an executable (ex. /Applications/Preview.app/Contents/MacOS/Preview)" 
-	method_option :distributed,  :default => false,		:type => :boolean, 	:aliases => "-d", :desc => "Set the fuzzer type as distributed " 
-	method_option :executor,     :default => "appscript", 	:aliases => "-e", :desc => "Type of executor to use (cli, appscript)" 
-	method_option :port,         :default => 27017, 	:type => :numeric, 	:aliases => "-p", :desc => "Port for distributed fuzzing"  
-	method_option :timeout,      :default => 0, 		:type => :numeric, 	:aliases => "-t", :desc => "Time to run an executable for each testcase in seconds (ex. 20)" 
-	method_option :server,       :default => "fuzz.io", :aliases => "-s", :desc => "Server address for distributed fuzzing (ex. fuzz.io)" 
-	method_option :type,         :default => "Mangle", 	:aliases => "-y", :desc => "Type of fuzzer to create" 
+		desc "create", "Create a Mamba instance"
+		method_option :app,          :default => "/Applications/Preview.app/Contents/MacOS/Preview", :option => :required, :aliases => "-a", :desc => "Path to an executable (ex. /Applications/Preview.app/Contents/MacOS/Preview)" 
+		method_option :distributed,  :default => false,		:type => :boolean, 	:aliases => "-d", :desc => "Set the fuzzer type as distributed " 
+		method_option :executor,     :default => "appscript", 	:aliases => "-e", :desc => "Type of executor to use (cli, appscript)" 
+		method_option :port,         :default => 27017, 	:type => :numeric, 	:aliases => "-p", :desc => "Port for distributed fuzzing"  
+		method_option :timeout,      :default => 0, 		:type => :numeric, 	:aliases => "-t", :desc => "Time to run an executable for each testcase in seconds (ex. 20)" 
+		method_option :server,       :default => "fuzz.io", :aliases => "-s", :desc => "Server address for distributed fuzzing (ex. fuzz.io)" 
+		method_option :type,         :default => "Mangle", 	:aliases => "-y", :desc => "Type of fuzzer to create" 
 
-	# Create a fuzzing environment with the associated settings 
-	# @param [Name] top-level directory to create for the fuzzing envionment (defaults to: mamba-fuzzer)
-	def create(name="mamba-fuzzer")
-		say "Mamba Fuzzing Framework Initializing Environment....", :blue
-
-		#
-		# Check for Operating System Support
-		#
-		if(!supported_os?()) then
-			say "Error: Unsupported Operating System (#{Config::CONFIG["host_os"]})", :red
-			exit(1)
-		end
-
-		#
-		# Validate Parameters Given
-		#
-		validate_params()
-
-		%w(configs databases disassemblies logs models queues tests).each do |dirname|
-			empty_directory name + "/" + dirname
-		end
-
-		#
-		# Copy the Thor Tasks
-		#
-		Mamba.source_root(File.dirname(__FILE__))
-		directory "../lib/mamba-refactor/tasks", "#{name}/tasks"
-
-		#
-		# Create the Mamba Configuration File
-		#
-		mambaConfig = generate_config()
-		create_file "#{name}/configs/fuzzer.yml" do
-			YAML::dump(mambaConfig)
-		end
-
-		#
-		# Create the Fuzzer Configuration File
-		#
-		create_file "#{name}/configs/#{mambaConfig[:type]}.yml" do
-			#Mamba.const_get(self.config['type']).generate_config(self.fuzzerName)
-		end
-	end
-
-	no_tasks do
-		# Validate whether Mamba supports the running OS
-		# @return [Fixnum] nil if not supported, offset of string otherwise 
-		def supported_os?()
-			return(Config::CONFIG["host_os"] =~ /darwin10\.\d+\.\d+$/)
-		end
-
-		# Validates parameters given to the mamba command line tool for illegal values
-		def validate_params()
-			if(options[:executor] != "appscript" and options[:executor] !~ /^cli#/) then
-				say "Error: Unsupported Executor", :red
-				exit(1)	
-			end
-
-			#if(!Mamba.const_defined?(options['type'])) then
-		#		puts "Unsupported Fuzzer"
-#				exit(1)
-#			end
-		end
-
-		# Generate a hash containing the mamba configuration settings
-		# @return [Hash] configuration settings
-		def generate_config()
-			uuid = "fz" + UUIDTools::UUID.timestamp_create.to_s().gsub("-", "")
-			config = {app: options[:app], executor: options[:executor], timeout: options[:timeout], type: options[:type], uuid: uuid}
+		# Create a fuzzing environment with the associated settings 
+		# @param [String, #read] top-level directory to create for the fuzzing envionment (defaults to: mamba-fuzzer)
+		def create(name="mamba-fuzzer")
+			say "Mamba Fuzzing Framework Initializing Environment....", :blue
 
 			#
-			# Check for distributed Fuzzing
+			# Check for Operating System Support
 			#
-			if(options[:distributed]) then
-				fuzzerType =  "Distributed" + options[:type]
-				config = {app: options[:app], executor: options[:executor], timeout: options[:timeout], type: fuzzerType, uuid: uuid, organizer: true,  port: options[:port], server: options[:server]}
+			if(!supported_os?()) then
+				say "Error: Unsupported Operating System (#{Config::CONFIG["host_os"]})", :red
+				exit(1)
 			end
 
-			return(config)
+			#
+			# Validate Parameters Given
+			#
+			validate_params()
+
+			%w(configs databases disassemblies logs models queues tests).each do |dirname|
+				empty_directory name + "/" + dirname
+			end
+
+			#
+			# Copy the Thor Tasks
+			#
+			Mamba::CLI.source_root(File.dirname(__FILE__))
+			directory "../lib/mamba-refactor/tasks", "#{name}/tasks"
+
+			#
+			# Create the Mamba Configuration File
+			#
+			mambaConfig = generate_config()
+			create_file "#{name}/configs/fuzzer.yml" do
+				YAML::dump(mambaConfig)
+			end
+
+			#
+			# Create the Fuzzer Configuration File
+			#
+			create_file "#{name}/configs/#{mambaConfig[:type]}.yml" do
+				#Mamba.const_get(self.config['type']).generate_config(self.fuzzerName)
+			end
+		end
+
+		no_tasks do
+			# Validate whether Mamba supports the running OS
+			# @return [Fixnum] nil if not supported, offset of string otherwise 
+			def supported_os?()
+				return(Config::CONFIG["host_os"] =~ /darwin10\.\d+\.\d+$/)
+			end
+
+			# Validates parameters given to the mamba command line tool for illegal values
+			def validate_params()
+				if(options[:executor] != "appscript" and options[:executor] !~ /^cli#/) then
+					say "Error: Unsupported Executor", :red
+					exit(1)	
+				end
+
+				#if(!Mamba.const_defined?(options['type'])) then
+				#		puts "Unsupported Fuzzer"
+				#				exit(1)
+				#			end
+			end
+
+			# Generate a hash containing the mamba configuration settings
+			# @return [Hash] configuration settings
+			def generate_config()
+				uuid = "fz" + UUIDTools::UUID.timestamp_create.to_s().gsub("-", "")
+				config = {app: options[:app], executor: options[:executor], timeout: options[:timeout], type: options[:type], uuid: uuid}
+
+				#
+				# Check for distributed Fuzzing
+				#
+				if(options[:distributed]) then
+					fuzzerType =  "Distributed" + options[:type]
+					config = {app: options[:app], executor: options[:executor], timeout: options[:timeout], type: fuzzerType, uuid: uuid, organizer: true,  port: options[:port], server: options[:server]}
+				end
+
+				return(config)
+			end
 		end
 	end
 end
 
-Mamba.start()
+Mamba::CLI.start()
