@@ -32,24 +32,30 @@ module Mamba
 		end
 
 		desc "qstart", "Start the rabbitmq queueing system"
+		# Start the rabbitmq queueing system for distributed jobs
 		def qstart() 
 			puts "Starting rabbitmq queueing system"
-			rabbitmq = File.dirname(__FILE__) + "/../../../ext/rabbitmq/rabbitmq-server-2.3.1/scripts/rabbitmq-server"
+			rabbitmqPath = [ENV['GEM_HOME'], "gems", "mamba-refactor-" + @@version, "ext", "rabbitmq", "rabbitmq-server-2.3.1", "scripts"].join(File::SEPARATOR)
+			rabbitmq = find_executable("rabbitmq-server", rabbitmqPath + File::PATH_SEPARATOR + ENV['PATH'])
 			queueBaseDir = Dir.pwd + "/queues"
 			queueLogDir = Dir.pwd + "/logs/rabbitmq"
 			system("export RABBITMQ_MNESIA_BASE=#{queueBaseDir}; export RABBITMQ_LOG_BASE=#{queueLogDir}; #{rabbitmq} -detached")
 		end	
 
 		desc "qreset", "Resetting the rabbitmq queueing system"
+		# Reset the rabbitmq queueing system for distributed jobs (empty the queues)
 		def qreset() 
-			rabbitmqctl = File.dirname(__FILE__) + "/../../../ext/rabbitmq/rabbitmq-server-2.3.1/scripts/rabbitmqctl"
+			rabbitmqPath = [ENV['GEM_HOME'], "gems", "mamba-refactor-" + @@version, "ext", "rabbitmq", "rabbitmq-server-2.3.1", "scripts"].join(File::SEPARATOR)
+			rabbitmqctl = find_executable("rabbitmqctl", rabbitmqPath + File::PATH_SEPARATOR + ENV['PATH'])
 			system("#{rabbitmqctl} force_reset")
 		end
 
 		desc "qstop", "Stop the rabbitmq queueing system"
+		# Stop the rabbitmq queueing system for distributed jobs
 		def qstop() 
 			puts "Stopping the rabbitmq queueing system"
-			rabbitmqctl = File.dirname(__FILE__) + "/../../../ext/rabbitmq/rabbitmq-server-2.3.1/scripts/rabbitmqctl"
+			rabbitmqPath = [ENV['GEM_HOME'], "gems", "mamba-refactor-" + @@version, "ext", "rabbitmq", "rabbitmq-server-2.3.1", "scripts"].join(File::SEPARATOR)
+			rabbitmqctl = find_executable("rabbitmqctl", rabbitmqPath + File::PATH_SEPARATOR + ENV['PATH'])
 			system("#{rabbitmqctl} stop")
 		end
 

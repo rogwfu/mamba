@@ -1,0 +1,37 @@
+require 'mkmf'
+
+#
+# Check for required tools
+#
+tools = Hash.new()
+%w(curl tar erl).each do |toolName|
+	toolLoc = find_executable(toolName)
+	if(!toolLoc) then
+		raise "Error: #{toolName} not found in #{ENV['PATH']}"
+	else
+		tools[toolName] = toolLoc
+	end
+end
+
+#
+# Configure the correct url
+#
+rabbitmqURL = ""
+case Config::CONFIG["host_os"]
+when /^darwin10\.\d+\.\d+$/
+	rabbitmqURL = "http://www.rabbitmq.com/releases/rabbitmq-server/v2.3.1/rabbitmq-server-2.3.1.tar.gz"
+else
+	raise "Error: Unsupported Operating System (#{Config::CONFIG["host_os"]})"
+end
+
+#
+# Download, Extract, and Make rabbitmq 
+#
+system("#{tools["curl"]} -O #{rabbitmqURL}") 
+system("#{tools["tar"]} xvzf #{rabbitmqURL.split('/')[-1]}")
+system("cd #{rabbitmqURL.split('/')[-1].gsub(/\.tar\.gz$/, "")} ; make ")
+
+#
+# Appease packaging library
+#
+create_makefile("")
