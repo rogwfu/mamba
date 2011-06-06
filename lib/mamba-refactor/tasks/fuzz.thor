@@ -40,11 +40,7 @@ class Fuzz < Thor
 		# Hand over control to fuzzer
 		#
 		fuzzer = Kernel.const_get("Mamba").const_get(mambaConfig[:type]).new()
-		sleep(10)
-		2000000.times do
-
-		end
-#		fuzzer.fuzz()
+		fuzzer.fuzz()
 		fuzzer.report()
 	end
 
@@ -149,7 +145,7 @@ class Fuzz < Thor
 		end
 
 		# Validates parameters given to the mamba command line tool for illegal values
-		# @params [Hash] Mamba configuration
+		# @param [Hash] Mamba configuration
 		def validate_params(mambaConfig)
 
 			#
@@ -172,7 +168,7 @@ class Fuzz < Thor
 		end
 
 		# Ensure fuzzing algorithm is implemented with required inheritance and methods
-		# @params [String] The algorithm for fuzzing
+		# @param [String] The algorithm for fuzzing
 		def validate_algorithm_type(type)
 
 			#

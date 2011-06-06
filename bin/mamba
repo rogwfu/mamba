@@ -74,7 +74,7 @@ module Mamba
 			end
 
 			# Validates parameters given to the mamba command line tool for illegal values
-			# @params [Hash] Mamba configuration
+			# @param [Hash] Mamba configuration
 			def validate_params(mambaConfig)
 				#
 				# Validate the Executors

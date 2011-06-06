@@ -1,5 +1,6 @@
 require 'log4r'
 
+# @author Roger Seagle, Jr. 
 module Mamba
 	class Fuzzer
 
@@ -23,7 +24,7 @@ module Mamba
 		private 
 
 		# Initialize a logger                                                                                                                                                                  
-		# @params [String] Type of fuzzer, used to name the log file
+		# @param [Type] Type of fuzzer, used to name the log file
 		# @return [Logger] A logger created from the log4r library
 		def init_logger(type)                                                                                                                                                                    
 			logfilename			= "logs/#{type}." + Time.now.strftime("%Y-%m-%d-%H-%M-%S") + ".log"                                                                                                  
