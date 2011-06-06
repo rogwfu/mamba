@@ -1,5 +1,6 @@
 module Mamba
 	class Mangle < Fuzzer
+		include Mamba::Tracing
 
         DEFAULT_HEADER_SIZE = 1024
         DEFAULT_NUMBER_CASES = 1024
@@ -19,11 +20,16 @@ module Mamba
 		# Initializes Mangle fuzzer and the generic fuzzer class
 		def initialize()
 			super()
+
+			@mangleConfig = read_fuzzer_config(self.to_s()) 
+			@logger.info(@mangleConfig.inspect())
 		end
 
 		# Runs the fuzzing job
 		def fuzz()
 
 		end
+
+		private
 	end
 end
