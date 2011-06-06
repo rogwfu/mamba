@@ -16,7 +16,6 @@ module Mamba
 			@crashes =  Array.new()
 			@watcher = DirectoryWatcher.new(os_crash_dir(), :pre_load => true)
 			@watcher.interval = 2.0
-			@logger.info(os_crash_dir())
 			@watcher.add_observer do |*args|
 				args.each do |event|
 					#

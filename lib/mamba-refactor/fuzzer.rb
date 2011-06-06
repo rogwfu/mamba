@@ -6,7 +6,7 @@ module Mamba
 		# Create a new instance of a fuzzer
 		def initialize()
 			@logger = init_logger("Fuzzer")
-			@reporter = Reporter.new(@logger)
+			@reporter = Reporter.new()
 			@reporter.watcher.start()
 		end
 
