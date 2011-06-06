@@ -21,6 +21,11 @@ module Mamba
 		def initialize()
 			super()
 			@mangleConfig = read_fuzzer_config(self.to_s()) 
+
+			#
+			# Print configuration to log file
+			#
+			dump_config(@mangleConfig)
 		end
 
 		# Runs the fuzzing job
