@@ -26,7 +26,8 @@ class Fuzz < Thor
 		#
 		# Read environments configuration
 		#
-		mambaConfiguration = read_config()
+		mambaConfig = read_config()
+		validate_params(mambaConfig)
 		pwd = Dir.pwd() 
 
 		#
@@ -38,7 +39,7 @@ class Fuzz < Thor
 		#
 		# Hand over control to fuzzer
 		#
-		fuzzer = Kernel.const_get("Mamba").const_get(mambaConfiguration[:type]).new()
+		fuzzer = Kernel.const_get("Mamba").const_get(mambaConfig[:type]).new()
 		sleep(10)
 		2000000.times do
 
@@ -67,18 +68,15 @@ class Fuzz < Thor
 		#
 		# Read the Mamba Configuration
 		# 
-		mambaConfiguration = read_config()
-		if(!configuration_sane?(mambaConfiguration)) then
-			say "Error: Configuration contains illegal values", :red
-			exit(1)
-		end
+		mambaConfig = read_config()
+		validate_params(mambaConfig)
 
 		#
 		# Remove any lingering package with the same name
 		#
-		packageFilename = mambaConfiguration[:uuid] + ".mamba"
+		packageFilename = mambaConfig[:uuid] + ".mamba"
 		remove_old_package(packageFilename)
-		swapped = swap_roles(mambaConfiguration)
+		swapped = swap_roles(mambaConfig)
 
 		#
 		# Create the Package File
@@ -93,7 +91,7 @@ class Fuzz < Thor
 		#
 		# Check for switching back to an organizer
 		#
-		swap_roles(mambaConfiguration, swapped)
+		swap_roles(mambaConfig, swapped)
 	end
 
 	desc "unpackage", "Unpackage Fuzzer Configuration Files"
@@ -150,14 +148,62 @@ class Fuzz < Thor
 			return(config)
 		end
 
-		# Scrutinize the configuration to ensure validity
-		# @param [Config] Hash of the configuration read in
-		# @return [Boolean] Configuration sane or not
-		def configuration_sane?(config)
-			if(config[:uuid] !~ /^fz\w+$/) then
-				return(false)
+		# Validates parameters given to the mamba command line tool for illegal values
+		# @params [Hash] Mamba configuration
+		def validate_params(mambaConfig)
+
+			#
+			# Ensure correct format of UUID
+			#
+			if(mambaConfig[:uuid] !~ /^fz\w+$/) then
+				say "Error: Incorrect UUID format (#{mambaConfig[:uuid]})", :red
+				exit(1)	
 			end
-			return(true)
+
+			#
+			# Validate the Executors
+			#
+			if(mambaConfig[:executor] != "appscript" and mambaConfig[:executor] !~ /^cli#/) then
+				say "Error: Unsupported Executor (#{mambaConfig[:executor]})", :red
+				exit(1)	
+			end
+
+			validate_algorithm_type(mambaConfig[:type])
+		end
+
+		# Ensure fuzzing algorithm is implemented with required inheritance and methods
+		# @params [String] The algorithm for fuzzing
+		def validate_algorithm_type(type)
+
+			#
+			# Validate if defined
+			#
+			if(!Kernel.const_get("Mamba").const_defined?(type)) then
+				say "Error: Unsupported fuzzing algorithm (#{type})", :red
+				exit(1)	
+			end
+
+			#
+			# Validate methods
+			#
+			if(!Kernel.const_get("Mamba").const_get(type).respond_to?("generate_config")) then
+				say "Error: Unsupported fuzzing algorithm (#{type}) - Missing generate_config() method", :red
+				exit(1)
+			end
+
+			if(!Kernel.const_get("Mamba").const_get(type).method_defined?("fuzz")) then
+				say "Error: Unsupported fuzzing algorithm (#{type}) - Missing fuzz() method", :red
+				exit(1)
+			end
+
+			#
+			# Validate algorithms inheritance
+			#
+			if(!Kernel.const_get("Mamba").const_get(type).superclass().to_s().eql?("Mamba::Fuzzer")) then
+				say "Error: Unsupported fuzzing algorithm (#{type}) - Does not inherit from Mamba::Fuzzer", :red
+				exit(1)
+			end
+
 		end
 
 		# Removes old package files from the Mamba environment
