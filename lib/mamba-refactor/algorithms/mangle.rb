@@ -10,10 +10,10 @@ module Mamba
 		# Generates the YAML configuration file for Mangle fuzzer
 		def self.generate_config()
                 mangleConfig = Hash.new()
+                mangleConfig['Basefile'] = Mamba::Mangle::DEFAULT_BASE_FILE
+                mangleConfig['Default Offset'] = Mamba::Mangle::DEFAULT_OFFSET
                 mangleConfig['Header Size'] = Mamba::Mangle::DEFAULT_HEADER_SIZE
                 mangleConfig['Number of Testcases'] = Mamba::Mangle::DEFAULT_NUMBER_CASES
-                mangleConfig['Default Offset'] = Mamba::Mangle::DEFAULT_OFFSET
-                mangleConfig['Basefile'] = Mamba::Mangle::DEFAULT_BASE_FILE
 				YAML::dump(mangleConfig)
 		end
 
@@ -21,11 +21,19 @@ module Mamba
 		def initialize()
 			super()
 			@mangleConfig = read_fuzzer_config(self.to_s()) 
+            @baseFileSuffix = File.extname(@mangleConfig['Basefile'])
 
 			#
 			# Print configuration to log file
 			#
 			dump_config(@mangleConfig)
+
+			#
+            # Seed random number generator
+            #
+			seed = Time.now.to_i()
+            srand(seed)
+			@logger.info("SRAND Seed: #{seed}")
 		end
 
 		# Runs the fuzzing job
@@ -44,7 +52,7 @@ module Mamba
 			@mangleConfig['Number of Testcases'].times do |testCaseNumber|
 				@logger.info("Running testcase: #{testCaseNumber}")
 				@reporter.currentTestCase = testCaseNumber
-#				mangle_testcase(testCaseNumber)
+				newTestCaseFilename = mangle_test_case(testCaseNumber)
 #				execute()
 				@reporter.numCasesRun = @reporter.numCasesRun + 1
 			end
@@ -52,8 +60,93 @@ module Mamba
 
 		private
 
-		def read_header()
+		# Create a mangled test case using mangle's algorithm
+		# @param [Fixnum] The current number test case being generated
+		# @return [String] New test case filename
+		def mangle_test_case(testCaseNumber)
+			#
+			# Extract the necessary section of the file
+			#
+            secData = read_section()
 
+            count = rand(@mangleConfig['Header Size']/10)
+            idx = 0
+			count.times do
+                offset = rand(@mangleConfig['Header Size'])
+                secData[offset] = rand() % 256
+                if(rand() % 2 && secData[offset] < 128) then
+                    secData[offset] = 0xff
+                end
+            end
+
+			return(write_test_case(secData, testCaseNumber))
+		end
+
+		# Read a section of the base test case to alter
+		# @return [Array]  Binary data from the base test case
+		def read_section()
+			baseTestCaseFileDes = File.open(@mangleConfig['Basefile'], "rb")
+
+			#
+			# Set to the configuration fuzzer
+			#
+			baseTestCaseFileDes.seek(@mangleConfig['Default Offset'], IO::SEEK_SET)
+
+			#
+			# Read in the header
+			#
+			data = Array.new()
+			@mangleConfig['Header Size'].times do |byteNum|
+				data << baseTestCaseFileDes.getc()
+			end
+
+			#
+			# Cleanup the file descriptor
+			#
+			baseTestCaseFileDes.close()
+			return(data)
+		end
+
+		# Write a new test case file
+		# @param [Array] Mangled data to insert into test case
+		# @param [Fixnum] Current number of test case being generated
+		# @returns [String] The test case filename
+		def write_test_case(sectionData, testCaseNumber)
+			testCaseFilename = "tests/#{testCaseNumber}" + @baseFileSuffix
+
+			#
+			# Open necessary file descriptors
+			#
+			testFileDes = File.open(testCaseFilename, "wb")
+			baseTestCaseFileDes = File.open(@mangleConfig['Basefile'], "rb")
+
+			#
+            # Write the beginning of the file
+            #
+            if(@mangleConfig['Default Offset'] > 0) then
+                testFileDes.write(baseTestCaseFileDes.read(@mangleConfig['Header Size']-1))
+            end
+
+            #
+            # Write the fuzzed data
+            #
+            sectionData.each do |byte|
+                testFileDes.putc(byte)
+            end
+
+            #
+            # Write the rest of the base file
+            # 
+            baseTestCaseFileDes.seek(@mangleConfig['Header Size'], IO::SEEK_SET)
+            testFileDes.write(baseTestCaseFileDes.read())
+
+			#
+			# Cleanup
+			#
+			testFileDes.close()
+			baseTestCaseFileDes.close()
+
+			return(testCaseFilename)
 		end
 
 		# Ensure the base test case conforms to testing requirements 
