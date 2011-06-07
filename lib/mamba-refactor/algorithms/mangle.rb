@@ -46,6 +46,14 @@ module Mamba
 				return()
 			end
 
+			# File is fine, open a descriptor for use during fuzzer
+			@baseTestCaseFileDes = File.open(@mangleConfig['Basefile'], "rb")
+
+			#
+			# Read section of data from base test case
+			#
+			@sectionData = read_section() 
+
 			#
 			# Run all the test cases
 			#
@@ -56,6 +64,9 @@ module Mamba
 #				execute()
 				@reporter.numCasesRun = @reporter.numCasesRun + 1
 			end
+
+			# Be Kind, Cleanup
+			@baseTestCaseFileDes.close()
 		end
 
 		private
@@ -67,10 +78,13 @@ module Mamba
 			#
 			# Extract the necessary section of the file
 			#
-            secData = read_section()
+            secData = clone_section() 
 
             count = rand(@mangleConfig['Header Size']/10)
-            idx = 0
+
+			#
+			# Mangle the section data
+			#
 			count.times do
                 offset = rand(@mangleConfig['Header Size'])
                 secData[offset] = rand() % 256
@@ -85,26 +99,30 @@ module Mamba
 		# Read a section of the base test case to alter
 		# @return [Array]  Binary data from the base test case
 		def read_section()
-			baseTestCaseFileDes = File.open(@mangleConfig['Basefile'], "rb")
-
 			#
 			# Set to the configuration fuzzer
 			#
-			baseTestCaseFileDes.seek(@mangleConfig['Default Offset'], IO::SEEK_SET)
+			@baseTestCaseFileDes.seek(@mangleConfig['Default Offset'], IO::SEEK_SET)
 
 			#
 			# Read in the header
 			#
 			data = Array.new()
 			@mangleConfig['Header Size'].times do |byteNum|
-				data << baseTestCaseFileDes.getc()
+				data << @baseTestCaseFileDes.getc()
 			end
 
-			#
-			# Cleanup the file descriptor
-			#
-			baseTestCaseFileDes.close()
 			return(data)
+		end
+
+		# Make a clone of the original section data (Used to minimize file IO)
+		# @return [Array] Copy of original section data
+		def clone_section()
+			secData = Array.new()
+			@sectionData.each do |byte|
+				secData << byte
+			end
+			return(secData)
 		end
 
 		# Write a new test case file
@@ -115,16 +133,16 @@ module Mamba
 			testCaseFilename = "tests/#{testCaseNumber}" + @baseFileSuffix
 
 			#
-			# Open necessary file descriptors
+			# Open necessary file descriptors, rewind base descriptor
 			#
 			testFileDes = File.open(testCaseFilename, "wb")
-			baseTestCaseFileDes = File.open(@mangleConfig['Basefile'], "rb")
+			@baseTestCaseFileDes.rewind() 
 
 			#
             # Write the beginning of the file
             #
             if(@mangleConfig['Default Offset'] > 0) then
-                testFileDes.write(baseTestCaseFileDes.read(@mangleConfig['Header Size']-1))
+                testFileDes.write(@baseTestCaseFileDes.read(@mangleConfig['Header Size']-1))
             end
 
             #
@@ -137,14 +155,13 @@ module Mamba
             #
             # Write the rest of the base file
             # 
-            baseTestCaseFileDes.seek(@mangleConfig['Header Size'], IO::SEEK_SET)
-            testFileDes.write(baseTestCaseFileDes.read())
+            @baseTestCaseFileDes.seek(@mangleConfig['Header Size'], IO::SEEK_SET)
+            testFileDes.write(@baseTestCaseFileDes.read())
 
 			#
 			# Cleanup
 			#
 			testFileDes.close()
-			baseTestCaseFileDes.close()
 
 			return(testCaseFilename)
 		end
