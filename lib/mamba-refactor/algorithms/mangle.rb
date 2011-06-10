@@ -1,7 +1,5 @@
 module Mamba
 	class Mangle < Fuzzer
-		include Mamba::Tracing
-
         DEFAULT_HEADER_SIZE = 1024
         DEFAULT_NUMBER_CASES = 1024
         DEFAULT_BASE_FILE = "tests/test2"
@@ -18,8 +16,8 @@ module Mamba
 		end
 
 		# Initializes Mangle fuzzer and the generic fuzzer class
-		def initialize()
-			super()
+		def initialize(mambaConfig)
+			super(mambaConfig)
 			@mangleConfig = read_fuzzer_config(self.to_s()) 
             @baseFileSuffix = File.extname(@mangleConfig['Basefile'])
 
@@ -61,7 +59,7 @@ module Mamba
 				@logger.info("Running testcase: #{testCaseNumber}")
 				@reporter.currentTestCase = testCaseNumber
 				newTestCaseFilename = mangle_test_case(testCaseNumber)
-#				execute()
+			    @executor.run(@logger, newTestCaseFilename)
 				@reporter.numCasesRun = @reporter.numCasesRun + 1
 			end
 
@@ -80,7 +78,7 @@ module Mamba
 			#
             secData = clone_section() 
 
-            count = rand(@mangleConfig['Header Size']/10)
+            count = rand(@mangleConfig['Header Size']/10).to_i()
 
 			#
 			# Mangle the section data

@@ -17,4 +17,5 @@ group :development do
   gem "zip", ">=2.0.2"
   gem "log4r", ">=1.1.9"
   gem "directory_watcher", ">=1.4.0"
+  gem "rb-appscript", ">=0.6.1"
 end

@@ -5,8 +5,11 @@ module Mamba
 	class Fuzzer
 
 		# Create a new instance of a fuzzer
-		def initialize()
+		# @param [Hash] Contains global configuration of the mamba fuzzing framework
+		def initialize(mambaConfig)
 			@logger = init_logger("Fuzzer")
+			@logger.info("Executor is: #{mambaConfig[:executor]}")
+			@executor = Executor.new(mambaConfig[:app], mambaConfig[:executor], mambaConfig[:timeout], @logger)
 			@reporter = Reporter.new()
 			@reporter.watcher.start()
 		end

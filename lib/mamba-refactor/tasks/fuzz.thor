@@ -39,7 +39,7 @@ class Fuzz < Thor
 		#
 		# Hand over control to fuzzer
 		#
-		fuzzer = Kernel.const_get("Mamba").const_get(mambaConfig[:type]).new()
+		fuzzer = Kernel.const_get("Mamba").const_get(mambaConfig[:type]).new(mambaConfig)
 		fuzzer.fuzz()
 		fuzzer.report()
 	end
