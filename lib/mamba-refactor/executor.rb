@@ -52,6 +52,7 @@ module Mamba
 			rescue Errno::ERSCH
 
 			end
+			FileUtils.rm_f("app.pid." + pid.to_s())
 		end
 
 		# Creates the lambda for the run function based on mamba's configuration
@@ -61,6 +62,7 @@ module Mamba
 			if(@timeout < 1) then
 				appscriptRunLambda = lambda do |newTestCase|
 					pid = Process.spawn(@application, [:out, :err]=>["logs/application.log", File::CREAT|File::WRONLY|File::APPEND]) 
+					FileUtils.touch("app.pid." + pid.to_s())
 					Process.spawn("opener.rb #{pid} #{Dir.pwd() + File::SEPARATOR + newTestCase}")
 					runtime = cpu_scale(pid)
 					application_cleanup(pid)
@@ -69,6 +71,7 @@ module Mamba
 			else
 				appscriptRunLambda = lambda do |newTestCase|
 					pid = Process.spawn(@application, [:out, :err]=>["logs/application.log", File::CREAT|File::WRONLY|File::APPEND])
+					FileUtils.touch("app.pid." + pid.to_s())
 					Process.spawn("opener.rb #{pid} #{Dir.pwd() + File::SEPARATOR + newTestCase}")
 					runtime = sleep(@timeout) 
 					application_cleanup(pid)
