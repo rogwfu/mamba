@@ -4,8 +4,11 @@ module Mamba
 		POLLING_TIMEOUT = 4
 		UPPERBOUND = 12
 
-		
 		# Initialize the executor with the correct application, delivery type, and timeout
+		# @param [String] The application under test (must be full path)
+		# @param [String] How to delivery the test cases (currently: appscript or cli)
+		# @param [Integer] Amount of time to run the program under test per test case
+		# @param [Logger] Instance of a log4r logger
 		def initialize(app, deliveryMethod, timeout, log)
 			@application = app
 			@timeout = timeout
@@ -46,11 +49,16 @@ module Mamba
 		end
 
 		# Spawn the application under test feeding it a test case
+		# @param [Logger] Instance of log4r logger
+		# @param [String] Location of the test case to run
 		def run(log, testCase)
 			log.info("Running Test Case: #{testCase}")
 			pid, actualRunTime = @exeLambdas["run"].call(log, testCase)
 		end
 
+		# Spawn the application under test with valgrind 
+		# @param [Logger] Instance of log4r logger
+		# @param [String] Location of the test case to run
 		def valrind_trace(log, testCase)
 			log.info("Running Test Case: #{testCase}")
 			pid, actualRunTime = @exeLambdas["valgrind"].call(testCase)
@@ -58,20 +66,23 @@ module Mamba
 
 		private
 
-		def application_cleanup(pid)
+		# Kill the application under test
+		def application_cleanup()
 			#
 			# Cleanup the application
 			#
 			begin
-				Process.kill("INT", pid)
-				Process.wait(pid)
+				Process.kill("INT", @runningPid)
+				Process.wait(@runningPid)
 			rescue 
 			ensure
-				FileUtils.rm_f("app.pid." + pid.to_s())
+				# Remove the process file
+				FileUtils.rm_f("app.pid." + @runningPid.to_s())
 			end
 		end
 
-		# Creates the lambda for the run function based on mamba's configuration
+		# Creates the appscript lambdas based on mamba's configuration
+		# @param [String] The type of application monitor (either cpu_scale or cpu_sleep)
 		def create_appscript_lambdas(appMonitor)
 			#
 			# Loop through the different tracer methods and create lambda
@@ -82,12 +93,14 @@ module Mamba
 					FileUtils.touch("app.pid." + @runningPid.to_s())
 					Process.spawn("opener.rb #{@runningPid} #{Dir.pwd() + File::SEPARATOR + newTestCase}")
 					runtime = self.send(appMonitor.to_sym)
-					application_cleanup(@runningPid)
+					application_cleanup()
 					return [@runningPid, runtime]
 				end
 			end
 		end
 
+		# Creates the cli lambdas based on mamba's configuration
+		# @param [String] The type of application monitor (either cpu_scale or cpu_sleep)
 		def create_cli_lambdas(appMonitor, deliveryMethod)
 			#
 			# Loop through the different tracer methods and create lambda
@@ -97,7 +110,7 @@ module Mamba
 					@runningPid = Process.spawn("#{@supportedTracers[tracerKey]} " + @application + " #{deliveryMethod}" + " #{newTestCase}", [:out, :err] => ["logs/application.log", File::CREAT|File::WRONLY|File::APPEND]) 
 					FileUtils.touch("app.pid." + @runningPid.to_s())
 					runtime = self.send(appMonitor.to_sym)
-					application_cleanup(@runningPid)
+					application_cleanup()
 					return [@runningPid, runtime]
 				end
 			end
