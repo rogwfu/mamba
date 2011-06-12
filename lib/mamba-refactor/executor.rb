@@ -4,20 +4,24 @@ module Mamba
 		POLLING_TIMEOUT = 4
 		UPPERBOUND = 12
 
-		@@valgrind = ENV['GEM_HOME'] + File::PATH_SEPARATOR + "mamba-refactor-0.0.0" +  File::PATH_SEPARATOR + "ext" +  File::PATH_SEPARATOR + "valgrind" +  File::PATH_SEPARATOR + "inst" +  File::PATH_SEPARATOR + "bin" +  File::PATH_SEPARATOR + "valgrind"
-
+		
 		# Initialize the executor with the correct application, delivery type, and timeout
 		def initialize(app, deliveryMethod, timeout, log)
 			@application = app
 			@timeout = timeout
 			@exeLambdas = Hash.new()
-
-			# 
-			# Create lambdas to eliminate multiple if checks
+	
 			#
-			
+			# Hash For supported executors
 			#
-			# Create the function symbol
+			@supportedTracers = 
+				{
+				"run"  => "",
+				"valgrind" => ENV['GEM_HOME'] + File::PATH_SEPARATOR + "mamba-refactor-0.0.0" +  File::PATH_SEPARATOR + "ext" +  File::PATH_SEPARATOR + "valgrind" +  File::PATH_SEPARATOR + "inst" +  File::PATH_SEPARATOR + "bin" +  File::PATH_SEPARATOR + "valgrind"
+			}
+		
+			#
+			# Create the function symbol to kill an application under test
 			#
 			if(@timeout < 1) then
 				appMonitor = "cpu_scale"
@@ -25,18 +29,16 @@ module Mamba
 				appMonitor = "cpu_sleep"
 			end
 
+			#
+			# 
+			# Create the execution lambdas 
+			#
 			case deliveryMethod 
 			when /^appscript$/ 
-				#
-				# Create the run 
-				create_appscript_run_lambda(appMonitor) 
-				create_appscript_valgrind_lambda()
+				create_appscript_lambdas(appMonitor) 
 			when /^cli#/
 				deliveryMethod.gsub!(/^cli#/, '')
-				create_cli_run_lambda(appMonitor, deliveryMethod) 
-				#@runLambda = create_cli_run_lambda(deliveryMethod) 
-#				@runLambda = create_appscript_run_lambda($1)
-#				@valgrindLambda = create_cli_valgrind_lambda(deliveryMethod) 
+				create_cli_lambdas(appMonitor, deliveryMethod) 
 			else
 				log.fatal("Unknown executor type: #{deliveryMethod}")
 				exit(1) # fix this to throw some kind of error
@@ -70,46 +72,34 @@ module Mamba
 		end
 
 		# Creates the lambda for the run function based on mamba's configuration
-		def create_appscript_run_lambda(appMonitor)
-			@exeLambdas["run"] = lambda do |log, newTestCase|
-				@runningPid = Process.spawn(@application, [:out, :err]=>["logs/application.log", File::CREAT|File::WRONLY|File::APPEND]) 
-				FileUtils.touch("app.pid." + @runningPid.to_s())
-				Process.spawn("opener.rb #{@runningPid} #{Dir.pwd() + File::SEPARATOR + newTestCase}")
-				runtime = self.send(appMonitor.to_sym)
-				application_cleanup(@runningPid)
-				return [@runningPid, runtime]
+		def create_appscript_lambdas(appMonitor)
+			#
+			# Loop through the different tracer methods and create lambda
+			#
+			@supportedTracers.each_key do |tracerKey|
+				@exeLambdas[tracerKey] = lambda do |log, newTestCase|
+					@runningPid = Process.spawn("#{@supportedTracers[tracerKey]} " + @application, [:out, :err]=>["logs/application.log", File::CREAT|File::WRONLY|File::APPEND]) 
+					FileUtils.touch("app.pid." + @runningPid.to_s())
+					Process.spawn("opener.rb #{@runningPid} #{Dir.pwd() + File::SEPARATOR + newTestCase}")
+					runtime = self.send(appMonitor.to_sym)
+					application_cleanup(@runningPid)
+					return [@runningPid, runtime]
+				end
 			end
 		end
 
-		def create_appscript_valgrind_lambda()
-			appscriptValgrindLambda = nil
-
-			if(@timeout < 1) then
-				appscriptValgrindLambda = lambda do
-#					pid = Process.spawn(@application) # [:out, :err]=>["logs/application.log", "w"]
-#					runtime = cpu_scale(pid)
-#					application_cleanup(pid)
-#					return[pid, runtime]
+		def create_cli_lambdas(appMonitor, deliveryMethod)
+			#
+			# Loop through the different tracer methods and create lambda
+			#
+			@supportedTracers.each_key do |tracerKey|
+				@exeLambdas[tracerKey] = lambda do |log, newTestCase|
+					@runningPid = Process.spawn("#{@supportedTracers[tracerKey]} " + @application + " #{deliveryMethod}" + " #{newTestCase}", [:out, :err] => ["logs/application.log", File::CREAT|File::WRONLY|File::APPEND]) 
+					FileUtils.touch("app.pid." + @runningPid.to_s())
+					runtime = self.send(appMonitor.to_sym)
+					application_cleanup(@runningPid)
+					return [@runningPid, runtime]
 				end
-			else
-				appscriptValgrindLambda = lambda do
-#					pid = Process.spawn(@application) # [:out, :err]=>["logs/application.log", "w"]
-#					runtime = cpu_scale(pid)
-#					application_cleanup(pid)
-#					return[pid, runtime]
-				end
-			end
-
-			return(appscriptValgrindLambda)
-		end
-
-		def create_cli_run_lambda(appMonitor, deliveryMethod)
-			@exeLambdas["run"] = lambda do |log, newTestCase|
-				@runningPid = Process.spawn(@application + " #{deliveryMethod}" + " #{newTestCase}", [:out, :err] => ["logs/application.log", File::CREAT|File::WRONLY|File::APPEND]) 
-				FileUtils.touch("app.pid." + @runningPid.to_s())
-				runtime = self.send(appMonitor.to_sym)
-				application_cleanup(@runningPid)
-				return [@runningPid, runtime]
 			end
 		end
 
