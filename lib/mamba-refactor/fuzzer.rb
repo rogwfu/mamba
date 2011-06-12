@@ -3,6 +3,7 @@
 #
 require 'mamba-refactor/reporter'
 require 'mamba-refactor/executor'
+require 'mamba-refactor/storage'
 require 'log4r'
 
 # @author Roger Seagle, Jr. 
@@ -17,6 +18,16 @@ module Mamba
 			@executor = Executor.new(mambaConfig[:app], mambaConfig[:executor], mambaConfig[:timeout], @logger)
 			@reporter = Reporter.new()
 			@reporter.watcher.start()
+
+			#
+			# Check for distributed fuzzer setup
+			#
+			if(self.class.to_s.start_with?("Mamba::Distributed")) then
+				@logger.info("Class is #{self.class}")
+				@storage = Storage.new(mambaConfig[:server], mambaConfig[:port], mambaConfig[:uuid])
+				@organizer = mambaConfig[:organizer]
+				@logger.info("Storage is: #{@storage.inspect()}")
+			end
 		end
 
 
@@ -62,5 +73,6 @@ module Mamba
 			end
             @logger.info("=================================================")
 		end
+
 	end
 end
