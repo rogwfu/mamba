@@ -50,11 +50,18 @@ class Fuzz < Thor
 		say "Mamba Fuzzing Framework Stopping....", :blue
 		pidFiles = Daemons::PidFile.find_files(FileUtils.pwd(), "MambaFuzzingFramework")
 		if(pidFiles.length == 1) then
-			Process.kill('SIGINT', File.open(pidFiles[0]).readline().chomp().to_i())
 			#
-			# Cleanup support applications
-			#
-			cleanup_running_environment()
+			# Kill the running framework/catch no such process (ERSCH)
+			begin
+				Process.kill('SIGINT', File.open(pidFiles[0]).readline().chomp().to_i())
+			rescue 
+				say "Error: Mamba Fuzzing Framework not running!", :red
+			ensure
+				#
+				# Cleanup support applications
+				#
+				cleanup_running_environment()
+			end
 		else
 			say "Error: Mamba Fuzzing Framework not running!", :red
 		end
@@ -244,8 +251,13 @@ class Fuzz < Thor
 		def cleanup_running_environment()
 			pidFilesApps = Dir.glob("app.pid.*")
 			pidFilesApps.each do |pid|
-				Process.kill('INT', pid.split(".")[-1].to_i())
-				FileUtils.rm_f(pid)
+				begin
+					Process.kill('INT', pid.split(".")[-1].to_i())
+				rescue 
+					say "Warning: Application with pid (#{pid.split(".")[-1]}) not running!", :yellow
+				ensure
+					FileUtils.rm_f(pid)
+				end
 			end
 		end
 	end

@@ -50,10 +50,10 @@ module Mamba
 			begin
 				Process.kill("INT", pid)
 				Process.wait(pid)
-			rescue Errno::ERSCH
-
+			rescue 
+			ensure
+				FileUtils.rm_f("app.pid." + pid.to_s())
 			end
-			FileUtils.rm_f("app.pid." + pid.to_s())
 		end
 
 		# Creates the lambda for the run function based on mamba's configuration
