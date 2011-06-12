@@ -10,19 +10,32 @@ module Mamba
 		def initialize(app, deliveryMethod, timeout, log)
 			@application = app
 			@timeout = timeout
+			@exeLambdas = Hash.new()
 
 			# 
 			# Create lambdas to eliminate multiple if checks
 			#
+			
+			#
+			# Create the function symbol
+			#
+			if(@timeout < 1) then
+				appMonitor = "cpu_scale"
+			else
+				appMonitor = "cpu_sleep"
+			end
+
 			case deliveryMethod 
 			when /^appscript$/ 
 				#
 				# Create the run 
-				@runLambda = create_appscript_run_lambda() 
-				@valgrindLambda = create_appscript_valgrind_lambda()
-			when /^cli#.*/
+				create_appscript_run_lambda(appMonitor) 
+				create_appscript_valgrind_lambda()
+			when /^cli#/
 				deliveryMethod.gsub!(/^cli#/, '')
-				@runLambda = create_cli_run_lambda(deliveryMethod) 
+				create_cli_run_lambda(appMonitor, deliveryMethod) 
+				#@runLambda = create_cli_run_lambda(deliveryMethod) 
+#				@runLambda = create_appscript_run_lambda($1)
 #				@valgrindLambda = create_cli_valgrind_lambda(deliveryMethod) 
 			else
 				log.fatal("Unknown executor type: #{deliveryMethod}")
@@ -33,12 +46,12 @@ module Mamba
 		# Spawn the application under test feeding it a test case
 		def run(log, testCase)
 			log.info("Running Test Case: #{testCase}")
-			pid, actualRunTime = @runLambda.call(testCase)
+			pid, actualRunTime = @exeLambdas["run"].call(log, testCase)
 		end
 
 		def valrind_trace(log, testCase)
 			log.info("Running Test Case: #{testCase}")
-			pid, actualRunTime = @valgrindLambda.call(testCase)
+			pid, actualRunTime = @exeLambdas["valgrind"].call(testCase)
 		end
 
 		private
@@ -57,27 +70,14 @@ module Mamba
 		end
 
 		# Creates the lambda for the run function based on mamba's configuration
-		def create_appscript_run_lambda()
-			appscriptRunLambda = nil
-
-			if(@timeout < 1) then
-				appscriptRunLambda = lambda do |newTestCase|
-					pid = Process.spawn(@application, [:out, :err]=>["logs/application.log", File::CREAT|File::WRONLY|File::APPEND]) 
-					FileUtils.touch("app.pid." + pid.to_s())
-					Process.spawn("opener.rb #{pid} #{Dir.pwd() + File::SEPARATOR + newTestCase}")
-					runtime = cpu_scale(pid)
-					application_cleanup(pid)
-					return [pid, runtime]
-				end
-			else
-				appscriptRunLambda = lambda do |newTestCase|
-					pid = Process.spawn(@application, [:out, :err]=>["logs/application.log", File::CREAT|File::WRONLY|File::APPEND])
-					FileUtils.touch("app.pid." + pid.to_s())
-					Process.spawn("opener.rb #{pid} #{Dir.pwd() + File::SEPARATOR + newTestCase}")
-					runtime = sleep(@timeout) 
-					application_cleanup(pid)
-					return [pid, runtime]
-				end
+		def create_appscript_run_lambda(appMonitor)
+			@exeLambdas["run"] = lambda do |log, newTestCase|
+				@runningPid = Process.spawn(@application, [:out, :err]=>["logs/application.log", File::CREAT|File::WRONLY|File::APPEND]) 
+				FileUtils.touch("app.pid." + @runningPid.to_s())
+				Process.spawn("opener.rb #{@runningPid} #{Dir.pwd() + File::SEPARATOR + newTestCase}")
+				runtime = self.send(appMonitor.to_sym)
+				application_cleanup(@runningPid)
+				return [@runningPid, runtime]
 			end
 		end
 
@@ -103,32 +103,20 @@ module Mamba
 			return(appscriptValgrindLambda)
 		end
 
-		def create_cli_run_lambda(deliveryMethod)
-			cliRunLambda = nil
-			
-			if(@timeout < 1) then
-				cliRunLambda = lambda do |newTestCase|
-					pid = Process.spawn(@application + " #{deliveryMethod}" + " #{newTestCase}", [:out, :err] => ["logs/application.log", File::CREAT|File::WRONLY|File::APPEND]) 
-					runtime = cpu_scale(pid)
-					application_cleanup(pid)
-					return [pid, runtime]
-				end
-			else
-				cliRunLambda = lambda do |newTestCase|
-					pid = Process.spawn(@application + " #{deliveryMethod}" + " #{newTestCase}", [:out, :err] => ["logs/application.log", File::CREAT|File::WRONLY|File::APPEND]) 
-					runtime = sleep(@timeout) 
-					application_cleanup(pid)
-					return [pid, runtime]
-				end
+		def create_cli_run_lambda(appMonitor, deliveryMethod)
+			@exeLambdas["run"] = lambda do |log, newTestCase|
+				@runningPid = Process.spawn(@application + " #{deliveryMethod}" + " #{newTestCase}", [:out, :err] => ["logs/application.log", File::CREAT|File::WRONLY|File::APPEND]) 
+				FileUtils.touch("app.pid." + @runningPid.to_s())
+				runtime = self.send(appMonitor.to_sym)
+				application_cleanup(@runningPid)
+				return [@runningPid, runtime]
 			end
-
-			return(cliRunLambda)
 		end
 
 		# Monitor CPU to determine lull in processing
 		# @param [String] The process id to monitor
 		# @return [Fixnum] The observed application runtime
-		def cpu_scale(pid)
+		def cpu_scale()
 			cpuUtil = 100.0
 			pollingCheck = 0
 			runtime = 0
@@ -139,7 +127,7 @@ module Mamba
 			while (cpuUtil > Mamba::Executor::UTILIZATION_THRESH and pollingCheck < Mamba::Executor::UPPERBOUND) do
 				sleep(Mamba::Executor::POLLING_TIMEOUT)
 				runtime = runtime + Mamba::Executor::POLLING_TIMEOUT 
-				processInfo = `ps aux #{pid} | tail -1`
+				processInfo = `ps aux #{@runningPid} | tail -1`
 				cpuUtil = processInfo.split(' ')[2].to_f()
 				pollingCheck = pollingCheck + 1
 			end
@@ -148,6 +136,11 @@ module Mamba
 			# Return the amount of time run
 			#
 			return(runtime)
+		end
+
+		# Basically an alias for Kernel.sleep to facilitate Executor class metaprogramming
+		def cpu_sleep()
+			sleep(@timeout)
 		end
 	end
 end
