@@ -54,7 +54,7 @@ module Mamba
 			#
 			# Create the Mamba Configuration File
 			#
-			create_file "#{name}/configs/mamba.yml" do
+			create_file "#{name}/configs/Mamba.yml" do
 				YAML::dump(mambaConfig)
 			end
 
@@ -115,7 +115,7 @@ module Mamba
 				#
 				# Validate algorithms inheritance
 				#
-				if(!Kernel.const_get("Mamba").const_get(type).superclass().to_s().eql?("Mamba::Fuzzer")) then
+				if(!Kernel.const_get("Mamba").const_get(type).ancestors.to_s().include?("Mamba::Fuzzer")) then
 					say "Error: Unsupported fuzzing algorithm (#{type}) - Does not inherit from Mamba::Fuzzer", :red
 					exit(1)
 				end

@@ -18,4 +18,8 @@ group :development do
   gem "log4r", ">=1.1.9"
   gem "directory_watcher", ">=1.4.0"
   gem "rb-appscript", ">=0.6.1"
+  gem "bson_ext", ">=1.3.1"
+  gem "mongo", ">=1.3.1"
+  gem "amqp", ">=0.7.1"
+  gem "eventmachine", ">=0.12.10"
 end

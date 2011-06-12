@@ -4,6 +4,11 @@
 require 'mamba-refactor/fuzzer'
 
 #
-# Algorithms
+# Centralized Algorithms
 #
 require 'mamba-refactor/algorithms/mangle'
+
+#
+# Distributed Algorithms
+#
+require 'mamba-refactor/algorithms/distributed-mangle'

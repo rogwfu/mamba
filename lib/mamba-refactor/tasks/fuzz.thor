@@ -151,7 +151,7 @@ class Fuzz < Thor
 		# Reads the Mamba configuration file from the current environment
 		# @return [Hash] configuration settings
 		def read_config()
-			config = YAML.load_file("configs/mamba.yml")
+			config = YAML.load_file("configs/Mamba.yml")
 			return(config)
 		end
 
@@ -206,7 +206,7 @@ class Fuzz < Thor
 			#
 			# Validate algorithms inheritance
 			#
-			if(!Kernel.const_get("Mamba").const_get(type).superclass().to_s().eql?("Mamba::Fuzzer")) then
+			if(!Kernel.const_get("Mamba").const_get(type).ancestors.to_s().include?("Mamba::Fuzzer")) then
 				say "Error: Unsupported fuzzing algorithm (#{type}) - Does not inherit from Mamba::Fuzzer", :red
 				exit(1)
 			end
@@ -237,7 +237,7 @@ class Fuzz < Thor
 
 			if(config[:organizer] or swapped) then
 				config[:organizer] = !config[:organizer]	
-				mambaConfigFile = File.new("configs/mamba.yml", "w+")
+				mambaConfigFile = File.new("configs/Mamba.yml", "w+")
 				mambaConfigFile.write(YAML::dump(config))
 				mambaConfigFile.close()
 				return(true)
