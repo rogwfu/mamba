@@ -25,6 +25,7 @@ module Mamba
 				@runLambda = create_cli_run_lambda(deliveryMethod) 
 #				@valgrindLambda = create_cli_valgrind_lambda(deliveryMethod) 
 			else
+				log.fatal("Unknown executor type: #{deliveryMethod}")
 				exit(1) # fix this to throw some kind of error
 			end
 		end
@@ -107,14 +108,14 @@ module Mamba
 			
 			if(@timeout < 1) then
 				cliRunLambda = lambda do |newTestCase|
-					pid = Process.spawn(@application + " #{deliveryMethod}" + " #{newTestCase}", [:out, :err] => ["logs/application.log", File::CREAT|File::WRONLY|File::APPEND]) # [:out, :err]=>["logs/application.log", "w"]
+					pid = Process.spawn(@application + " #{deliveryMethod}" + " #{newTestCase}", [:out, :err] => ["logs/application.log", File::CREAT|File::WRONLY|File::APPEND]) 
 					runtime = cpu_scale(pid)
 					application_cleanup(pid)
 					return [pid, runtime]
 				end
 			else
 				cliRunLambda = lambda do |newTestCase|
-					pid = Process.spawn(@application + " #{deliveryMethod}" + " #{newTestCase}", [:out, :err] => ["logs/application.log", File::CREAT|File::WRONLY|File::APPEND]) # [:out, :err]=>["logs/application.log", "w"]
+					pid = Process.spawn(@application + " #{deliveryMethod}" + " #{newTestCase}", [:out, :err] => ["logs/application.log", File::CREAT|File::WRONLY|File::APPEND]) 
 					runtime = sleep(@timeout) 
 					application_cleanup(pid)
 					return [pid, runtime]
