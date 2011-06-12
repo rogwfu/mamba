@@ -1,3 +1,8 @@
+#
+# Include Base Functionality Classes
+#
+require 'mamba-refactor/reporter'
+require 'mamba-refactor/executor'
 require 'log4r'
 
 # @author Roger Seagle, Jr. 
