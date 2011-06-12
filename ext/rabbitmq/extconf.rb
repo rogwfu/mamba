@@ -25,11 +25,13 @@ else
 end
 
 #
-# Download, Extract, and Make rabbitmq 
+# Download, Extract, and Make rabbitmq (if needed)
 #
-system("#{tools["curl"]} -O #{rabbitmqURL}") 
-system("#{tools["tar"]} xvzf #{rabbitmqURL.split('/')[-1]}")
-system("cd #{rabbitmqURL.split('/')[-1].gsub(/\.tar\.gz$/, "")} ; make ")
+if(!find_executable("rabbitmq-server")) then
+	system("#{tools["curl"]} -O #{rabbitmqURL}") 
+	system("#{tools["tar"]} xvzf #{rabbitmqURL.split('/')[-1]}")
+	system("cd #{rabbitmqURL.split('/')[-1].gsub(/\.tar\.gz$/, "")} ; make ")
+end
 
 #
 # Appease packaging library

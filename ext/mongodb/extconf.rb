@@ -25,10 +25,12 @@ else
 end
 
 #
-# Download and Extract mongod
+# Download and Extract mongod (if necessary)
 #
-system("#{tools["curl"]} -O #{mongodURL}") 
-system("#{tools["tar"]} xvzf #{mongodURL.split('/')[-1]}")
+if(!find_executable("mongod")) then
+	system("#{tools["curl"]} -O #{mongodURL}") 
+	system("#{tools["tar"]} xvzf #{mongodURL.split('/')[-1]}")
+end
 
 #
 # Appease packaging library

@@ -2,6 +2,7 @@
 # Functionality
 #
 require 'mamba-refactor/fuzzer'
+require 'mamba-refactor/storage'
 
 #
 # Centralized Algorithms
