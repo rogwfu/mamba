@@ -14,7 +14,6 @@ module Mamba
 		# @param [Hash] Contains global configuration of the mamba fuzzing framework
 		def initialize(mambaConfig)
 			@logger = init_logger("Fuzzer")
-			@logger.info("Executor is: #{mambaConfig[:executor]}")
 			@executor = Executor.new(mambaConfig[:app], mambaConfig[:executor], mambaConfig[:timeout], @logger)
 			@reporter = Reporter.new()
 			@reporter.watcher.start()
@@ -23,26 +22,66 @@ module Mamba
 			# Check for distributed fuzzer setup
 			#
 			if(self.class.to_s.start_with?("Mamba::Distributed")) then
-				initialize_distributed(mambaConfig)
+				initialize_storage(mambaConfig)
 			end
 		end
 
-		def initialize_distributed(mambaConfig)
-			@logger.info("Class is #{self.class}")
+		# Create a storage handler for mongodb filesystem
+		def initialize_storage(mambaConfig)
 			@storage = Storage.new(mambaConfig[:server], mambaConfig[:port], mambaConfig[:uuid])
 			@organizer = mambaConfig[:organizer]
-			@logger.info("Storage is: #{@storage.inspect()}")
 		end
 
+		# Create queues for messaging between nodes and coordinating fuzzing efforts
 		def initialize_queues()
 			#
 			# Create new channel
 			#
-		#	channel  = AMQP::Channel.new()
-	#		exchange = channel.topic("uuid", :auto_delete => true)
+			@channel  = AMQP::Channel.new()
+			@exchange = @channel.topic("uuid", :auto_delete => true)
+			@channel.prefetch(0)
 
+			#
+			# Setup Direct Queues
+			#
+			["testcases"].each do |queueName|
+				@channel.queue("testcases").bind(@channel.direct(queueName)).subscribe(:ack => true, &method(queueName.to_sym()))
+			end
+
+			#
+			# Setup Topic Queues
+			#
+			["commands", "crashes", "remoteLogging"].each do |queueName|
+				@channel.queue(queueName).bind(@exchange, :routing_key => queueName).subscribe(&method(queueName.to_sym))
+			end
 		end
 
+		# Handler for remote commands sent via rabbitmq (used for shutdown)
+		# @param [AMQP::Protocol::Header] Header of an amqp message
+		# @param [String] Payload of an amqp message (the command)
+		def commands(header, payload)
+			@logger.info("Received remote command: #{payload}")
+			case payload
+			when /^shutdown$/
+				EventMachine.stop_event_loop()
+			else
+				@logger.warn("Unrecognized remote command: #{payload}")
+			end
+		end
+
+		# Handler for remote notification of crashes sent via rabbitmq (used for shutdown)
+		# @param [AMQP::Protocol::Header] Header of an amqp message
+		# @param [String] Payload of an amqp message (the test case number causing a crash)
+		def crashes(header, payload)
+			@logger.info("Got information about crashes: #{payload}, routing key is #{header.routing_key}")
+		end
+
+		# Handler for any remote logging events sent via rabbitmq (used for shutdown)
+		# @param [AMQP::Protocol::Header] Header of an amqp message
+		# @param [String] Payload of an amqp message (the message to log)
+		def remoteLogging(header, payload)
+			@logger.info("Remote Message: #{payload}")
+		end
 
 		# Report the status of the fuzzer run (Start Time, Elapsed Time, Number of Test Cases, Number of Crashes, and Crashes themselves)
 		def report()
