@@ -23,11 +23,24 @@ module Mamba
 			# Check for distributed fuzzer setup
 			#
 			if(self.class.to_s.start_with?("Mamba::Distributed")) then
-				@logger.info("Class is #{self.class}")
-				@storage = Storage.new(mambaConfig[:server], mambaConfig[:port], mambaConfig[:uuid])
-				@organizer = mambaConfig[:organizer]
-				@logger.info("Storage is: #{@storage.inspect()}")
+				initialize_distributed(mambaConfig)
 			end
+		end
+
+		def initialize_distributed(mambaConfig)
+			@logger.info("Class is #{self.class}")
+			@storage = Storage.new(mambaConfig[:server], mambaConfig[:port], mambaConfig[:uuid])
+			@organizer = mambaConfig[:organizer]
+			@logger.info("Storage is: #{@storage.inspect()}")
+		end
+
+		def initialize_queues()
+			#
+			# Create new channel
+			#
+		#	channel  = AMQP::Channel.new()
+	#		exchange = channel.topic("uuid", :auto_delete => true)
+
 		end
 
 
@@ -73,6 +86,5 @@ module Mamba
 			end
             @logger.info("=================================================")
 		end
-
 	end
 end
