@@ -15,10 +15,10 @@ module Mamba
 				#
 				# Testing sending messages
 				#
-				@channel.queue("testcases").publish("New Test Case")
-				@exchange.publish("New Logging", :routing_key => "remoteLogging")
-				@exchange.publish("New Crash", :routing_key => "crashes")
-#				@exchange.publish("shutdown", :routing_key => "commands")
+				@channel.queue("#{@uuid}.testcases").publish("New Test Case")
+				@exchange.publish("New Logging", :routing_key => "#{@uuid}.remoteLogging")
+				@exchange.publish("New Crash", :routing_key => "#{@uuid}.crashes")
+				@exchange.publish("shutdown", :routing_key => "#{@uuid}.commands")
 			end
 		end
 

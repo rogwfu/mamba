@@ -17,6 +17,7 @@ module Mamba
 			@executor = Executor.new(mambaConfig[:app], mambaConfig[:executor], mambaConfig[:timeout], @logger)
 			@reporter = Reporter.new()
 			@reporter.watcher.start()
+			@uuid = mambaConfig[:uuid]
 
 			#
 			# Check for distributed fuzzer setup
@@ -38,21 +39,21 @@ module Mamba
 			# Create new channel
 			#
 			@channel  = AMQP::Channel.new()
-			@exchange = @channel.topic("uuid", :auto_delete => true)
+			@exchange = @channel.topic(@uuid, :auto_delete => true)
 			@channel.prefetch(0)
 
 			#
 			# Setup Direct Queues
 			#
 			["testcases"].each do |queueName|
-				@channel.queue("testcases").bind(@channel.direct(queueName)).subscribe(:ack => true, &method(queueName.to_sym()))
+				@channel.queue("#{@uuid}.#{queueName}").bind(@channel.direct("#{@uuid}.#{queueName}")).subscribe(:ack => true, &method(queueName.to_sym()))
 			end
 
 			#
 			# Setup Topic Queues
 			#
 			["commands", "crashes", "remoteLogging"].each do |queueName|
-				@channel.queue(queueName).bind(@exchange, :routing_key => queueName).subscribe(&method(queueName.to_sym))
+				@channel.queue("#{@uuid}.#{queueName}").bind(@exchange, :routing_key => "#{@uuid}.#{queueName}").subscribe(&method(queueName.to_sym))
 			end
 		end
 
