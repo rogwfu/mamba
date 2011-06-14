@@ -89,7 +89,7 @@ class Fuzz < Thor
 		# Create the Package File
 		#
 		Zip::ZipFile.open(packageFilename, Zip::ZipFile::CREATE) do |zipfile|
-			entries = Dir.glob("configs/*.yml") + Dir.glob("disassemblies/*") + Dir.glob("models/*")
+			entries = Dir.glob("configs/*.yml") + Dir.glob("disassemblies/*") + Dir.glob("models/*") + Dir.glob("tests/*")
 			entries.each do |entry|
 				zipfile.add(entry, entry)
 			end
@@ -128,7 +128,7 @@ class Fuzz < Thor
 				#
 				# Sanity check the packaged filename (Whitelist)
 				#
-				if (entry.name =~ /^configs\/\w+\.yml/ or entry.name =~ /^disassemblies\/w+.fz/ or entry.name =~ /models\/w+.ml/) then
+				if (entry.name =~ /^configs\/\w+\.yml/ or entry.name =~ /^disassemblies\/w+.fz/ or entry.name =~ /models\/w+.ml/ or entry.name =~ /^tests\/w+\.w+/) then
 					#
 					# Packaged file superseeds all other files
 					#

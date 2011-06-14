@@ -2,7 +2,7 @@ require 'mongo'
 
 module Mamba
 	class Storage
-		attr_accessor :storageHandler
+		attr_accessor :dbHandle
 
 		# @param [String]
 		# @port  [String]
@@ -12,7 +12,7 @@ module Mamba
         	# Setup the Mongodb Connections
         	#
         	@database = Mongo::Connection.new(server, port).db(uuid)
-        	@storageHandler = Mongo::Grid.new(@database)
+        	@dbHandle = Mongo::Grid.new(@database)
 		end
 	end
 end

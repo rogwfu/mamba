@@ -40,21 +40,22 @@ module Mamba
 			#
 			@channel  = AMQP::Channel.new()
 			@exchange = @channel.topic(@uuid, :auto_delete => true)
-			@channel.prefetch(0)
+			@channel.prefetch(1)
 
 			#
 			# Setup Direct Queues
 			#
 			["testcases"].each do |queueName|
-				@channel.queue("#{@uuid}.#{queueName}").bind(@channel.direct("#{@uuid}.#{queueName}")).subscribe(:ack => true, &method(queueName.to_sym()))
+				#@channel.queue("#{@uuid}.#{queueName}").bind(@channel.direct("#{@uuid}.#{queueName}")).subscribe(:ack => true, &method(queueName.to_sym()))
+				@channel.queue("#{@uuid}.#{queueName}").subscribe(:ack => true, &method(queueName.to_sym()))
 			end
 
 			#
 			# Setup Topic Queues
 			#
-			["commands", "crashes", "remoteLogging"].each do |queueName|
-				@channel.queue("#{@uuid}.#{queueName}").bind(@exchange, :routing_key => "#{@uuid}.#{queueName}").subscribe(&method(queueName.to_sym))
-			end
+			#["commands", "crashes", "remoteLogging"].each do |queueName|
+		    #	@channel.queue("#{@uuid}.#{queueName}").bind(@exchange, :routing_key => "#{@uuid}.#{queueName}").subscribe(&method(queueName.to_sym))
+			#end
 		end
 
 		# Handler for remote commands sent via rabbitmq (used for shutdown)
