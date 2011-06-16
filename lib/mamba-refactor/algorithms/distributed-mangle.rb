@@ -28,7 +28,6 @@ module Mamba
 
 			seed_test_cases()
 
-
 			# Be Kind, Cleanup
 			#@baseTestCaseFileDes.close()
 				#

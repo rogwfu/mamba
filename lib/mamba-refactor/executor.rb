@@ -91,8 +91,18 @@ module Mamba
 				@exeLambdas[tracerKey] = lambda do |log, newTestCase|
 					@runningPid = Process.spawn("#{@supportedTracers[tracerKey]} " + @application, [:out, :err]=>["logs/application.log", File::CREAT|File::WRONLY|File::APPEND]) 
 					FileUtils.touch("app.pid." + @runningPid.to_s())
-					Process.spawn("opener.rb #{@runningPid} #{Dir.pwd() + File::SEPARATOR + newTestCase}")
+					appscriptPid = Process.spawn("opener.rb #{@runningPid} #{Dir.pwd() + File::SEPARATOR + newTestCase}")
 					runtime = self.send(appMonitor.to_sym)
+
+					#
+					# Try to kill the applescript process to eliminate zombies
+					#
+					begin
+						Process.kill("INT", appscriptPid)
+						Process.wait(appscriptPid)
+					rescue
+					end
+
 					application_cleanup()
 					return [@runningPid, runtime]
 				end
