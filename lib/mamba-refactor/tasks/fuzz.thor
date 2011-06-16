@@ -128,7 +128,7 @@ class Fuzz < Thor
 				#
 				# Sanity check the packaged filename (Whitelist)
 				#
-				if (entry.name =~ /^configs\/\w+\.yml/ or entry.name =~ /^disassemblies\/w+.fz/ or entry.name =~ /models\/w+.ml/ or entry.name =~ /^tests\/w+\.w+/) then
+				if (entry.name =~ /^configs\/\w+\.yml/ or entry.name =~ /^disassemblies\/\w+\.fz/ or entry.name =~ /models\/\w+\.ml/ or entry.name =~ /^tests\/\w+\.\w+/) then
 					#
 					# Packaged file superseeds all other files
 					#
