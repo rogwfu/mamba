@@ -5,6 +5,7 @@ require 'mamba-refactor/reporter'
 require 'mamba-refactor/executor'
 require 'mamba-refactor/storage'
 require 'log4r'
+require 'uuidtools'
 
 # @author Roger Seagle, Jr. 
 module Mamba
@@ -34,20 +35,33 @@ module Mamba
 		end
 
 		# Create queues for messaging between nodes and coordinating fuzzing efforts
-		def initialize_queues()
+		def initialize_queues(connection)
 			#
 			# Create new channel
 			#
-			@channel  = AMQP::Channel.new()
-			@exchange = @channel.topic(@uuid, :auto_delete => true)
+			@channel  = AMQP::Channel.new(connection)
+			@channel2  = AMQP::Channel.new(connection)
+
+			#
+			# Create a new fanout channel
+			#
+			@fanout_exchange = @channel2.fanout('logging')
+			
+			@queue    = @channel.queue("#{@uuid}.testcases", :auto_delete => true)
+			@queue_logging = @channel2.queue(UUIDTools::UUID.timestamp_create.to_s(), :auto_delete => true)
+			@direct_exchange = @channel.direct("")
+
 			@channel.prefetch(1)
 
 			#
 			# Setup Direct Queues
 			#
 			["testcases"].each do |queueName|
-				#@channel.queue("#{@uuid}.#{queueName}").bind(@channel.direct("#{@uuid}.#{queueName}")).subscribe(:ack => true, &method(queueName.to_sym()))
-				@channel.queue("#{@uuid}.#{queueName}").subscribe(:ack => true, &method(queueName.to_sym()))
+				@queue.bind(@direct_exchange).subscribe(:ack => true, &method(queueName.to_sym()))
+			end
+
+			["remoteLogging", "", ""].each do |channelName|
+				@queue_logging.bind(@fanout_exchange).subscribe(&method(channelName.to_sym()))
 			end
 
 			#

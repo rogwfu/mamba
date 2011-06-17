@@ -10,7 +10,7 @@ module Mamba
 			# Start Queueing and callback (EventMachine loop running here)
 			#
 			AMQP.start(:host => "fuzz.io") do |connection|
-				initialize_queues()
+				initialize_queues(connection)
 			#
 			# Check about base test case
 			#
@@ -27,16 +27,16 @@ module Mamba
 			@sectionData = read_section() 
 
 			seed_test_cases()
+			
+			#
+			# Testing it out
+			#
+#			if(@organizer) then
+#				@channel_cmds.publish("Fanout Message")
+#			end
 
 			# Be Kind, Cleanup
-			#@baseTestCaseFileDes.close()
-				#
-				# Testing sending messages
-				#
-			#	@channel.queue("#{@uuid}.testcases").publish("New Test Case")
-			#	@exchange.publish("New Logging", :routing_key => "#{@uuid}.remoteLogging")
-			#	@exchange.publish("New Crash", :routing_key => "#{@uuid}.crashes")
-			#	@exchange.publish("shutdown", :routing_key => "#{@uuid}.commands")
+#			@baseTestCaseFileDes.close()
 			end
 		end
 
@@ -44,7 +44,9 @@ module Mamba
 			if(@organizer) then
 				@mangleConfig['Number of Testcases'].times do |testCaseNumber|
 				#	@channel.queue("#{@uuid}.testcases").publish(testCaseNumber)
-					AMQP::Exchange.default.publish(testCaseNumber, :routing_key => "#{@uuid}.testcases")
+					@logger.info("Seeding test case: #{testCaseNumber}")
+					#@direct_exchange.publish(testCaseNumber.to_s(), :routing_key => @queue.name, :app_id => "Hello world")
+					@direct_exchange.publish(testCaseNumber.to_s(), :routing_key => @queue.name)
 				end
 			end
 		end
@@ -59,6 +61,13 @@ module Mamba
 			# Store the file in the "cloud" :)
 			#
 			@storage.dbHandle.put(File.open(newTestCaseFilename), :_id => "0:#{testCaseNumber}", :filename => newTestCaseFilename)
+
+			#
+			# Testing the logging
+			#
+			if(testCaseNumber.to_i() > 30) then
+				@fanout_exchange.publish("Log from testcase number: #{testCaseNumber}")
+			end
 
 			# Acknowledge the test case is done
 			header.ack()	
