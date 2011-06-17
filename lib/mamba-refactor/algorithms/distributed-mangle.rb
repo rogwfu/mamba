@@ -65,8 +65,9 @@ module Mamba
 			#
 			# Testing the logging
 			#
-			if(testCaseNumber.to_i() > 30) then
-				@fanout_exchange.publish("Log from testcase number: #{testCaseNumber}")
+			if(testCaseNumber.to_i() > 10) then
+				@topic_exchange.publish("Log from testcase number: #{testCaseNumber}", :key => "remoteLogging")
+				@topic_exchange.publish("Crash number: #{testCaseNumber}", :key => "crashes")
 			end
 
 			# Acknowledge the test case is done

@@ -45,10 +45,10 @@ module Mamba
 			#
 			# Create a new fanout channel
 			#
-			@fanout_exchange = @channel2.fanout('logging')
+			@topic_exchange = @channel2.topic('remote')
 			
 			@queue    = @channel.queue("#{@uuid}.testcases", :auto_delete => true)
-			@queue_logging = @channel2.queue(UUIDTools::UUID.timestamp_create.to_s(), :auto_delete => true)
+#			@queue_logging = @channel2.queue(UUIDTools::UUID.timestamp_create.to_s(), :auto_delete => true)
 			@direct_exchange = @channel.direct("")
 
 			@channel.prefetch(1)
@@ -60,8 +60,10 @@ module Mamba
 				@queue.bind(@direct_exchange).subscribe(:ack => true, &method(queueName.to_sym()))
 			end
 
-			["remoteLogging", "", ""].each do |channelName|
-				@queue_logging.bind(@fanout_exchange).subscribe(&method(channelName.to_sym()))
+			@queueHash = Hash.new()
+			["remoteLogging", "crashes"].each do |channelName|
+				@queueHash[channelName] = @channel2.queue(UUIDTools::UUID.timestamp_create.to_s(), :auto_delete => true)
+				@queueHash[channelName].bind(@topic_exchange, :key => channelName).subscribe(&method(channelName.to_sym()))
 			end
 
 			#
