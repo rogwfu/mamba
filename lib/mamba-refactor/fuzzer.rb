@@ -31,6 +31,7 @@ module Mamba
 		end
 
 		# Create a storage handler for mongodb filesystem
+		# @param [Hash] Contains global configuration of the mamba fuzzing framework
 		def initialize_storage(mambaConfig)
 			@storage = Storage.new(mambaConfig[:server], mambaConfig[:port], mambaConfig[:uuid])
 			@organizer = mambaConfig[:organizer]
