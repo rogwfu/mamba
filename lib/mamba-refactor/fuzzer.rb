@@ -16,16 +16,18 @@ module Mamba
 		def initialize(mambaConfig)
 			@logger = init_logger("Fuzzer")
 			@executor = Executor.new(mambaConfig[:app], mambaConfig[:executor], mambaConfig[:timeout], @logger)
-			@reporter = Reporter.new()
-			@reporter.watcher.start()
 			@uuid = mambaConfig[:uuid]
 
 			#
 			# Check for distributed fuzzer setup
 			#
 			if(self.class.to_s.start_with?("Mamba::Distributed")) then
+				@reporter = Reporter.new(true)
 				initialize_storage(mambaConfig)
+			else
+				@reporter = Reporter.new()
 			end
+			@reporter.watcher.start()
 		end
 
 		# Create a storage handler for mongodb filesystem
@@ -66,6 +68,19 @@ module Mamba
 				@queueHash[channelName] = @channel2.queue(UUIDTools::UUID.timestamp_create.to_s() + ".#{channelName}", :auto_delete => true)
 				@queueHash[channelName].bind(@topic_exchange, :key => channelName).subscribe(&method(channelName.to_sym()))
 			end
+
+			#
+			# Setup Distributed Crash Notification
+			#
+			@reporter.topic_exchange = @topic_exchange
+		end
+		
+		# Pass through to the reporter, need to fix this
+		# @param [AMQP::Protocol::Header] Header of an amqp message
+		# @param [String] Payload of an amqp message (Crash file information)
+		def crashes(header, payload)
+			@logger.info("Got notification of a crash: #{payload}")
+			@reporter.remote_notification(header, payload)
 		end
 
 		# Handler for remote commands sent via rabbitmq (used for shutdown)
@@ -78,14 +93,6 @@ module Mamba
 			else
 				@logger.warn("Unrecognized remote command: #{payload}")
 			end
-		end
-
-		# Handler for remote notification of crashes sent via rabbitmq (used for shutdown)
-		# @param [AMQP::Protocol::Header] Header of an amqp message
-		# @param [String] Payload of an amqp message (the test case number causing a crash)
-		def crashes(header, payload)
-			@logger.info("Got information about crashes: #{payload}, routing key is #{header.routing_key}")
-
 		end
 
 		# Handler for any remote logging events sent via rabbitmq (used for shutdown)

@@ -6,36 +6,81 @@ module Mamba
 		attr_accessor    :numCasesRun
 		attr_accessor    :currentTestCase
 		attr_accessor    :watcher
+		attr_accessor	 :topic_exchange
 
 		# Initialize Reporter variables and create directory watcher instance
-		def initialize()
+		# @param [Boolean] Signifies if the fuzzer using this reporter is distributed (Default: False)
+		def initialize(distributed=false)
 			@numCasesRun = 0
 			@numCrashes = 0
 			@currentTestCase = 0
 			@startTime = Time.now()
-			@crashes =  Array.new()
+			@crashes =  Hash.new()
 			@watcher = DirectoryWatcher.new(os_crash_dir(), :pre_load => true)
 			@watcher.interval = 2.0
+
+			#
+			# Check for distributed notification
+			#
+			if(distributed) then
+				detectionFunction = "add_detected_crash_remote"
+			else
+				detectionFunction = "add_detected_crash"
+			end
+
+			#
+			# Set the watching function
+			#
 			@watcher.add_observer do |*args|
 				args.each do |event|
 					#
 					# Check for an added file
 					#
 					if(event[:type] == :added) then
-						@numCrashes = @numCrashes + 1
-						crash = Hash.new()
-						crash['CrashReport'] = event[:path]
-						crash['ProbTestCase'] = @currentTestCase
-						crash['CrashTime'] = Time.now()
-
-						#
-						# Add it to the global crashes
-						#
-						@crashes << crash
+						self.send(detectionFunction, event)
 					end
 				end
 			end
+
 			return(self)
+		end
+
+		# Adds a newly detected crash to the metrics
+		# @param [Event] Information about a file system event
+		def add_detected_crash(event)
+			crash = Hash.new()
+			crash['CrashReport'] = event[:path]
+			crash['ProbTestCase'] = @currentTestCase
+			crash['CrashTime'] = Time.now().strftime("%B %d, %Y - %I:%M:%S %p")
+
+			#
+			# Add it to the global crashes
+			#
+			@crashes[@currentTestCase] = crash
+		end
+
+		# Notify cluster of a detected crash 
+		# @param [Event] Information about a file system event
+		def add_detected_crash_remote(event)
+			@topic_exchange.publish("#{event[:path]}+#{@currentTestCase}+#{Time.now()}", :key => "crashes")
+		end
+
+		# Handle remote notification of crashes from other nodes
+		# @param [AMQP::Protocol::Header] Header of an amqp message
+		# @param [String] Payload of an amqp message (Crash file information)
+		def remote_notification(header, crashInfo)
+			crashInfoArr = crashInfo.split("+")
+			crash = Hash.new()
+			crash['CrashReport'] = crashInfoArr[0] 
+			crash['ProbTestCase'] = crashInfoArr[1] 
+			crash['CrashTime'] = crashInfoArr[2] 
+
+			#
+			# Make sure test case not already recorded (helps running multiple instances on the same node)
+			#
+			if(!@crashes.has_key?(crashInfoArr[1])) then
+				@crashes[crashInfoArr[1]] = crash 
+			end
 		end
 
 		# Print information pertaining to run time, test cases run, and crashes
@@ -46,14 +91,14 @@ module Mamba
 			logger.info("Elapsed Runtime:           #{elapsedTime} secs")
 			logger.info("Number of Test Cases Run:  #{@numCasesRun} ")
 			logger.info("Average Test Case Runtime: #{elapsedTime/@numCasesRun}")  
-			logger.info("Number of Crashes Found:   #{@numCrashes}")
+			logger.info("Number of Crashes Found:   #{@crashes.size()}")
 			logger.info("Crashes:                   ")
 
 			#
 			# Format the crash string
 			#
-			@crashes.each do |crash|
-				logger.info(crash['CrashReport'] + " : " + crash['CrashTime'].strftime("%B %d, %Y - %I:%M:%S %p") + " : " + crash['ProbTestCase'].to_s())
+			@crashes.each do |key, crash|
+				logger.info(crash['CrashReport'] + " : " + crash['CrashTime'] + " : " + crash['ProbTestCase'].to_s())
 			end
 		end
 
