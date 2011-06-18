@@ -35,6 +35,7 @@ module Mamba
 		end
 
 		# Create queues for messaging between nodes and coordinating fuzzing efforts
+		# @param [AMQP::Client] Established connection to a rabbitmq server
 		def initialize_queues(connection)
 			#
 			# Create new channel
@@ -45,40 +46,32 @@ module Mamba
 			#
 			# Create a new fanout channel
 			#
-			@topic_exchange = @channel2.topic('remote')
-			
-			@queue    = @channel.queue("#{@uuid}.testcases", :auto_delete => true)
-#			@queue_logging = @channel2.queue(UUIDTools::UUID.timestamp_create.to_s(), :auto_delete => true)
+			@topic_exchange = @channel2.topic("#{@uuid}.topic")
 			@direct_exchange = @channel.direct("")
-
 			@channel.prefetch(1)
 
 			#
 			# Setup Direct Queues
 			#
-			["testcases"].each do |queueName|
-				@queue.bind(@direct_exchange).subscribe(:ack => true, &method(queueName.to_sym()))
-			end
-
 			@queueHash = Hash.new()
-			["remoteLogging", "crashes"].each do |channelName|
-				@queueHash[channelName] = @channel2.queue(UUIDTools::UUID.timestamp_create.to_s(), :auto_delete => true)
-				@queueHash[channelName].bind(@topic_exchange, :key => channelName).subscribe(&method(channelName.to_sym()))
+			["testcases"].each do |queueName|
+				@queue    = @channel.queue("#{@uuid}.testcases", :auto_delete => true)
+				@queue.bind(@direct_exchange).subscribe(:ack => true, &method(queueName.to_sym()))
 			end
 
 			#
 			# Setup Topic Queues
 			#
-			#["commands", "crashes", "remoteLogging"].each do |queueName|
-		    #	@channel.queue("#{@uuid}.#{queueName}").bind(@exchange, :routing_key => "#{@uuid}.#{queueName}").subscribe(&method(queueName.to_sym))
-			#end
+			["commands", "crashes", "remoteLogging", "results"].each do |channelName|
+				@queueHash[channelName] = @channel2.queue(UUIDTools::UUID.timestamp_create.to_s() + ".#{channelName}", :auto_delete => true)
+				@queueHash[channelName].bind(@topic_exchange, :key => channelName).subscribe(&method(channelName.to_sym()))
+			end
 		end
 
 		# Handler for remote commands sent via rabbitmq (used for shutdown)
 		# @param [AMQP::Protocol::Header] Header of an amqp message
 		# @param [String] Payload of an amqp message (the command)
 		def commands(header, payload)
-			@logger.info("Received remote command: #{payload}")
 			case payload
 			when /^shutdown$/
 				EventMachine.stop_event_loop()
@@ -92,13 +85,14 @@ module Mamba
 		# @param [String] Payload of an amqp message (the test case number causing a crash)
 		def crashes(header, payload)
 			@logger.info("Got information about crashes: #{payload}, routing key is #{header.routing_key}")
+
 		end
 
 		# Handler for any remote logging events sent via rabbitmq (used for shutdown)
 		# @param [AMQP::Protocol::Header] Header of an amqp message
 		# @param [String] Payload of an amqp message (the message to log)
 		def remoteLogging(header, payload)
-			@logger.info("Remote Message: #{payload}")
+			@logger.info("Cluster Message: #{payload}")
 		end
 
 		# Report the status of the fuzzer run (Start Time, Elapsed Time, Number of Test Cases, Number of Crashes, and Crashes themselves)
