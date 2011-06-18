@@ -29,12 +29,6 @@ module Mamba
 						crash['CrashTime'] = Time.now()
 
 						#
-						# Consider Files within 20 seconds of crash
-						#
-						lowerBound = crash['CrashTime'] - 10
-						upperBound = crash['CrashTime'] + 10
-
-						#
 						# Add it to the global crashes
 						#
 						@crashes << crash
@@ -47,11 +41,13 @@ module Mamba
 		# Print information pertaining to run time, test cases run, and crashes
 		# @param [Logger] A log4r instance to print logging information on runtime and crashes
 		def print_report(logger)
-			logger.info("Start Time:               #{@startTime.strftime("%B %d, %Y (%A)- %I:%M:%S %p")}")
-			logger.info("Elapsed Runtime:          #{Time.now() - @startTime} secs")
-			logger.info("Number of Test Cases Run: #{@numCasesRun} ")
-			logger.info("Number of Crashes Found:  #{@numCrashes}")
-			logger.info("Crashes:                  ")
+			elapsedTime = Time.now() - @startTime
+			logger.info("Start Time:                #{@startTime.strftime("%B %d, %Y (%A)- %I:%M:%S %p")}")
+			logger.info("Elapsed Runtime:           #{elapsedTime} secs")
+			logger.info("Number of Test Cases Run:  #{@numCasesRun} ")
+			logger.info("Average Test Case Runtime: #{elapsedTime/@numCasesRun}")  
+			logger.info("Number of Crashes Found:   #{@numCrashes}")
+			logger.info("Crashes:                   ")
 
 			#
 			# Format the crash string

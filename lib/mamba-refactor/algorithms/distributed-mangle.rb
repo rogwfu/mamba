@@ -59,7 +59,6 @@ module Mamba
 		# @param [AMQP::Protocol::Header] Header of an amqp message
 		# @param [String] Payload of an amqp message (test case to run)
 		def testcases(header, testCaseNumber)
-			@logger.info("Running testcase: #{testCaseNumber}")
 			@reporter.currentTestCase = testCaseNumber
 			newTestCaseFilename = mangle_test_case(testCaseNumber)
 			@executor.run(@logger, newTestCaseFilename)
