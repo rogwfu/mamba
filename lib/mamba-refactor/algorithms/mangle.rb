@@ -56,7 +56,6 @@ module Mamba
 			# Run all the test cases
 			#
 			@mangleConfig['Number of Testcases'].times do |testCaseNumber|
-				@logger.info("Running testcase: #{testCaseNumber}")
 				@reporter.currentTestCase = testCaseNumber
 				newTestCaseFilename = mangle_test_case(testCaseNumber)
 			    @executor.run(@logger, newTestCaseFilename)
