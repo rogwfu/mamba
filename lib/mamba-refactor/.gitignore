@@ -1,0 +1,2 @@
+# Ignore the bundle created during extension testing
+fuzzrnd.bundle
