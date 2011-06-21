@@ -30,7 +30,6 @@ Rake::ExtensionTask.new('fuzzrnd') do |ext|
   ext.lib_dir = File.join 'lib', 'mamba-refactor'
 end
 
-
 require 'rspec/core'
 require 'rspec/core/rake_task'
 RSpec::Core::RakeTask.new(:spec) do |spec|
@@ -44,7 +43,6 @@ RSpec::Core::RakeTask.new(:rcov) do |spec|
 end
 
 task :default => :spec
-
 
 require 'yard'
 YARD::Rake::YardocTask.new
