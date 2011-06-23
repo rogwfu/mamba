@@ -73,6 +73,11 @@ describe "Population" do
 		@newPopulation.instance_eval{@fitness}.should == 15.1
 	end
 
+	it "should handle popping a chromosome if the population is empty" do
+		removedChrom = @newPopulation.pop()
+		removedChrom.should == nil
+	end
+
 	it "should be able to determine the maximumally fit chromosome in the population" do
 		newChrom = Mamba::Chromosome.new(0,"10.0")
 		newChrom2 = Mamba::Chromosome.new(1,"5.1")

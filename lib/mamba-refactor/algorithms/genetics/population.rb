@@ -45,9 +45,10 @@ module Mamba
 		end
 
 		# Remove last chromosome from the population of chromosomes
+		# @return [Chromosome] A Chromosome removed from the end of the population
 		def pop()
 			removedChromosome = @chromosomes.pop()
-			@fitness = @fitness - removedChromosome.fitness
+			@fitness = @fitness - removedChromosome.fitness unless !removedChromosome
 			return(removedChromosome)
 		end
 
@@ -59,6 +60,13 @@ module Mamba
 
 		# Add chromosomes to the population based on a zipped file
 		def seed!()
+
+		end
+
+		# Roulette wheel selection
+		# (An Introduction to Genetic Algorithms - pg. 166)
+		# @return [Chromosome] A chromosome proportionally selected by fitness
+		def roulette()
 
 		end
 	end
