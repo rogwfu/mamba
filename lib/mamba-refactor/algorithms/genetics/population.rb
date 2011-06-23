@@ -12,6 +12,7 @@ module Mamba
 		end
 
 		# Each method to satisfy Enumerable Module requirement
+		# @param [Proc] A block of code to call with each element as an argument
 		def each(&block)
 			# Call the block given with each chromosome as an argument
 			 @chromosomes.each do |chromosome| 
@@ -43,11 +44,17 @@ module Mamba
 			end
 		end
 
-		# Remove chromosomes from the population
+		# Remove last chromosome from the population of chromosomes
 		def pop()
 			removedChromosome = @chromosomes.pop()
 			@fitness = @fitness - removedChromosome.fitness
 			return(removedChromosome)
+		end
+
+		# Clear the population and reset population fitness
+		def clear()
+			@chromosomes.clear()
+			@fitness = BigDecimal("0.0")
 		end
 
 		# Add chromosomes to the population based on a zipped file

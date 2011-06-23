@@ -81,4 +81,14 @@ describe "Population" do
 		maxFitChrom = @newPopulation.max()
 		maxFitChrom.fitness.should == 25.6
 	end
+
+	it "should be able to clean up a population by removing all chromosomes and resetting fitness" do
+		newChrom = Mamba::Chromosome.new(0,"10.0")
+		newChrom2 = Mamba::Chromosome.new(1,"5.1")
+		newChrom3 = Mamba::Chromosome.new(2,"25.6")
+		@newPopulation.push(newChrom, newChrom2, newChrom3)
+		@newPopulation.clear()
+		@newPopulation.instance_eval{@fitness}.should == 0.0 
+		@newPopulation.instance_eval{@chromosomes.size()}.should == 0
+	end
 end
