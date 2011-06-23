@@ -39,37 +39,46 @@ describe "Population" do
 	end
 
 	it "when appending it should correctly add chromosome fitness to the populations fitness" do
-		newChrom = Mamba::Chromosome.new(0,10.0)
-		newChrom2 = Mamba::Chromosome.new(1,5.1)
-		newChrom3 = Mamba::Chromosome.new(2,25.6)
+		newChrom = Mamba::Chromosome.new(0,"10.0")
+		newChrom2 = Mamba::Chromosome.new(1,"5.1")
+		newChrom3 = Mamba::Chromosome.new(2,"25.6")
 		@newPopulation.push(newChrom, newChrom2, newChrom3)
 		@newPopulation.instance_eval{@fitness}.should == 40.7 
 	end
 
 	it "should remove a chromosome from the end of the population" do
-		newChrom = Mamba::Chromosome.new(0,10.0)
-		newChrom2 = Mamba::Chromosome.new(1,5.1)
-		newChrom3 = Mamba::Chromosome.new(2,25.6)
+		newChrom = Mamba::Chromosome.new(0,"10.0")
+		newChrom2 = Mamba::Chromosome.new(1,"5.1")
+		newChrom3 = Mamba::Chromosome.new(2,"25.6")
 		@newPopulation.push(newChrom, newChrom2, newChrom3)
 		@newPopulation.pop()
 		@newPopulation.instance_eval{@chromosomes.size()}.should == 2 
 	end
 
 	it "should correctly remove a chromosome from the end of the population" do
-		newChrom = Mamba::Chromosome.new(0,10.0)
-		newChrom2 = Mamba::Chromosome.new(1,5.1)
-		newChrom3 = Mamba::Chromosome.new(2,25.6)
+		newChrom = Mamba::Chromosome.new(0,"10.0")
+		newChrom2 = Mamba::Chromosome.new(1,"5.1")
+		newChrom3 = Mamba::Chromosome.new(2,"25.6")
 		@newPopulation.push(newChrom, newChrom2, newChrom3)
 		removedChrom = @newPopulation.pop()
 		removedChrom.id.should == 2
 	end
 
 	it "should decrement population fitness when a chromosome is removed from the end of the population" do
-		newChrom = Mamba::Chromosome.new(0,10.0)
-		newChrom2 = Mamba::Chromosome.new(1,5.1)
-		newChrom3 = Mamba::Chromosome.new(2,25.6)
+		newChrom = Mamba::Chromosome.new(0,"10.0")
+		newChrom2 = Mamba::Chromosome.new(1,"5.1")
+		newChrom3 = Mamba::Chromosome.new(2,"25.6")
 		@newPopulation.push(newChrom, newChrom2, newChrom3)
 		@newPopulation.pop()
 		@newPopulation.instance_eval{@fitness}.should == 15.1
+	end
+
+	it "should be able to determine the maximumally fit chromosome in the population" do
+		newChrom = Mamba::Chromosome.new(0,"10.0")
+		newChrom2 = Mamba::Chromosome.new(1,"5.1")
+		newChrom3 = Mamba::Chromosome.new(2,"25.6")
+		@newPopulation.push(newChrom, newChrom2, newChrom3)
+		maxFitChrom = @newPopulation.max()
+		maxFitChrom.fitness.should == 25.6
 	end
 end

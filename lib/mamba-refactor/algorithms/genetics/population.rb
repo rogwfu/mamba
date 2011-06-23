@@ -1,4 +1,5 @@
 require 'zip/zip'
+require 'bigdecimal'
 
 module Mamba
 	class Population 
@@ -7,7 +8,7 @@ module Mamba
 		# Initialize the population by setting empty 
 		def initialize()
 			@chromosomes = Array.new()
-			@fitness = 0.0
+			@fitness = BigDecimal("0.0")
 		end
 
 		# Each method to satisfy Enumerable Module requirement
