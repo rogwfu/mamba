@@ -12,15 +12,34 @@ module Mamba
 
 		# Each method to satisfy Enumerable Module requirement
 		def each(&block)
-			# Call the block given with each member as an argument
-			 @members.each do |member| 
-				 block.call(member)
+			# Call the block given with each chromosome as an argument
+			 @chromosomes.each do |chromosome| 
+				 block.call(chromosome)
 			end
 		end
 
-		# Add chromosomes to the population
+		# Add chromosomes to the end of the population of chromosomes
+		# @param [Array] a set of chromsomes to add to the population
 		def push(*chromosomes)
+			#
+			# Add all new chromosomes to the existing chromosome population 
+			# 
+			chromosomes.each do |newChromosome|
+				#
+				# Error check type to ensure new chromosomes
+				#
+				if(!newChromosome.class.eql?(Mamba::Chromosome)) then
+					raise "Invalid object appended to population" 
+				end
+			end
 
+			#
+			# If all objects sane, add to the population
+			#
+			@chromosomes = @chromosomes + chromosomes 
+			@fitness = chromosomes.inject(@fitness) do |sum, chromosome|
+				sum + chromosome.fitness
+			end
 		end
 
 		# Remove chromosomes from the population
@@ -28,6 +47,7 @@ module Mamba
 
 		end
 
+		# Add chromosomes to the population based on a zipped file
 		def seed!()
 
 		end
