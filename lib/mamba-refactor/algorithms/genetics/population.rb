@@ -1,5 +1,6 @@
 require 'zip/zip'
 require 'bigdecimal'
+require 'securerandom'
 
 module Mamba
 	class Population 
@@ -67,7 +68,17 @@ module Mamba
 		# (An Introduction to Genetic Algorithms - pg. 166)
 		# @return [Chromosome] A chromosome proportionally selected by fitness
 		def roulette()
+			spinValue = random()
+		end
 
+		private
+
+		# Generate a random value bounded by the population fitness
+		# @return [BigDecimal] A random value 
+		def random()
+			# Note: Number conversion here BigDecimal => Float may cause issues
+			spinValue = SecureRandom.random_number(@fitness.to_f())
+			# This is not right yet!!!!!!
 		end
 	end
 end

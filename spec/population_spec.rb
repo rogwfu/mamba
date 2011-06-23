@@ -96,4 +96,13 @@ describe "Population" do
 		@newPopulation.instance_eval{@fitness}.should == 0.0 
 		@newPopulation.instance_eval{@chromosomes.size()}.should == 0
 	end
+
+	it "should generate a random number less than the population fitness" do
+		newChrom = Mamba::Chromosome.new(0,"10.0")
+		newChrom2 = Mamba::Chromosome.new(1,"5.1")
+		newChrom3 = Mamba::Chromosome.new(2,"25.6")
+		@newPopulation.push(newChrom, newChrom2, newChrom3)
+
+
+	end
 end
