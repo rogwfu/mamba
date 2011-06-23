@@ -1,6 +1,5 @@
 require 'zip/zip'
 require 'bigdecimal'
-require 'securerandom'
 
 module Mamba
 	class Population 
@@ -76,9 +75,14 @@ module Mamba
 		# Generate a random value bounded by the population fitness
 		# @return [BigDecimal] A random value 
 		def random()
+			randVal = 0.0
+
 			# Note: Number conversion here BigDecimal => Float may cause issues
-			spinValue = SecureRandom.random_number(@fitness.to_f())
-			# This is not right yet!!!!!!
+			begin
+				srand(Time.now().to_i())
+				randVal = rand(@fitness) + rand()
+			end until randVal <= @fitness
+			return(BigDecimal.new(randVal.to_s()))
 		end
 	end
 end
