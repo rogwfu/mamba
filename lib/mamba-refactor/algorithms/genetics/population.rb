@@ -44,7 +44,9 @@ module Mamba
 
 		# Remove chromosomes from the population
 		def pop()
-
+			removedChromosome = @chromosomes.pop()
+			@fitness = @fitness - removedChromosome.fitness
+			return(removedChromosome)
 		end
 
 		# Add chromosomes to the population based on a zipped file
