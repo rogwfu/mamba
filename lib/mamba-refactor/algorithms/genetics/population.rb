@@ -75,6 +75,19 @@ module Mamba
 		# @return [Chromosome] A chromosome proportionally selected by fitness
 		def roulette()
 			spinValue = random()
+			rouletteValue = BigNumber("0.0")
+			@chromosomes.each do |chromosome|
+				rouletteValue += chromosome.fitness
+
+				if(rouletteValue >= spinValue) then
+					return(chromosome)
+				end
+			end
+
+			#
+			# Saftey, Return last element
+			#
+			return(@chromosomes[-1])
 		end
 
 		private
