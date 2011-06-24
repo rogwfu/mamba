@@ -1,5 +1,5 @@
 require 'base64'
-require 'mamba-refactor/fuzzrnd'
+require 'fuzzrnd'
 
 #
 # The below is borrowed from the rfuzz project of Zed A. Shaw. It has been
