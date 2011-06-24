@@ -105,4 +105,14 @@ describe "Population" do
 		randVal = @newPopulation.instance_eval{random()}
 		@newPopulation.instance_eval{@fitness}.should >= randVal 
 	end
+
+	it "should be capable of summing chromosome fitnesses to get population fitness" do
+		newChrom = Mamba::Chromosome.new(0,"10.0")
+		newChrom2 = Mamba::Chromosome.new(1,"5.1")
+		newChrom3 = Mamba::Chromosome.new(2,"25.6")
+		@newPopulation.push(newChrom, newChrom2, newChrom3)
+		@newPopulation.instance_eval{@fitness = BigDecimal("0")}
+		@newPopulation.sum()
+		@newPopulation.instance_eval{@fitness}.should == 40.7
+	end
 end

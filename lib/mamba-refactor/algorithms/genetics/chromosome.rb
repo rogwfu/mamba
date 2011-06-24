@@ -17,7 +17,6 @@ module Mamba
 		def <=>(other)
 			@fitness <=> other.fitness
 		end
-
 	end
 end
 

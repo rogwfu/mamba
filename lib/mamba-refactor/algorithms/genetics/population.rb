@@ -58,8 +58,15 @@ module Mamba
 			@fitness = BigDecimal("0.0")
 		end
 
+		# Sum all the chromosome fitnesses
+		def sum()
+			@fitness = @chromosomes.inject(BigDecimal("0.0")) do |sum, chromosome|
+				sum + chromosome.fitness
+			end
+		end
+
 		# Add chromosomes to the population based on a zipped file
-		def seed!()
+		def seed()
 
 		end
 
