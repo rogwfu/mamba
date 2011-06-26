@@ -17,6 +17,12 @@ module Mamba
 		def <=>(other)
 			@fitness <=> other.fitness
 		end
+
+		# Convenience method for printing a chromosome
+		# @return [String] A string representation of the chromosome object
+		def to_s()
+			"#{self.class} (#{self.__id__}): ID: #{@id}, Fitness: #{@fitness}" 
+		end
 	end
 end
 

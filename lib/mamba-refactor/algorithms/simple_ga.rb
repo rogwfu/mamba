@@ -42,6 +42,7 @@ module Mamba
 			#
 			@population = Population.new()
 			seed()
+			@logger.debug(@population.inspect())
 		end
 
 		# Run the fuzzing job
@@ -52,8 +53,6 @@ module Mamba
 		private
 
 		def seed()
-			@logger.info(Dir.pwd())
-
 			#
 			# Make sure its a zip file
 			#

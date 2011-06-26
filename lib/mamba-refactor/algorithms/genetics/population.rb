@@ -64,11 +64,6 @@ module Mamba
 			end
 		end
 
-		# Add chromosomes to the population based on a zipped file
-		def seed()
-
-		end
-
 		# Roulette wheel selection
 		# (An Introduction to Genetic Algorithms - pg. 166)
 		# @return [Chromosome] A chromosome proportionally selected by fitness
@@ -87,6 +82,18 @@ module Mamba
 			# Saftey, Return last element
 			#
 			return(@chromosomes[-1])
+		end
+
+		# Convenience method for printing a population
+		# @return [String] A string representation of the population object
+		def to_s()
+			@chromosomes
+			string = "#{self.class} (#{self.__id__}): Fitness: #{@fitness}\n"
+			@chromosomes.each do |chromosome|
+				string << chromosome.to_s() + "\n"
+			end
+
+			return(string)
 		end
 
 		private
