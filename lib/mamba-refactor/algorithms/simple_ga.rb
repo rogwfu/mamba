@@ -42,12 +42,13 @@ module Mamba
 			#
 			@population = Population.new()
 			seed()
-			@logger.debug(@population.inspect())
 		end
 
 		# Run the fuzzing job
 		def fuzz()
-
+			@simpleGAConfig['Maximum Generations'].times do |generationNumber|
+				@logger.debug("Evolving")
+			end
 		end
 
 		private
@@ -65,6 +66,7 @@ module Mamba
 			Zip::ZipFile.open(@simpleGAConfig['Initial Population']) do |zipfile|
 				zipfile.each do |entry|
 					if(entry.directory?) then
+						@logger.info("#{entry.name} is a directory!")
 						testSetMapping.printf("%-50.50s: skipped\n", entry.name)
 						next
 					else
@@ -87,6 +89,10 @@ module Mamba
 			#
 			# Error check number of chromosomes equal configuration
 			#
+			if(chromosomeNumber != @simpleGAConfig['Population Size']) then
+				@logger.fatal("Valid Chromosomes in zip file (#{chromosomeNumber} does not equal configured population size #{@simpleGAConfig['Population Size']}!")
+				exit(1)
+			end
 		end
 	end
 end
