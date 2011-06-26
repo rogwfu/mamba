@@ -88,12 +88,17 @@ module Mamba
 		# @return [String] A string representation of the population object
 		def to_s()
 			@chromosomes
-			string = "#{self.class} (#{self.__id__}): Fitness: #{@fitness}\n"
+			string = "#{self.class} (#{self.__id__}): Fitness: #{@fitness.to_s('F')}\n"
 			@chromosomes.each do |chromosome|
 				string << chromosome.to_s() + "\n"
 			end
 
 			return(string)
+		end
+
+		# @return [Integer] the size of the population array
+		def size()
+			@chromosomes.size()
 		end
 
 		private

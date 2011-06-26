@@ -48,11 +48,39 @@ module Mamba
 		def fuzz()
 			@simpleGAConfig['Maximum Generations'].times do |generationNumber|
 				@logger.debug("Evolving")
+				@population.each do |chromosome|
+					chromosome.fitness = BigDecimal(rand(25).to_s())
+					@logger.debug(chromosome)
+				end
+				statistics()
+				# Only evolve a new generation if needed
+				evolve() unless generationNumber == @simpleGAConfig['Maximum Generations']
 			end
+
 		end
 
 		private
 
+		# Evolve a new generation
+		def evolve()
+			(@simpleGAConfig['Population Size']/2).times do 
+				@logger.info("Child")
+				crossover()
+				mutate()
+			end
+		end
+
+		# Crossover two chromosomes
+		def crossover()
+			@logger.info("Crossover")
+		end
+
+		# Mutate a chromosome
+		def mutate()
+			@logger.info("Mutate")
+		end
+
+		# Seeds the initial population by unzipping the test cases
 		def seed()
 			#
 			# Make sure its a zip file
@@ -93,6 +121,14 @@ module Mamba
 				@logger.fatal("Valid Chromosomes in zip file (#{chromosomeNumber} does not equal configured population size #{@simpleGAConfig['Population Size']}!")
 				exit(1)
 			end
+		end
+
+		# Calculate and log interesting population statistics
+		def statistics()
+			populationFitness = @population.sum()
+			@logger.info("Total Generation Fitness: #{populationFitness.to_s('F')}")
+			@logger.info("Average Chromosome Fitness: #{(populationFitness/@population.size()).to_s('F')}")
+			@logger.info("Fittest Member: #{@population.max()}")
 		end
 	end
 end

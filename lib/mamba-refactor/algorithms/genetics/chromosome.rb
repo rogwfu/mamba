@@ -21,7 +21,7 @@ module Mamba
 		# Convenience method for printing a chromosome
 		# @return [String] A string representation of the chromosome object
 		def to_s()
-			"#{self.class} (#{self.__id__}): ID: #{@id}, Fitness: #{@fitness}" 
+			"#{self.class} (#{self.__id__}): ID: #{@id}, Fitness: #{@fitness.to_s('F')}" 
 		end
 	end
 end
