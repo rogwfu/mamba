@@ -138,13 +138,13 @@ module Mamba
 		# Print the configuration to the log file for historical purposes
 		# @param [Hash] Fuzzer specific configuration hash
 		def dump_config(fuzzerConfig)
-            @logger.info("=================================================")
-            @logger.info("\tAlgorithm Configuration")
-            @logger.info("=================================================")
+            @logger.info("==========================================================")
+            @logger.info("\t\tAlgorithm Configuration")
+            @logger.info("==========================================================")
 			fuzzerConfig.each_key do |key|
 				@logger.info("#{key}: \t#{fuzzerConfig[key]}")
 			end
-            @logger.info("=================================================")
+            @logger.info("==========================================================")
 		end
 	end
 end

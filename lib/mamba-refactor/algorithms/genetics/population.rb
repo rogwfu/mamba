@@ -1,4 +1,3 @@
-require 'zip/zip'
 require 'bigdecimal'
 
 module Mamba

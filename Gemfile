@@ -14,7 +14,7 @@ group :development do
   gem "thor", ">=0.14.6"
   gem "daemons", ">=1.1.3"
   gem "uuidtools", ">=2.1.2"
-  gem "zip", ">=2.0.2"
+  gem "rubyzip", ">=0.9.4"
   gem "log4r", ">=1.1.9"
   gem "directory_watcher", ">=1.4.0"
   gem "rb-appscript", ">=0.6.1"
