@@ -47,37 +47,60 @@ module Mamba
 		# Run the fuzzing job
 		def fuzz()
 			@simpleGAConfig['Maximum Generations'].times do |generationNumber|
-				@logger.debug("Evolving")
-				@population.each do |chromosome|
-					chromosome.fitness = BigDecimal(rand(25).to_s())
-					@logger.debug(chromosome)
+				nextGenerationNumber = generationNumber + 1
+				@simpleGAConfig['Population Size'].times do |chromosomeID|
+					@logger.info("Looping: #{generationNumber}/#{chromosomeID}")
+					fitness = rand(25).to_s()
+					@population.push(Chromosome.new(chromosomeID, fitness))
 				end
 				statistics()
 				# Only evolve a new generation if needed
-				evolve() unless generationNumber == @simpleGAConfig['Maximum Generations']
+				evolve(nextGenerationNumber) unless (nextGenerationNumber) == @simpleGAConfig['Maximum Generations']
 			end
-
 		end
 
 		private
 
-		# Evolve a new generation
-		def evolve()
+		# Evolve a new generation and clear the current one
+		def evolve(nextGenerationNumber)
+			prepare_storage(nextGenerationNumber)
+			parents = Array.new()
 			(@simpleGAConfig['Population Size']/2).times do 
-				@logger.info("Child")
-				crossover()
-				mutate()
+				parents << @population.roulette() << @population.roulette() 
+				@logger.info("=================CHILDREN===============")
+				@logger.info("Evolving: #{generationNumber}")
+				@logger.info(parents)
+				@logger.info("========================================")
+
+				if(rand() <= @simpleGAConfig['Crossover Rate']) then
+					children = crossover(parents)
+				end
+
+				mutate(children)
+				parents.clear()
 			end
+			@population.clear()
 		end
 
 		# Crossover two chromosomes
-		def crossover()
+		def crossover(parents)
 			@logger.info("Crossover")
 		end
 
 		# Mutate a chromosome
-		def mutate()
+		def mutate(children)
 			@logger.info("Mutate")
+		end
+
+		def elitism()
+
+		end
+
+		# Make the next test case directory
+		def prepare_storage(nextGenerationNumber)
+           if !File.directory?("tests/#{nextGenerationNumber}") then
+                FileUtils.mkdir_p("tests/#{nextGenerationNumber}")
+            end
 		end
 
 		# Seeds the initial population by unzipping the test cases
@@ -98,7 +121,6 @@ module Mamba
 						testSetMapping.printf("%-50.50s: skipped\n", entry.name)
 						next
 					else
-						newChromosome = Chromosome.new(chromosomeNumber)
 						testSetMapping.printf("%-50.50s: #{chromosomeNumber}\n", entry.name)
 
 						#
@@ -107,7 +129,6 @@ module Mamba
 						File.open("tests/0/#{chromosomeNumber}#{File.extname(entry.name)}", "w+") do |newTestCase|
 							newTestCase.write(zipfile.read(entry.name))
 						end
-						@population.push(newChromosome)
 						chromosomeNumber += 1
 					end
 				end
@@ -125,9 +146,8 @@ module Mamba
 
 		# Calculate and log interesting population statistics
 		def statistics()
-			populationFitness = @population.sum()
-			@logger.info("Total Generation Fitness: #{populationFitness.to_s('F')}")
-			@logger.info("Average Chromosome Fitness: #{(populationFitness/@population.size()).to_s('F')}")
+			@logger.info("Total Generation Fitness: #{@population.fitness.to_s('F')}")
+			@logger.info("Average Chromosome Fitness: #{(@population.fitness/@population.size()).to_s('F')}")
 			@logger.info("Fittest Member: #{@population.max()}")
 		end
 	end

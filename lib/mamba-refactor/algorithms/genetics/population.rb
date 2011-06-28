@@ -3,11 +3,13 @@ require 'bigdecimal'
 module Mamba
 	class Population 
 		include Enumerable 
+		attr_reader		:fitness
 
 		# Initialize the population by setting empty 
 		def initialize()
 			@chromosomes = Array.new()
 			@fitness = BigDecimal("0.0")
+			#srand(Time.now().to_i())
 		end
 
 		# Each method to satisfy Enumerable Module requirement
@@ -69,7 +71,7 @@ module Mamba
 		# @return [Chromosome] A chromosome proportionally selected by fitness
 		def roulette()
 			spinValue = random()
-			rouletteValue = BigNumber("0.0")
+			rouletteValue = BigDecimal("0.0")
 			@chromosomes.each do |chromosome|
 				rouletteValue += chromosome.fitness
 
@@ -110,7 +112,6 @@ module Mamba
 
 			# Note: Number conversion here BigDecimal => Float may cause issues
 			begin
-				srand(Time.now().to_i())
 				randVal = rand(@fitness) + rand()
 			end until randVal <= @fitness
 			return(BigDecimal.new(randVal.to_s()))
