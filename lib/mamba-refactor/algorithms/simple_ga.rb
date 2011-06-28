@@ -10,7 +10,7 @@ module Mamba
         DEFAULT_POPULATION_SIZE = 4
         DEFAULT_FITNESS_FUNCTION = "As"
 
-		DEFAULT_INITIAL_POPULATION_FILE = "tests/testset.zip"
+		DEFAULT_INITIAL_POPULATION_FILE = "tests" + File::SEPARATOR + "testset.zip"
 #        DEFAULT_IDA_DUMP = "disassemblies/"
 #        DEFAULT_INITIAL_POPULATION = "tests/testset.zip"
 #        MAX_FILE_SIZE = 2097152
@@ -41,6 +41,7 @@ module Mamba
 			# Seed the initial population
 			#
 			@population = Population.new()
+			@testSetMappings = Hash.new()
 			seed()
 		end
 
@@ -64,27 +65,63 @@ module Mamba
 		# Evolve a new generation and clear the current one
 		def evolve(nextGenerationNumber)
 			prepare_storage(nextGenerationNumber)
-			parents = Array.new()
-			(@simpleGAConfig['Population Size']/2).times do 
-				parents << @population.roulette() << @population.roulette() 
+			0.step(@simpleGAConfig['Population Size']-1, 2) do |childID|
+				parents, children = compose_filenames(nextGenerationNumber, childID)
+
 				@logger.info("=================CHILDREN===============")
-				@logger.info("Evolving: #{generationNumber}")
+				@logger.info("Evolving: #{nextGenerationNumber}")
 				@logger.info(parents)
+				@logger.info(children)
 				@logger.info("========================================")
 
-				if(rand() <= @simpleGAConfig['Crossover Rate']) then
-					children = crossover(parents)
-				end
+				crossover(parents, children)
+#				mutate(children)
 
-				mutate(children)
+				#
+				# Clean up the parents
+				#
+#				parents.each { |parent| parent.close()}
+#				children.each { |child| parent.close()}
 				parents.clear()
+				children.clear()
 			end
 			@population.clear()
 		end
 
-		# Crossover two chromosomes
-		def crossover(parents)
-			@logger.info("Crossover")
+		# Function to compose new filenames for children of the next generation
+		# @param [Fixnum] The next generation number
+		# @param [Fixnum] The current child number being generated
+		# @returns [Array, Array] 
+		def compose_filenames(nextGenerationNumber, childID)
+			parents = Array.new()
+			children = Array.new()
+
+			2.times do
+				parents << "tests" + File::SEPARATOR + "#{nextGenerationNumber - 1}" + File::SEPARATOR + @testSetMappings[@population.roulette().id] 
+			end
+
+			2.times do |iter| 
+				id = childID + iter
+				children << "tests" + File::SEPARATOR + "#{nextGenerationNumber}" + File::SEPARATOR + "#{id}." + parents[iter].split(".")[-1] 
+				@testSetMappings[childID + iter] = children[iter] 
+			end
+
+			return [parents, children]
+		end
+
+		# Single point crossover of two parent chromosomes
+		# @param [Array] Array of parent filenames 
+		# @param [Array] Array of children filenames 
+		def crossover(parents, children)
+
+			if(rand() <= @simpleGAConfig['Crossover Rate']) then
+
+			else
+				2.times do |iter|
+					@logger.info("Copying: #{parents[iter]} to #{children[iter]}")
+					FileUtils.cp(parents[iter], children[iter]) 
+				end
+			end
 		end
 
 		# Mutate a chromosome
@@ -98,22 +135,16 @@ module Mamba
 
 		# Make the next test case directory
 		def prepare_storage(nextGenerationNumber)
-           if !File.directory?("tests/#{nextGenerationNumber}") then
-                FileUtils.mkdir_p("tests/#{nextGenerationNumber}")
+           if !File.directory?("tests" + File::SEPARATOR + "#{nextGenerationNumber}") then
+                FileUtils.mkdir_p("tests" + File::SEPARATOR + "#{nextGenerationNumber}")
             end
 		end
 
 		# Seeds the initial population by unzipping the test cases
 		def seed()
-			#
-			# Make sure its a zip file
-			#
-			if (!File.directory?("tests/0")) then
-				FileUtils.mkdir_p("tests/0")
-			end
-			
+			prepare_storage(0)			
 			chromosomeNumber = 0
-			testSetMapping = File.open("tests/test_set_map.txt", "w+")
+			testSetMapping = File.open("tests" + File::SEPARATOR + "test_set_map.txt", "w+")
 			Zip::ZipFile.open(@simpleGAConfig['Initial Population']) do |zipfile|
 				zipfile.each do |entry|
 					if(entry.directory?) then
@@ -126,7 +157,8 @@ module Mamba
 						#
 						# Write the zipped file data
 						#
-						File.open("tests/0/#{chromosomeNumber}#{File.extname(entry.name)}", "w+") do |newTestCase|
+						@testSetMappings[chromosomeNumber] = "#{chromosomeNumber}#{File.extname(entry.name)}"
+						File.open("tests" + File::SEPARATOR + "0" + File::SEPARATOR + "#{@testSetMappings[chromosomeNumber]}", "w+") do |newTestCase|
 							newTestCase.write(zipfile.read(entry.name))
 						end
 						chromosomeNumber += 1

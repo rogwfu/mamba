@@ -9,6 +9,7 @@ module Mamba
 		def initialize()
 			@chromosomes = Array.new()
 			@fitness = BigDecimal("0.0")
+			@chromosomeMappings = Hash.new()
 			#srand(Time.now().to_i())
 		end
 
