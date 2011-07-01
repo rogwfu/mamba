@@ -53,6 +53,7 @@ module Mamba
 					@executor.run(@logger, @testSetMappings[chromosomeID])  
 					fitness = rand(25).to_s()
 					@population.push(Chromosome.new(chromosomeID, fitness))
+					@reporter.numCasesRun = @reporter.numCasesRun + 1
 				end
 				statistics()
 
