@@ -42,6 +42,7 @@ module Mamba
 			#
 			@population = Population.new()
 			@testSetMappings = Hash.new()
+			@temporaryMappings = Hash.new()
 			seed()
 		end
 
@@ -66,7 +67,7 @@ module Mamba
 		def evolve(nextGenerationNumber)
 			prepare_storage(nextGenerationNumber)
 			0.step(@simpleGAConfig['Population Size']-1, 2) do |childID|
-				parents, children = compose_filenames(nextGenerationNumber, childID)
+				parents, children = open_parents_and_children(nextGenerationNumber, childID)
 
 				@logger.info("=================CHILDREN===============")
 				@logger.info("Evolving: #{nextGenerationNumber}")
@@ -75,62 +76,85 @@ module Mamba
 				@logger.info("========================================")
 
 				crossover(parents, children)
-#				mutate(children)
-
-				#
-				# Clean up the parents
-				#
-#				parents.each { |parent| parent.close()}
-#				children.each { |child| parent.close()}
-				parents.clear()
-				children.clear()
+				mutate(children)
 			end
+
+			#
+			# Choose the best chromosome to survive
+			#
+			elitism()
+
+			cleanup()
+		end
+
+		# Reset variables and make deep copies where necessary
+		def cleanup()
+			@testSetMappings.clear() 
+			@testSetMappings = Marshal.load(Marshal.dump(@temporaryMappings)) 
+			@temporaryMappings.clear() 
 			@population.clear()
 		end
 
 		# Function to compose new filenames for children of the next generation
 		# @param [Fixnum] The next generation number
 		# @param [Fixnum] The current child number being generated
-		# @returns [Array, Array] 
-		def compose_filenames(nextGenerationNumber, childID)
+		# @returns [Array, Array] Opens File descriptors for parents and children  
+		def open_parents_and_children(nextGenerationNumber, childID)
 			parents = Array.new()
 			children = Array.new()
 
 			2.times do
-				parents << "tests" + File::SEPARATOR + "#{nextGenerationNumber - 1}" + File::SEPARATOR + @testSetMappings[@population.roulette().id] 
+				parents << File.open(@testSetMappings[@population.roulette().id], "rb") 
 			end
+				@logger.info("In open function: " + parents.inspect())
 
 			2.times do |iter| 
 				id = childID + iter
-				children << "tests" + File::SEPARATOR + "#{nextGenerationNumber}" + File::SEPARATOR + "#{id}." + parents[iter].split(".")[-1] 
-				@testSetMappings[childID + iter] = children[iter] 
+				children << "tests" + File::SEPARATOR + "#{nextGenerationNumber}" + File::SEPARATOR + "#{id}." + parents[iter].path.split(".")[-1] 
+				@temporaryMappings[childID + iter] = children[iter] 
 			end
+				@logger.info("In open children: " + children.inspect())
 
 			return [parents, children]
 		end
 
 		# Single point crossover of two parent chromosomes
-		# @param [Array] Array of parent filenames 
+		# @param [Array] Array of parent file descriptors 
 		# @param [Array] Array of children filenames 
 		def crossover(parents, children)
-
 			if(rand() <= @simpleGAConfig['Crossover Rate']) then
 
 			else
 				2.times do |iter|
-					@logger.info("Copying: #{parents[iter]} to #{children[iter]}")
-					FileUtils.cp(parents[iter], children[iter]) 
+					@logger.info("Copying: #{parents[iter].path} to #{children[iter]}")
+					FileUtils.cp(parents[iter].path, children[iter]) 
+					children[iter] = File.open(children[iter], "a+b")
 				end
 			end
+
+			# Cleanup filename arrays
+			parents.each { |parent| parent.close()}
+			parents.clear()
 		end
 
 		# Mutate a chromosome
+		# @param [Array] An array of children file descriptors
 		def mutate(children)
-			@logger.info("Mutate")
+			children.each do |child|
+				randomMutator = RandomGenerator.new() 	
+				if(rand() < @simpleGAConfig['Mutation Rate']) then
+					@logger.info("Mutate: #{child.path()}")
+					mutationPoint = rand(child.size())
+					child.seek(mutationPoint, IO::SEEK_SET)
+					child.write(randomMutator.bytes(rand(10)))
+				end
+				child.close()
+			end
+			children.clear()
 		end
 
 		def elitism()
-
+			@logger.info("Running elitism")
 		end
 
 		# Make the next test case directory
@@ -157,8 +181,8 @@ module Mamba
 						#
 						# Write the zipped file data
 						#
-						@testSetMappings[chromosomeNumber] = "#{chromosomeNumber}#{File.extname(entry.name)}"
-						File.open("tests" + File::SEPARATOR + "0" + File::SEPARATOR + "#{@testSetMappings[chromosomeNumber]}", "w+") do |newTestCase|
+						@testSetMappings[chromosomeNumber] = "tests" + File::SEPARATOR + "0" + File::SEPARATOR + "#{chromosomeNumber}#{File.extname(entry.name)}"
+						File.open("#{@testSetMappings[chromosomeNumber]}", "w+") do |newTestCase|
 							newTestCase.write(zipfile.read(entry.name))
 						end
 						chromosomeNumber += 1
@@ -171,7 +195,7 @@ module Mamba
 			# Error check number of chromosomes equal configuration
 			#
 			if(chromosomeNumber != @simpleGAConfig['Population Size']) then
-				@logger.fatal("Valid Chromosomes in zip file (#{chromosomeNumber} does not equal configured population size #{@simpleGAConfig['Population Size']}!")
+				@logger.fatal("Valid Chromosomes in zip file (#{chromosomeNumber}) does not equal configured population size #{@simpleGAConfig['Population Size']}!")
 				exit(1)
 			end
 		end
