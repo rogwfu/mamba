@@ -56,6 +56,7 @@ module Mamba
 					@population.push(Chromosome.new(chromosomeID, fitness))
 				end
 				statistics()
+
 				# Only evolve a new generation if needed
 				evolve(nextGenerationNumber) unless (nextGenerationNumber) == @simpleGAConfig['Maximum Generations']
 			end
@@ -153,8 +154,12 @@ module Mamba
 			children.clear()
 		end
 
+		# Copy the fittest chromosome of the current population to the next generation
 		def elitism()
-			@logger.info("Running elitism")
+			@population.fittestChromosome
+			replaceChromsomeID = rand(@simpleGAConfig['Population Size'])
+			@logger.info("Running elitism: #{@testSetMappings[@population.fittestChromosome.id]} to #{@temporaryMappings[replaceChromsomeID]}")
+			FileUtils.cp(@testSetMappings[@population.fittestChromosome.id], @temporaryMappings[replaceChromsomeID]) 
 		end
 
 		# Make the next test case directory

@@ -4,12 +4,13 @@ module Mamba
 	class Population 
 		include Enumerable 
 		attr_reader		:fitness
+		attr_reader		:fittestChromosome
 
 		# Initialize the population by setting empty 
 		def initialize()
 			@chromosomes = Array.new()
 			@fitness = BigDecimal("0.0")
-			@chromosomeMappings = Hash.new()
+			@fittestChromosome = nil
 			#srand(Time.now().to_i())
 		end
 
@@ -58,6 +59,7 @@ module Mamba
 		def clear()
 			@chromosomes.clear()
 			@fitness = BigDecimal("0.0")
+			@fittestChromosome = nil
 		end
 
 		# Sum all the chromosome fitnesses
@@ -65,6 +67,11 @@ module Mamba
 			@fitness = @chromosomes.inject(BigDecimal("0.0")) do |sum, chromosome|
 				sum + chromosome.fitness
 			end
+		end
+
+		# Maximum chromosome in the current population
+		def max()
+			@fittestChromosome = super()
 		end
 
 		# Roulette wheel selection
