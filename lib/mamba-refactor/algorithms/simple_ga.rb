@@ -12,8 +12,7 @@ module Mamba
 
 		DEFAULT_INITIAL_POPULATION_FILE = "tests" + File::SEPARATOR + "testset.zip"
 #        DEFAULT_IDA_DUMP = "disassemblies/"
-#        DEFAULT_INITIAL_POPULATION = "tests/testset.zip"
-#        MAX_FILE_SIZE = 2097152
+        MAX_FILE_SIZE = 524288000 # Maximum of 500MB 
 
 		# Generate the YAML configuration file for Simple Genetic Algorithm Fuzzer
 		def self.generate_config()
@@ -51,7 +50,7 @@ module Mamba
 			@simpleGAConfig['Maximum Generations'].times do |generationNumber|
 				nextGenerationNumber = generationNumber + 1
 				@simpleGAConfig['Population Size'].times do |chromosomeID|
-					@logger.info("Looping: #{generationNumber}/#{chromosomeID}")
+					@executor.run(@logger, @testSetMappings[chromosomeID])  
 					fitness = rand(25).to_s()
 					@population.push(Chromosome.new(chromosomeID, fitness))
 				end
@@ -124,7 +123,9 @@ module Mamba
 		# @param [Array] Array of children filenames 
 		def crossover(parents, children)
 			if(rand() <= @simpleGAConfig['Crossover Rate']) then
-
+				crossoverPoint = crossover_point(parents)
+				@logger.info("Crossover Point is: #{crossoverPoint}")
+				crossover_files(parents, children, crossoverPoint)	
 			else
 				2.times do |iter|
 					@logger.info("Copying: #{parents[iter].path} to #{children[iter]}")
@@ -136,6 +137,45 @@ module Mamba
 			# Cleanup filename arrays
 			parents.each { |parent| parent.close()}
 			parents.clear()
+		end
+
+		# Function to actually split the parent files and create children based on a crossover point
+		# @param [Array] Array of parent file descriptors
+		# @param [Fixnum] Byte offset to split the files and combine
+		def crossover_files(parents, children, crossoverPoint)
+			# Tricky code, works because ruby arrays have -1 indexing
+			# So this ends up switching parents to create two different children
+			# Mapping: child 0: 0 1 and child 1: 1 0
+			2.times do |iter|
+				children[iter] = File.open(children[iter], "w+b") 
+				parents[iter-1].seek(crossoverPoint, IO::SEEK_SET)
+				children[iter].write(parents[iter].read(crossoverPoint))
+				children[iter].write(parents[iter-1].read())
+				parents[iter-1].rewind()
+			end	
+		end
+
+		# Select a crossover point based on file size and maximum allowed file size (in bytes)
+		# @param [Array] Array of parent file descriptors
+		def crossover_point(parents)
+
+			# Determine the smaller of the two files (cache sizes)
+			parentOne = parents[0].size()
+			parentTwo = parents[1].size()
+			randomBound = parentOne 
+			if (parentTwo < parentOne) then
+				randomBound = parentTwo
+			end
+
+			#
+			# Randomly select crossover point (this may not work)
+			#
+			crossoverPoint = rand(randomBound)
+			until (((crossoverPoint + (parentTwo - crossoverPoint)) < MAX_FILE_SIZE) and ((crossoverPoint + (parentTwo - crossoverPoint)) < MAX_FILE_SIZE)) 
+				crossoverPoint = rand(randomBound)
+			end
+
+			return(crossoverPoint)
 		end
 
 		# Mutate a chromosome
