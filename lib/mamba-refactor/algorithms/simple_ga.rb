@@ -27,6 +27,7 @@ module Mamba
 		end
 
 		# Initialize SimpleGeneticAlgorithm fuzzer and the generic fuzzer class
+		# @param [Hash] Hash of configuration parameters for Mamba
 		def initialize(mambaConfig)
 			super(mambaConfig)
 			@simpleGAConfig = read_fuzzer_config(self.to_s())
@@ -65,6 +66,7 @@ module Mamba
 		private
 
 		# Evolve a new generation and clear the current one
+		# @param [Fixnum] The number of the next generation
 		def evolve(nextGenerationNumber)
 			prepare_storage(nextGenerationNumber)
 			0.step(@simpleGAConfig['Population Size']-1, 2) do |childID|
@@ -142,6 +144,7 @@ module Mamba
 
 		# Function to actually split the parent files and create children based on a crossover point
 		# @param [Array] Array of parent file descriptors
+		# @param [Array] Array of children filenames
 		# @param [Fixnum] Byte offset to split the files and combine
 		def crossover_files(parents, children, crossoverPoint)
 			# Tricky code, works because ruby arrays have -1 indexing
@@ -158,6 +161,7 @@ module Mamba
 
 		# Select a crossover point based on file size and maximum allowed file size (in bytes)
 		# @param [Array] Array of parent file descriptors
+		# @returns [Fixnum] A byte offset for the crossover point
 		def crossover_point(parents)
 
 			# Determine the smaller of the two files (cache sizes)
@@ -204,6 +208,7 @@ module Mamba
 		end
 
 		# Make the next test case directory
+		# @param [Fixnum] The number of the next generation
 		def prepare_storage(nextGenerationNumber)
            if !File.directory?("tests" + File::SEPARATOR + "#{nextGenerationNumber}") then
                 FileUtils.mkdir_p("tests" + File::SEPARATOR + "#{nextGenerationNumber}")
