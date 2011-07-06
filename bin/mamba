@@ -126,14 +126,14 @@ module Mamba
 			# @return [Hash] configuration settings
 			def generate_config()
 				uuid = "fz" + UUIDTools::UUID.timestamp_create.to_s().gsub("-", "")
-				config = {app: options[:app], executor: options[:executor], timeout: options[:timeout], type: options[:type], uuid: uuid}
+				config = {app: options[:app], executor: options[:executor], os: Config::CONFIG["host_os"], timeout: options[:timeout], type: options[:type], uuid: uuid}
 
 				#
 				# Check for distributed Fuzzing
 				#
 				if(options[:distributed]) then
 					fuzzerType =  "Distributed" + options[:type]
-					config = {app: options[:app], executor: options[:executor], timeout: options[:timeout], type: fuzzerType, uuid: uuid, organizer: true,  port: options[:port], server: options[:server]}
+					config = {app: options[:app], executor: options[:executor], os: Config::CONFIG["host_os"], timeout: options[:timeout], type: fuzzerType, uuid: uuid, organizer: true,  port: options[:port], server: options[:server]}
 				end
 
 				return(config)
