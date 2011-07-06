@@ -43,11 +43,13 @@ module Mamba
 			@population = Population.new()
 			@testSetMappings = Hash.new()
 			@temporaryMappings = Hash.new()
-			seed()
 		end
 
 		# Run the fuzzing job
 		def fuzz()
+
+			seed()
+
 			@simpleGAConfig['Maximum Generations'].times do |generationNumber|
 				nextGenerationNumber = generationNumber + 1
 				@simpleGAConfig['Population Size'].times do |chromosomeID|
@@ -236,6 +238,7 @@ module Mamba
 						File.open("#{@testSetMappings[chromosomeNumber]}", "w+") do |newTestCase|
 							newTestCase.write(zipfile.read(entry.name))
 						end
+						yield(@testSetMappings[chromosomeNumber], chromosomeNumber) if block_given?()
 						chromosomeNumber += 1
 					end
 				end
