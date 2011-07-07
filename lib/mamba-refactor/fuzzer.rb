@@ -24,6 +24,7 @@ module Mamba
 			#
 			if(self.class.to_s.start_with?("Mamba::Distributed")) then
 				@reporter = Reporter.new(true)
+				@amqpServer = mambaConfig[:server]
 				initialize_storage(mambaConfig)
 			else
 				@reporter = Reporter.new()
