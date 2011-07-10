@@ -21,33 +21,29 @@ module Mamba
 		# @param [AMQP::Protocol::Header] Header of an amqp message
 		# @param [String] Payload of an amqp message (test case results)
 		def results(header, payload)
-			@logger.info("Results: #{payload}")
-
-			#
-			# Create a chromosome
-			#
 			chromosomeInfo = payload.split(".")
-			@logger.info("Creating Chromosome: #{chromosomeInfo[1]}")
-			@population.push(Chromosome.new(chromosomeInfo[1].to_i(), chromosomeInfo[2]))
+			@logger.info("Chromosome[#{chromosomeInfo[1]}]: #{chromosomeInfo[2]}")
 			@reporter.numCasesRun = @reporter.numCasesRun + 1
 
-			#
-			# Check for condition to stop and condition to stop and evolve
-			#
-			if(@population.size == @simpleGAConfig['Population Size']) then
-				@logger.info(@population.inspect())
-				statistics()
+			if(@organizer)
+				@population.push(Chromosome.new(chromosomeInfo[1].to_i(), chromosomeInfo[2]))
 
-				@nextGeneration = @nextGeneration + 1
-				unless (@nextGeneration) == @simpleGAConfig['Maximum Generations'] then
-					@logger.info("Evolving Stuff")
-					evolve(@nextGeneration) 
-					@testSetMappings.each_key do |key|
-						@logger.info("Key is: #{key}")
-						seed_distributed(key)
+				#
+				# Check for condition to stop and condition to stop and evolve
+				#
+				if(@population.size == @simpleGAConfig['Population Size']) then
+					@logger.info(@population.inspect())
+					statistics()
+
+					@nextGeneration = @nextGeneration + 1
+					unless (@nextGeneration) == @simpleGAConfig['Maximum Generations'] then
+						evolve(@nextGeneration) 
+						@testSetMappings.each_key do |key|
+							seed_distributed(key)
+						end
+					else
+						@topic_exchange.publish("shutdown", :key => "commands")
 					end
-				else
-					@topic_exchange.publish("shutdown", :key => "commands")
 				end
 			end
 		end
@@ -64,7 +60,7 @@ module Mamba
 			localFD.write(remoteFD.read())
 			localFD.close()
 
-		#	@executor.run(@logger, testCaseFilename)
+			@executor.run(@logger, testCaseFilename)
 
 			# 
 			# Store the results in the "cloud" :)
