@@ -131,15 +131,9 @@ class Fuzz < Thor
 				#
 				if (entry.name =~ /^configs\/\w+\.yml/ or entry.name =~ /^disassemblies\/\w+\.fz/ or entry.name =~ /models\/\w+\.ml/ or entry.name =~ /^tests\/\w+\.\w+/) then
 					#
-					# Packaged file superseeds all other files
-					#
-					if(File.exists?(entry.name)) then
-						FileUtils.rm(entry.name, :secure => true)
-					end
-
-					#
 					# Extract the contents
 					#
+					say "Writing: #{entry.name}", :green
 					zipfile.extract(entry, entry.name)
 				else
 					next
