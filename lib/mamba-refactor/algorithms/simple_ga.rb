@@ -38,11 +38,12 @@ module Mamba
 			dump_config(@simpleGAConfig)
 
 			#
-			# Seed the initial population
+			# Initialize object members 
 			#
 			@population = Population.new()
 			@testSetMappings = Hash.new()
 			@temporaryMappings = Hash.new()
+			@nextGenerationNumber = 0
 		end
 
 		# Run the fuzzing job
@@ -61,21 +62,20 @@ module Mamba
 				statistics()
 
 				# Only evolve a new generation if needed
-				evolve(nextGenerationNumber) unless (nextGenerationNumber) == @simpleGAConfig['Maximum Generations']
+				evolve() unless (@nextGenerationNumber) == @simpleGAConfig['Maximum Generations']
 			end
 		end
 
 		private
 
 		# Evolve a new generation and clear the current one
-		# @param [Fixnum] The number of the next generation
-		def evolve(nextGenerationNumber)
-			prepare_storage(nextGenerationNumber)
+		def evolve()
+			prepare_storage()
 			0.step(@simpleGAConfig['Population Size']-1, 2) do |childID|
-				parents, children = open_parents_and_children(nextGenerationNumber, childID)
+				parents, children = open_parents_and_children(childID)
 
 				@logger.info("=================CHILDREN===============")
-				@logger.info("Evolving: #{nextGenerationNumber}")
+				@logger.info("Evolving: #{@nextGenerationNumber}")
 				@logger.info("Parents: #{parents}")
 				@logger.info("Children: #{children}")
 				@logger.info("========================================")
@@ -101,10 +101,9 @@ module Mamba
 		end
 
 		# Function to compose new filenames for children of the next generation
-		# @param [Fixnum] The next generation number
 		# @param [Fixnum] The current child number being generated
 		# @returns [Array, Array] Opens File descriptors for parents and children  
-		def open_parents_and_children(nextGenerationNumber, childID)
+		def open_parents_and_children(childID)
 			parents = Array.new()
 			children = Array.new()
 
@@ -115,7 +114,7 @@ module Mamba
 
 			2.times do |iter| 
 				id = childID + iter
-				children << "tests" + File::SEPARATOR + "#{nextGenerationNumber}" + File::SEPARATOR + "#{id}." + parents[iter].path.split(".")[-1] 
+				children << "tests" + File::SEPARATOR + "#{@nextGenerationNumber}" + File::SEPARATOR + "#{id}." + parents[iter].path.split(".")[-1] 
 				@temporaryMappings[childID + iter] = children[iter] 
 			end
 				@logger.info("In open children: " + children.inspect())
@@ -210,16 +209,15 @@ module Mamba
 		end
 
 		# Make the next test case directory
-		# @param [Fixnum] The number of the next generation
-		def prepare_storage(nextGenerationNumber)
-           if !File.directory?("tests" + File::SEPARATOR + "#{nextGenerationNumber}") then
-                FileUtils.mkdir_p("tests" + File::SEPARATOR + "#{nextGenerationNumber}")
+		def prepare_storage()
+           if !File.directory?("tests" + File::SEPARATOR + "#{@nextGenerationNumber}") then
+                FileUtils.mkdir_p("tests" + File::SEPARATOR + "#{@nextGenerationNumber}")
             end
 		end
 
 		# Seeds the initial population by unzipping the test cases
 		def seed()
-			prepare_storage(0)			
+			prepare_storage()			
 			chromosomeNumber = 0
 			testSetMapping = File.open("tests" + File::SEPARATOR + "test_set_map.txt", "w+")
 			Zip::ZipFile.open(@simpleGAConfig['Initial Population']) do |zipfile|

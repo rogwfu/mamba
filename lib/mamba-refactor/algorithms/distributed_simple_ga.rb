@@ -7,7 +7,6 @@ module Mamba
 				initialize_queues(connection)
 
 				if(@organizer) then
-					@nextGeneration = 0
 					seed do |testCaseNumber|
 						@logger.info("Test case number in distributed is: #{testCaseNumber}")
 						seed_distributed(testCaseNumber)
@@ -35,9 +34,9 @@ module Mamba
 					@logger.info(@population.inspect())
 					statistics()
 
-					@nextGeneration = @nextGeneration + 1
-					unless (@nextGeneration) == @simpleGAConfig['Maximum Generations'] then
-						evolve(@nextGeneration) 
+					@nextGenerationNumber = @nextGenerationNumber + 1
+					unless (@nextGenerationNumber) == @simpleGAConfig['Maximum Generations'] then
+						evolve() 
 						@testSetMappings.each_key do |key|
 							seed_distributed(key)
 						end
@@ -83,8 +82,8 @@ module Mamba
 		# testCaseFilename format: generationNumber.testcasefilename (e.g. 2.4.pdf - means generation 2 chromomse 4 with filename 4.pdf)
 		# @param [Fixnum] The test case number
 		def seed_distributed(testCaseNumber)
-			testCaseID = @nextGeneration.to_s() + "." + testCaseNumber.to_s()
-			remoteTestCaseFilename = "#{@nextGeneration.to_s()}." + @testSetMappings[testCaseNumber].split(File::SEPARATOR)[-1]
+			testCaseID = @nextGenerationNumber.to_s() + "." + testCaseNumber.to_s()
+			remoteTestCaseFilename = "#{@nextGenerationNumber.to_s()}." + @testSetMappings[testCaseNumber].split(File::SEPARATOR)[-1]
 			@storage.dbHandle.put(File.open(@testSetMappings[testCaseNumber]), :_id => testCaseID, :filename => remoteTestCaseFilename)
 			@direct_exchange.publish(testCaseID, :routing_key => @queue.name)
 		end
