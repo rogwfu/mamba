@@ -51,7 +51,7 @@ module Mamba
 			seed()
 
 			@simpleGAConfig['Maximum Generations'].times do |generationNumber|
-				nextGenerationNumber = generationNumber + 1
+				@nextGenerationNumber = generationNumber + 1
 				@simpleGAConfig['Population Size'].times do |chromosomeID|
 					@executor.run(@logger, @testSetMappings[chromosomeID])  
 					fitness = rand(25).to_s()
@@ -76,8 +76,8 @@ module Mamba
 
 				@logger.info("=================CHILDREN===============")
 				@logger.info("Evolving: #{nextGenerationNumber}")
-				@logger.info(parents)
-				@logger.info(children)
+				@logger.info("Parents: #{parents}")
+				@logger.info("Children: #{children}")
 				@logger.info("========================================")
 
 				crossover(parents, children)
@@ -194,7 +194,7 @@ module Mamba
 					@logger.info("Mutate: #{child.path()}")
 					mutationPoint = rand(child.size())
 					child.seek(mutationPoint, IO::SEEK_SET)
-					child.write(randomMutator.bytes(rand(10)))
+					child.write(randomMutator.bytes(rand(10) + 1)) # + 1 ensures at least one byte mutated
 				end
 				child.close()
 			end
@@ -238,7 +238,7 @@ module Mamba
 						File.open("#{@testSetMappings[chromosomeNumber]}", "w+") do |newTestCase|
 							newTestCase.write(zipfile.read(entry.name))
 						end
-						yield(@testSetMappings[chromosomeNumber], chromosomeNumber) if block_given?()
+						yield(chromosomeNumber) if block_given?()
 						chromosomeNumber += 1
 					end
 				end
