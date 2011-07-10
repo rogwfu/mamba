@@ -70,7 +70,6 @@ module Mamba
 
 		# Evolve a new generation and clear the current one
 		def evolve()
-			prepare_storage()
 			0.step(@simpleGAConfig['Population Size']-1, 2) do |childID|
 				parents, children = open_parents_and_children(childID)
 
@@ -114,7 +113,7 @@ module Mamba
 
 			2.times do |iter| 
 				id = childID + iter
-				children << "tests" + File::SEPARATOR + "#{@nextGenerationNumber}" + File::SEPARATOR + "#{id}." + parents[iter].path.split(".")[-1] 
+				children << "tests" + File::SEPARATOR + "#{@nextGenerationNumber}."  + "#{id}." + parents[iter].path.split(".")[-1] 
 				@temporaryMappings[childID + iter] = children[iter] 
 			end
 				@logger.info("In open children: " + children.inspect())
@@ -208,16 +207,8 @@ module Mamba
 			FileUtils.cp(@testSetMappings[@population.fittestChromosome.id], @temporaryMappings[replaceChromsomeID]) 
 		end
 
-		# Make the next test case directory
-		def prepare_storage()
-           if !File.directory?("tests" + File::SEPARATOR + "#{@nextGenerationNumber}") then
-                FileUtils.mkdir_p("tests" + File::SEPARATOR + "#{@nextGenerationNumber}")
-            end
-		end
-
 		# Seeds the initial population by unzipping the test cases
 		def seed()
-			prepare_storage()			
 			chromosomeNumber = 0
 			testSetMapping = File.open("tests" + File::SEPARATOR + "test_set_map.txt", "w+")
 			Zip::ZipFile.open(@simpleGAConfig['Initial Population']) do |zipfile|
@@ -232,7 +223,7 @@ module Mamba
 						#
 						# Write the zipped file data
 						#
-						@testSetMappings[chromosomeNumber] = "tests" + File::SEPARATOR + "0" + File::SEPARATOR + "#{chromosomeNumber}#{File.extname(entry.name)}"
+						@testSetMappings[chromosomeNumber] = "tests" + File::SEPARATOR + "#{@nextGenerationNumber}." + "#{chromosomeNumber}#{File.extname(entry.name)}"
 						File.open("#{@testSetMappings[chromosomeNumber]}", "w+") do |newTestCase|
 							newTestCase.write(zipfile.read(entry.name))
 						end
