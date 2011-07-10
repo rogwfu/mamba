@@ -55,9 +55,15 @@ module Mamba
 
 			remoteFD = @storage.dbHandle.get(testCaseID)
 			testCaseFilename = "tests#{File::SEPARATOR}#{remoteFD.filename}"
-			localFD = File.open(testCaseFilename, "w+b")
-			localFD.write(remoteFD.read())
-			localFD.close()
+
+			#
+			# Optimization (Organizer already has all the files)
+			#
+			if(!@organizer) then
+				localFD = File.open(testCaseFilename, "w+b")
+				localFD.write(remoteFD.read())
+				localFD.close()
+			end
 
 			@executor.run(@logger, testCaseFilename)
 
@@ -66,6 +72,15 @@ module Mamba
 			#
 #			@storage.dbHandle.put(File.open(newTestCaseFilename), :_id => "0:#{testCaseNumber}", :filename => newTestCaseFilename)
 
+			#
+			# Cleanup remotes
+			#
+			if(!@organizer) then
+				FileUtils.rm(testCaseFilename)
+			end
+
+#			FileUtils.rm(testCaseFilename + ".xml")
+			
 			#
 			# Post test case results 0.1.2
 			#
