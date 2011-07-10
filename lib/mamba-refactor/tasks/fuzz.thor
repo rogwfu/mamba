@@ -1,7 +1,9 @@
+require 'rubygems'
 require 'mamba-refactor'
 require 'daemons'
 require 'yaml'
-require 'zip/zipfilesystem'
+require 'zip/zip'
+
 class Fuzz < Thor
 	namespace :fuzz
 

@@ -90,7 +90,7 @@ module Mamba
 			@supportedTracers.each_key do |tracerKey|
 				@exeLambdas[tracerKey] = lambda do |log, newTestCase|
 					@runningPid = Process.spawn("#{@supportedTracers[tracerKey]} " + @application, [:out, :err]=>["logs/application.log", File::CREAT|File::WRONLY|File::APPEND]) 
-					FileUtils.touch("app.pid." + @runningPid.to_s())
+					File.new("app.pid." + @runningPid.to_s(), "w+").close()
 					appscriptPid = Process.spawn("opener.rb #{@runningPid} #{Dir.pwd() + File::SEPARATOR + newTestCase}")
 					runtime = self.send(appMonitor.to_sym)
 
@@ -118,7 +118,7 @@ module Mamba
 			@supportedTracers.each_key do |tracerKey|
 				@exeLambdas[tracerKey] = lambda do |log, newTestCase|
 					@runningPid = Process.spawn("#{@supportedTracers[tracerKey]} " + @application + " #{deliveryMethod}" + " #{newTestCase}", [:out, :err] => ["logs/application.log", File::CREAT|File::WRONLY|File::APPEND]) 
-					FileUtils.touch("app.pid." + @runningPid.to_s())
+					File.new("app.pid." + @runningPid.to_s(), "w+").close()
 					runtime = self.send(appMonitor.to_sym)
 					application_cleanup()
 					return [@runningPid, runtime]
