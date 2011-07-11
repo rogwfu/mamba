@@ -40,7 +40,7 @@ class Fuzz < Thor
 		#
 		# Hand over control to fuzzer
 		#
-		fuzzer = Kernel.const_get("Mamba").const_get(mambaConfig[:type]).new(mambaConfig)
+		fuzzer = Kernel.const_get("Mamba").const_get("Algorithms").const_get(mambaConfig[:type]).new(mambaConfig)
 		fuzzer.fuzz()
 		fuzzer.report()
 	end
@@ -133,7 +133,7 @@ class Fuzz < Thor
 					#
 					# Extract the contents
 					#
-					say "Writing: #{entry.name}", :green
+					say "Writing: #{entry.name}", :blue
 					zipfile.extract(entry, entry.name)
 				else
 					next
@@ -176,11 +176,12 @@ class Fuzz < Thor
 		# Ensure fuzzing algorithm is implemented with required inheritance and methods
 		# @param [String] The algorithm for fuzzing
 		def validate_algorithm_type(type)
+			algorithmsConst = Kernel.const_get("Mamba").const_get("Algorithms")
 
 			#
 			# Validate if defined
 			#
-			if(!Kernel.const_get("Mamba").const_defined?(type)) then
+			if(!algorithmsConst.const_defined?(type)) then
 				say "Error: Unsupported fuzzing algorithm (#{type})", :red
 				exit(1)	
 			end
@@ -188,12 +189,12 @@ class Fuzz < Thor
 			#
 			# Validate methods
 			#
-			if(!Kernel.const_get("Mamba").const_get(type).respond_to?("generate_config")) then
+			if(!algorithmsConst.const_get(type).respond_to?("generate_config")) then
 				say "Error: Unsupported fuzzing algorithm (#{type}) - Missing generate_config() method", :red
 				exit(1)
 			end
 
-			if(!Kernel.const_get("Mamba").const_get(type).method_defined?("fuzz")) then
+			if(!algorithmsConst.const_get(type).method_defined?("fuzz")) then
 				say "Error: Unsupported fuzzing algorithm (#{type}) - Missing fuzz() method", :red
 				exit(1)
 			end
@@ -201,7 +202,7 @@ class Fuzz < Thor
 			#
 			# Validate algorithms inheritance
 			#
-			if(!Kernel.const_get("Mamba").const_get(type).ancestors.to_s().include?("Mamba::Fuzzer")) then
+			if(!algorithmsConst.const_get(type).ancestors.to_s().include?("Mamba::Fuzzer")) then
 				say "Error: Unsupported fuzzing algorithm (#{type}) - Does not inherit from Mamba::Fuzzer", :red
 				exit(1)
 			end

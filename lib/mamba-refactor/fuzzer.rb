@@ -131,7 +131,7 @@ module Mamba
 		# Read the YAML configuration file for the fuzzer
 		# @param [FuzzerType] The class name of the fuzzer type configured in mamba.yml
 		def read_fuzzer_config(fuzzerType)
-			fuzzerType.gsub!(/^.+Mamba::(\w+):.+/, '\1')
+			fuzzerType.gsub!(/^.+Mamba::Algorithms::(\w+):.+/, '\1')
 			fuzzerConfig = YAML.load_file("configs/#{fuzzerType}.yml")
 			return(fuzzerConfig)
 		end
