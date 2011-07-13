@@ -9,13 +9,10 @@ module Mamba
 				randomMutator = RandomGenerator.new() 	
 				children.each do |child|
 					tmpFile = File.new("tests" + File::SEPARATOR + "temp-test", 'wb+')
-					@logger.info("(Before rewind) Child: #{child.inspect()}, Position: #{child.pos()}")
 					child.rewind()
-					@logger.info("Child: #{child.inspect()}, Position: #{child.pos()}")
 					childSize = child.size()
 					0.upto(childSize) do
 						if(Kernel.rand() < @simpleGAConfig['Mutation Rate']) then
-							@logger.info("Mutating")
 							child.read(1)
 							tmpFile.write(randomMutator.bytes(1))
 						else
@@ -26,7 +23,6 @@ module Mamba
 					tmpFile.close()
 					FileUtils.mv(tmpFile.path(), child.path())
 				end
-				@logger.info("Finished loop")
 				children.clear()
 			end
 		end
