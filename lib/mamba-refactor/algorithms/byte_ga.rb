@@ -12,15 +12,14 @@ module Mamba
 					@logger.info("(Before rewind) Child: #{child.inspect()}, Position: #{child.pos()}")
 					child.rewind()
 					@logger.info("Child: #{child.inspect()}, Position: #{child.pos()}")
-					child.each_byte do |byte|
-						@logger.info("Byte #{child.pos()}:#{byte}")
+					childSize = child.size()
+					0.upto(childSize) do
 						if(Kernel.rand() < @simpleGAConfig['Mutation Rate']) then
-							@logger.info("Mutate")
-#							numWritten = child.write(randomMutator.bytes(1)) 
+							@logger.info("Mutating")
+							child.read(1)
 							tmpFile.write(randomMutator.bytes(1))
-#							@logger.info("Wrote: #{numWritten} bytes")
 						else
-							tmpFile.print([byte].pack("c"))
+							tmpFile.write(child.read(1))
 						end
 					end
 					child.close()
