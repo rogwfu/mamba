@@ -8,6 +8,7 @@ require 'mamba-refactor/fuzzer'
 #
 require 'mamba-refactor/algorithms/mangle'
 require 'mamba-refactor/algorithms/simple_ga'
+require 'mamba-refactor/algorithms/byte_ga'
 
 #
 # Distributed Algorithms
