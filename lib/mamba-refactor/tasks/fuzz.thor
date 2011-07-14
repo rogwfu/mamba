@@ -178,6 +178,7 @@ class Fuzz < Thor
 		def validate_algorithm_type(type)
 			algorithmsConst = Kernel.const_get("Mamba").const_get("Algorithms")
 
+			say "Type is: #{type}"
 			#
 			# Validate if defined
 			#

@@ -1,11 +1,11 @@
 module Mamba
 	module Algorithms
-		class ByteGeneticAlgorithm < SimpleGeneticAlgorithm 
-
+		module ByteMutation
 			# Mutate a file by randoming selecting bytes through out the file with 
 			# the probability for each byte being mutated being the Mutation Rate
 			# @param [Array] An array of children file descriptors
 			def mutate(children)
+				@logger.info("In Byte Mutation Function")
 				randomMutator = RandomGenerator.new() 	
 				children.each do |child|
 					tmpFile = File.new("tests" + File::SEPARATOR + "temp-test", 'wb+')
@@ -25,6 +25,14 @@ module Mamba
 				end
 				children.clear()
 			end
+		end
+	end
+end
+
+module Mamba
+	module Algorithms
+		class ByteGeneticAlgorithm < SimpleGeneticAlgorithm 
+			include Mamba::Algorithms::ByteMutation
 		end
 	end
 end

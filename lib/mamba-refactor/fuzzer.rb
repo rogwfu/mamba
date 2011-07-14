@@ -22,7 +22,8 @@ module Mamba
 			#
 			# Check for distributed fuzzer setup
 			#
-			if(self.class.to_s.start_with?("Mamba::Distributed")) then
+			if(self.class.to_s.start_with?("Mamba::Algorithms::Distributed")) then
+				@logger.info("Puts in the distriburted function: #{mambaConfig[:server]}")
 				@reporter = Reporter.new(true)
 				@amqpServer = mambaConfig[:server]
 				initialize_storage(mambaConfig)

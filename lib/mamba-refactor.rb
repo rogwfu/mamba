@@ -15,3 +15,4 @@ require 'mamba-refactor/algorithms/byte_ga'
 #
 require 'mamba-refactor/algorithms/distributed_mangle'
 require 'mamba-refactor/algorithms/distributed_simple_ga'
+require 'mamba-refactor/algorithms/distributed_byte_ga'

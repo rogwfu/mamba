@@ -9,7 +9,6 @@ module Mamba
 
 					if(@organizer) then
 						seed do |testCaseNumber|
-							@logger.info("Test case number in distributed is: #{testCaseNumber}")
 							seed_distributed(testCaseNumber)
 						end
 					end
@@ -56,6 +55,7 @@ module Mamba
 
 				remoteFD = @storage.dbHandle.get(testCaseID)
 				testCaseFilename = "tests#{File::SEPARATOR}#{remoteFD.filename}"
+				@logger.info("Got this for the remote test case filename: #{remoteFD.filename}")
 
 				#
 				# Optimization (Organizer already has all the files)
@@ -99,7 +99,7 @@ module Mamba
 			# @param [Fixnum] The test case number
 			def seed_distributed(testCaseNumber)
 				testCaseID = @nextGenerationNumber.to_s() + "." + testCaseNumber.to_s()
-				remoteTestCaseFilename = "#{@nextGenerationNumber.to_s()}." + @testSetMappings[testCaseNumber].split(File::SEPARATOR)[-1]
+				remoteTestCaseFilename = @testSetMappings[testCaseNumber].split(File::SEPARATOR)[-1]
 				@storage.dbHandle.put(File.open(@testSetMappings[testCaseNumber]), :_id => testCaseID, :filename => remoteTestCaseFilename)
 				@direct_exchange.publish(testCaseID, :routing_key => @queue.name)
 			end
