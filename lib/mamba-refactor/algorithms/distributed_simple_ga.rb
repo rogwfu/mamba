@@ -55,7 +55,6 @@ module Mamba
 
 				remoteFD = @storage.dbHandle.get(testCaseID)
 				testCaseFilename = "tests#{File::SEPARATOR}#{remoteFD.filename}"
-				@logger.info("Got this for the remote test case filename: #{remoteFD.filename}")
 
 				#
 				# Optimization (Organizer already has all the files)
