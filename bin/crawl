@@ -8,6 +8,7 @@ require 'getoptlong'
 require 'mkmf'
 require 'digest/sha2'
 require 'zip/zip'
+require 'cgi'
 
 # Function to tell user the usage
 def usage()
@@ -16,6 +17,7 @@ Usage: crawl [options]
 	--filetype  (-f)    Filetype to download examples (ex. pdf, doc, ppt) 
 	--help      (-h)    Display the usage information 
 	--num       (-n)    Number of files to download 
+	--terms	    (-t)    Filename containing search terms to mix into the searches (a search term per line) 
 	--zip       (-z)    Zip the files into testset.zip (Warning!: old teset.zip removed) 
 
 	USAGEND
@@ -36,6 +38,8 @@ def parse_options(opts)
 			usage()
 		when '--num'
 			config['num'] = arg.to_i
+		when '--terms'
+			config['termFilename'] = arg
 		when '--zip'
 			config['zip'] = true
 		else
@@ -49,13 +53,11 @@ end
 # Class To download files from google
 class Downloader
 	# Create an instance of the Downloader class
-	# @param [String] The filetype to filter google searches
-	def initialize(filetype)
+	# @param [String] Filename of a file containing search terms (1 per line)
+	def initialize(termFilename)
 		# Create a hash to hold all signatures
 		@fileSignatures = Hash.new()
 
-		# Create the base url
-		@url = "http://www.google.com/search?q=filetype:#{filetype}&filter=0"
 		srand(Time.now().to_i)
 
 		# Try to find wget for faster download
@@ -76,6 +78,13 @@ class Downloader
 			end	
 		end
 
+		# Read in some terms to spice it up
+		if(termFilename) then
+			@searchTerms = parse_terms(termFilename)
+		else
+			@searchTerms = [CGI::escape(" ")] 
+		end
+
 		return(self)
 	end
 
@@ -85,14 +94,18 @@ class Downloader
 	def download(numRequestedFiles, fileSuffix)
 		docsCollected = 0
 		while docsCollected < numRequestedFiles do
-			# 1000 is the maximum returned by a google search
-			doc = Hpricot(open(@url + "&start=" + rand(1000).to_s()).read)
+			# Create the base url
+			url = "http://www.google.com/search?q=#{@searchTerms[rand(@searchTerms.length())]}#{CGI::escape(' ')}filetype:#{fileSuffix}&filter=0"
 
+			# 1000 is the maximum returned by a google search
+			doc = Hpricot(open(url + "&start=" + rand(1000).to_s()).read)
+
+			pageLimit = 0
 			# Download all the files on the page
 			(doc/"li[@class='g']").each do |li|
 
 				# Check for reaching threshold
-				if(docsCollected >= numRequestedFiles) then
+				if(docsCollected >= numRequestedFiles or pageLimit == 3) then
 					break
 				end
 
@@ -117,16 +130,37 @@ class Downloader
 				# Check for uniqueness
 				exemplarHash = hash(exemplarName)
 				if(downloaded?(exemplarHash) or File.stat(exemplarName).size == 0) then
-					FileUtils.rm(exmplarName)
+					FileUtils.rm(exemplarName)
 				else
 					@fileSignatures[exemplarHash] = true
 					docsCollected +=  1
+					pageLimit += 1
 				end
 			end
 		end
 	end
 
 	private
+
+	# Parse the terms in the file
+	# @param [String] The name of the search term file
+	# @return [Array] An array of search terms
+	def parse_terms(termFilename)
+
+		# Error Check 
+		if(!File.exists?(termFilename))
+			puts "Error: File #{termFilename} does not exist!"	
+			exit(1)
+		end
+
+		terms = Array.new()
+		File.open(termFilename, 'r') do |fileHandler|
+			fileHandler.each_line do |line|
+				terms << CGI::escape(line.chomp())
+			end
+		end
+		return(terms)
+	end
 
 	# Hash the file just downloaded
 	# @param [String] Downloaded file's name
@@ -155,6 +189,7 @@ opts = GetoptLong.new(
 	['--filetype',      '-f', GetoptLong::REQUIRED_ARGUMENT],
 	['--num',           '-n', GetoptLong::REQUIRED_ARGUMENT],
 	['--help',          '-h', GetoptLong::NO_ARGUMENT],
+	['--terms',         '-t', GetoptLong::REQUIRED_ARGUMENT],
 	['--zip',			'-z', GetoptLong::NO_ARGUMENT])
 
 # Parse the command line options 
@@ -166,7 +201,7 @@ if(config['filetype'] == nil || config['num'] == nil) then
 end
 
 # Create a downloader and download files
-Downloader.new(config['filetype']).download(config['num'], config['filetype'])
+Downloader.new(config['termFilename']).download(config['num'], config['filetype'])
 
 # Check for Zip option
 if(config['zip']) then
