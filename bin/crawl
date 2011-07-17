@@ -7,6 +7,7 @@ require 'hpricot'
 require 'getoptlong'
 require 'mkmf'
 require 'digest/sha2'
+require 'zip/zip'
 
 # Function to tell user the usage
 def usage()
@@ -15,6 +16,7 @@ Usage: crawl [options]
 	--filetype  (-f)    Filetype to download examples (ex. pdf, doc, ppt) 
 	--help      (-h)    Display the usage information 
 	--num       (-n)    Number of files to download 
+	--zip       (-z)    Zip the files into testset.zip (Warning!: old teset.zip removed) 
 
 	USAGEND
 	puts usageStr
@@ -34,6 +36,8 @@ def parse_options(opts)
 			usage()
 		when '--num'
 			config['num'] = arg.to_i
+		when '--zip'
+			config['zip'] = true
 		else
 			usage()
 		end
@@ -150,7 +154,8 @@ end
 opts = GetoptLong.new(
 	['--filetype',      '-f', GetoptLong::REQUIRED_ARGUMENT],
 	['--num',           '-n', GetoptLong::REQUIRED_ARGUMENT],
-	['--help',          '-h', GetoptLong::NO_ARGUMENT])
+	['--help',          '-h', GetoptLong::NO_ARGUMENT],
+	['--zip',			'-z', GetoptLong::NO_ARGUMENT])
 
 # Parse the command line options 
 config = parse_options(opts)
@@ -162,3 +167,19 @@ end
 
 # Create a downloader and download files
 Downloader.new(config['filetype']).download(config['num'], config['filetype'])
+
+# Check for Zip option
+if(config['zip']) then
+	# Remove old testset
+	if(File.exists?("testset.zip")) then
+	   FileUtils.rm("testset.zip")
+	end
+
+	# Create a test set zip package
+	Zip::ZipFile.open("testset.zip", Zip::ZipFile::CREATE) do |zipfile|
+		entries = Dir.glob("*.#{config['filetype']}")
+		entries.each do |entry|
+			zipfile.add(entry, entry)
+		end
+	end
+end
