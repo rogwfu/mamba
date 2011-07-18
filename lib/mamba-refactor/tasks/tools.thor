@@ -15,6 +15,8 @@ class Tools < Thor
 	def seed()
 		say "Downloading test set from Google searches...", :blue
 		
+		validate_terms(options[:terms]) if options[:terms]
+
 		# Create a downloader and download files
 		googler = Kernel.const_get("Mamba").const_get("Tools"). const_get("Downloader").new(options[:terms])
 		googler.download(options[:num], options[:filetype])
@@ -22,6 +24,18 @@ class Tools < Thor
 		# Create an archive 
 		if(options[:zip]) then
 			googler.zip(options[:filetype])
+		end
+	end
+
+	no_tasks do
+		# Validate the terms filename given against a strict whitelist
+		# @param [String] The filename continaing the terms
+		def validate_terms(termsFilename)
+            if(termsFilename !~ /^\w+\.?\w?$/) then
+                say "Error: Incorrect filename format for terms (#{termsFilename})", :red
+				say "Error: Must conform to: \w\.?\w? and it must reside in the same directory", :red
+                exit(1)
+            end
 		end
 	end
 end

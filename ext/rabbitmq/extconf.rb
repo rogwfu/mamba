@@ -18,7 +18,7 @@ end
 #
 rabbitmqURL = ""
 case Config::CONFIG["host_os"]
-when /^darwin10\.\d+\.\d+$/
+when /^darwin10\.\d+(\.\d+)?$/
 	rabbitmqURL = "http://www.rabbitmq.com/releases/rabbitmq-server/v2.3.1/rabbitmq-server-2.3.1.tar.gz"
 else
 	raise "Error: Unsupported Operating System (#{Config::CONFIG["host_os"]})"
