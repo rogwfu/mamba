@@ -20,7 +20,7 @@ class Fuzz < Thor
 			:multiple	=> false,
 			:dir_mode	=> :normal,
 			:dir		=> FileUtils.pwd(),
-			:log_dir   => "#{FileUtils.pwd()}/logs",
+			:log_dir   => "#{FileUtils.pwd()}#{File::SEPARATOR}logs",
 			:backtrace  => true
 		}
 
@@ -90,7 +90,7 @@ class Fuzz < Thor
 		# Create the Package File
 		#
 		Zip::ZipFile.open(packageFilename, Zip::ZipFile::CREATE) do |zipfile|
-			entries = Dir.glob("configs/*.yml") + Dir.glob("disassemblies/*") + Dir.glob("models/*") + Dir.glob("tests/*")
+			entries = Dir.glob("configs#{File::SEPARATOR}*.yml") + Dir.glob("disassemblies#{File::SEPARATOR}*") + Dir.glob("models#{File::SEPARATOR}*") + Dir.glob("tests#{File::SEPARATOR}*")
 			entries.each do |entry|
 				zipfile.add(entry, entry)
 			end
@@ -146,7 +146,7 @@ class Fuzz < Thor
 		# Reads the Mamba configuration file from the current environment
 		# @return [Hash] configuration settings
 		def read_config()
-			config = YAML.load_file("configs/Mamba.yml")
+			config = YAML.load_file("configs#{File::SEPARATOR}Mamba.yml")
 			return(config)
 		end
 
@@ -178,7 +178,6 @@ class Fuzz < Thor
 		def validate_algorithm_type(type)
 			algorithmsConst = Kernel.const_get("Mamba").const_get("Algorithms")
 
-			say "Type is: #{type}"
 			#
 			# Validate if defined
 			#
@@ -222,7 +221,7 @@ class Fuzz < Thor
 		# Ensures a clean environment for starting a new fuzzer
 		def cleanup_old_environment()
 			%w(configs databases disassembles logs models queues tests).each do |dir|
-				FileUtils.rm_rf(Dir.glob("#{dir}/*"), :secure => true)
+				FileUtils.rm_rf(Dir.glob("#{dir}#{File::SEPARATOR}*"), :secure => true)
 			end
 		end
 
@@ -234,7 +233,7 @@ class Fuzz < Thor
 
 			if(config[:organizer] or swapped) then
 				config[:organizer] = !config[:organizer]	
-				mambaConfigFile = File.new("configs/Mamba.yml", "w+")
+				mambaConfigFile = File.new("configs#{File::SEPARATOR}Mamba.yml", "w+")
 				mambaConfigFile.write(YAML::dump(config))
 				mambaConfigFile.close()
 				return(true)
