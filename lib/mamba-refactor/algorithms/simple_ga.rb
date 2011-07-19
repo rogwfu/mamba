@@ -24,7 +24,7 @@ module Mamba
 				simpleGAConfig['Population Size'] = 	DEFAULT_POPULATION_SIZE 
 				simpleGAConfig['Fitness Function'] = 	DEFAULT_FITNESS_FUNCTION	
 				simpleGAConfig['Initial Population'] =  DEFAULT_INITIAL_POPULATION_FILE
-				YAML::dump(simpleGAConfig)
+				super(simpleGAConfig)
 			end
 
 			# Initialize SimpleGeneticAlgorithm fuzzer and the generic fuzzer class
