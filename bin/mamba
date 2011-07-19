@@ -20,7 +20,7 @@ module Mamba
 		method_option :port,         :default => 27017, 	:type => :numeric, 	:aliases => "-p", :desc => "Port for distributed fuzzing"  
 		method_option :timeout,      :default => 0, 		:type => :numeric, 	:aliases => "-t", :desc => "Time to run an executable for each testcase in seconds (ex. 20)" 
 		method_option :server,       :default => "fuzz.io", :aliases => "-s", :desc => "Server address for distributed fuzzing (ex. fuzz.io)" 
-		method_option :type,         :default => "Mangle", 	:aliases => "-y", :desc => "Type of fuzzer to create (Supported Types: #{Mamba::Algorithms.constants.select(){|algorithm| algorithm !~/^Distributed/}.map!() {|algoSym| algoSym.to_s()}.sort!()})"
+		method_option :type,         :default => "Mangle", 	:aliases => "-y", :desc => "Type of fuzzer to create (Supported Types: #{Mamba::Algorithms.constants.select(){|algorithm| algorithm !~/^Distributed/ and algorithm !~/^Helpers/}.map!() {|algoSym| algoSym.to_s()}.sort!()})"
 
 		# Create a fuzzing environment with the associated settings 
 		# @param [String, #read] top-level directory to create for the fuzzing envionment (defaults to: mamba-fuzzer)
