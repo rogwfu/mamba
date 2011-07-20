@@ -85,8 +85,8 @@ module Mamba
 				#
 				count.times do
 					offset = rand(@mangleConfig['Header Size'])
-					secData[offset] = rand() % 256
-					if(rand() % 2 && secData[offset] < 128) then
+					secData[offset] = rand(256)
+					if(rand(2) && secData[offset] < 128) then
 						secData[offset] = 0xff
 					end
 				end
