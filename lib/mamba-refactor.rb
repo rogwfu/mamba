@@ -7,7 +7,6 @@ require 'mamba-refactor/tools/downloader'
 # Helpers
 require 'mamba-refactor/algorithms/helpers/byte_mutation'
 require 'mamba-refactor/algorithms/helpers/mangle_mutation'
-require 'mamba-refactor/algorithms/helpers/mangle_mixin'
 
 # Centralized Algorithms
 require 'mamba-refactor/algorithms/mangle'
