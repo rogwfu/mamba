@@ -4,7 +4,6 @@ require 'hpricot'
 require 'mkmf'
 require 'digest/sha2'
 require 'zip/zip'
-require 'cgi'
 
 module Mamba
 	module Tools

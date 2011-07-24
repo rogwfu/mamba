@@ -58,15 +58,16 @@ VALUE FuzzRnd_data(VALUE self, VALUE length)
   len = FIX2INT(length);
   data = rb_str_buf_new(len);
 
+  rb_str_resize(data, len);
+
 #if defined(RUBY_1_9_x)
-  p = RSTRING_PTR(data);
+  VALUE str_data = StringValue(data);
+  p = RSTRING_PTR(str_data);
 #elif defined(RUBY_1_8_x)
   p = RSTRING(data)->ptr;
 #else
 #error unsupported RUBY_VERSION
 #endif
-
-  rb_str_resize(data, len);
 
   for (n=0;n<len;n++)             /* run the ArcFour algorithm as long as it needs */
   {
@@ -79,7 +80,7 @@ VALUE FuzzRnd_data(VALUE self, VALUE length)
     p[n]  = ArcFour.sbox[(a+b) & 0xFF];
   }
 
-  return data;
+  return str_data;
 }
 
 
@@ -116,8 +117,9 @@ VALUE FuzzRnd_seed(VALUE self, VALUE data) {
   REQUIRE_TYPE(data, T_STRING);
 
 #if defined(RUBY_1_9_x)
-  key = RSTRING_PTR(data);
-  key_len = RSTRING_LEN(data);;
+  VALUE str = StringValue(data);
+  key = RSTRING_PTR(str);
+  key_len = RSTRING_LEN(str);;
 #elif defined(RUBY_1_8_x)
   key = RSTRING(data)->ptr;
   key_len = RSTRING(data)->len;
