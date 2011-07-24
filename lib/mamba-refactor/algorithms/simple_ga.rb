@@ -191,7 +191,6 @@ module Mamba
 				children.each do |child|
 					randomMutator = RandomGenerator.new() 	
 					if(rand() < @simpleGAConfig['Mutation Rate']) then
-						@logger.info("Mutate: #{child.path()}")
 						mutationPoint = rand(child.size())
 						child.seek(mutationPoint, IO::SEEK_SET)
 						child.write(randomMutator.bytes(rand(10) + 1)) # + 1 ensures at least one byte mutated
