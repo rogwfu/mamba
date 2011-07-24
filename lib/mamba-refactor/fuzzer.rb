@@ -12,6 +12,12 @@ require 'uuidtools'
 module Mamba
 	class Fuzzer
 
+		# Class method to dump a fuzzer configuration
+		# @param [Hash] A hash containing configuration parameters
+		def self.generate_config(configuration)
+			YAML::dump(configuration)
+		end
+
 		# Create a new instance of a fuzzer
 		# @param [Hash] Contains global configuration of the mamba fuzzing framework
 		def initialize(mambaConfig)

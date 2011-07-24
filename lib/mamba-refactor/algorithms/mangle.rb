@@ -13,7 +13,7 @@ module Mamba
 				mangleConfig['Default Offset'] = DEFAULT_OFFSET
 				mangleConfig['Header Size'] = DEFAULT_HEADER_SIZE
 				mangleConfig['Number of Testcases'] = DEFAULT_NUMBER_CASES
-				YAML::dump(mangleConfig)
+				super(mangleConfig)
 			end
 
 			# Initializes Mangle fuzzer and the generic fuzzer class
