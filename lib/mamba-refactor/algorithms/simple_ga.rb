@@ -153,7 +153,7 @@ module Mamba
 				# So this ends up switching parents to create two different children
 				# Mapping: child 0: 0 1 and child 1: 1 0
 				2.times do |iter|
-					children[iter] = File.open(children[iter], "r+b") 
+					children[iter] = File.open(children[iter], "w+b") 
 					parents[iter-1].seek(crossoverPoint, IO::SEEK_SET)
 					children[iter].write(parents[iter].read(crossoverPoint))
 					children[iter].write(parents[iter-1].read())
