@@ -17,19 +17,16 @@ module Mamba
 			end
 
 			# Initializes Mangle fuzzer and the generic fuzzer class
+			# @param [Hash] Configuration of the current instantiation of the Mamba fuzzing framework
 			def initialize(mambaConfig)
 				super(mambaConfig)
 				@mangleConfig = read_fuzzer_config(self.to_s()) 
 				@baseFileSuffix = File.extname(@mangleConfig['Basefile'])
 
-				#
 				# Print configuration to log file
-				#
 				dump_config(@mangleConfig)
 
-				#
 				# Seed random number generator
-				#
 				seed = Time.now.to_i()
 				srand(seed)
 				@logger.info("SRAND Seed: #{seed}")
@@ -167,18 +164,20 @@ module Mamba
 			# Ensure the base test case conforms to testing requirements 
 			# @return [Bool] True if the base test case is conforms, False otherwise
 			def valid_base_test_case?()
-				#
 				# Check Existence 
-				#
 				if(!File.exists?(@mangleConfig['Basefile'])) then
 					@logger.fatal("Base testcase file: #{@mangleConfig['Basefile']} does not exist")
 					@logger.fatal("Exiting....")
 					return(false)
 				end
 
-				#
+				# Error check for basefile naming
+				if(@mangleConfig['Basefile'] =~ /^tests\/[0-9]+/) then
+					@logger.fatal("Basefile (#{@mangleConfig['Basefile']}) can not match regular expression /^tests\/[0-9]+/")	
+					return(false)
+				end
+
 				# Error Check Negative/Zero 
-				#
 				if(@mangleConfig['Default Offset'] < 0 || @mangleConfig['Header Size'] <= 0) then
 					@logger.fatal("Either the Header size (#{@mangleConfig['Header Size']}) is <= 0 or the Default Offset (#{@mangleConfig['Default Offset']}) < 0") 
 					@logger.fatal("Exiting....")
