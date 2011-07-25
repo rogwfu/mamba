@@ -2,7 +2,7 @@ module Mamba
 	module Algorithms
 		module Helpers
 			module MangleMutation
-				# Metaprogramming to add additional options to GA Configuration Hash
+				# Metaprogramming for additional options to GA Configuration Hash
 				# @param [Symbol] The class name
 				def self.included(base)
 					class << base
