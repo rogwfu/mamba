@@ -1,3 +1,5 @@
+require 'amatch'
+
 module Mamba
 	module Algorithms
 		module Helpers
@@ -15,8 +17,8 @@ module Mamba
 					end
 				end
 
-
 				def evolve() 
+					calculate_incest_prevention()
 					0.step(@simpleGAConfig['Population Size']-1, 2) do |childID|
 						# Randomly select parents
 						parents, children = open_parents_and_children(childID, "random")
@@ -25,6 +27,21 @@ module Mamba
 
 					# Cleanup the mess from this population
 					cleanup()
+				end
+
+				# Calculate incest prevention measurement
+				# @returns [] Incest prevention measure for the current population
+				def calculate_incest_prevention()
+					largestChromosomeSize = 0
+					@testSetMappings.each_value do |testFile|
+						chromosomeSize = File.size?(testFile)
+						if(chromosomeSize > largestChromosomeSize) then
+							largestChromosomeSize = chromosomeSize
+						end
+					end
+
+					@logger.info("Largest File size is: #{largestChromosomeSize}")
+					@logger.info("Incest Prevention should be: #{largestChromosomeSize/4}")
 				end
 
 				# Half Uniform crossover (HUX) with incest prevention
