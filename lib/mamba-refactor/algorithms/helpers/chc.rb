@@ -14,6 +14,7 @@ module Mamba
 								# Delete unused rates from the genetic algorithm's configuration
 								gaConfig.delete("Mutation Rate")
 								gaConfig.delete("Crossover Rate")
+
 								# Starting incest prevention factor (Historical Initial Threshold)
 								gaConfig["Incest Prevention"] = INCEST_PREVENTION_INITIAL_THRESHOLD
 							end
@@ -22,19 +23,24 @@ module Mamba
 				end
 
 				def evolve() 
-					calculate_incest_prevention()
-					0.step(@simpleGAConfig['Population Size']-1, 2) do |childID|
+					incestThreshold = calculate_incest_prevention()
+					0.step(@simpleGAConfig['Population Size']-1, 1) do |childID|
 						# Randomly select parents
-						parents, children = open_parents_and_children(childID, "random")
-						crossover(parents, children)
+						parents, child = open_parents_and_children(childID, "random")
+
+						# Perform crossover based on incest threshold
+						uniform_crossover(parents, childID, child, incestThreshold)
 					end
 
 					# Cleanup the mess from this population
 					cleanup()
+
+					# Hack for right now
+					@simpleGAConfig['Population Size'] = @testSetMappings.size() 
 				end
 
 				# Calculate incest prevention measurement
-				# @returns [] Incest prevention measure for the current population
+				# @returns [Fixnum] Incest prevention measure for the current population (Number of bytes required to be different)
 				def calculate_incest_prevention()
 					largestChromosomeSize = 0
 					@testSetMappings.each_value do |testFile|
@@ -44,18 +50,53 @@ module Mamba
 						end
 					end
 
+					# Average Chromosome Length * Incest Prevention Measure
+					currentIncestThreshold = (largestChromosomeSize/@testSetMappings.size()) *  @simpleGAConfig["Incest Prevention"]
+
 					@logger.info("Largest File size is: #{largestChromosomeSize}")
-					@logger.info("Incest Prevention should be: #{largestChromosomeSize * @simpleGAConfig["Incest Prevention"]}")
+					@logger.info("Average File size is: #{largestChromosomeSize/@testSetMappings.size()}")
+					@logger.info("Incest Prevention should be: #{currentIncestThreshold}")
+
+					return(currentIncestThreshold)
+				end
+
+				# Function to compose new filenames for children of the next generation
+				# @param [Fixnum] The current child number being generated
+				# @param [String] The selection method for the parents
+				# @returns [Array, String] Opens File descriptors for parents and children  
+				def open_parents_and_children(childID, selectionMethod="roulette")
+					parents = Array.new()
+
+					2.times do
+						parents << File.open(@testSetMappings[@population.send(selectionMethod.to_sym()).id], "rb") 
+					end
+
+					@logger.info("In open function: " + parents.inspect())
+					child = "tests" + File::SEPARATOR + "#{@nextGenerationNumber}."  + "#{childID}." + parents[0].path.split(".")[-1] 
+					@logger.info("In open children: " + child.inspect())
+
+					return [parents, child]
 				end
 
 				# Half Uniform crossover (HUX) with incest prevention
 				# @param [Array] Array of parent file descriptors 
-				# @param [Array] Array of children filenames 
-				def crossover(parents, children)
-					2.times do |iter|
-						@logger.info("Copying: #{parents[iter].path} to #{children[iter]}")
-						FileUtils.cp(parents[iter].path, children[iter]) 
+				# @param [Fixnum] The current child number being generated
+				# @param [String] Child Filename 
+				# @param [Fixnum] Number bytes parents must differ before than can mate
+				def uniform_crossover(parents, childID, child, incestThreshold)
+
+					# Calculate the hamming distance between the parents
+					hamming = Amatch::Hamming.new(parents[0].read())
+					hammingDistance = hamming.match(parents[1].read())
+
+					@logger.info("Hamming distance is: #{hammingDistance}")
+					if(hammingDistance >= incestThreshold) then
+						@logger.info("Greater than threshold")
+						@logger.info("Copying: #{parents[0].path} to #{child}")
+						FileUtils.cp(parents[0].path, child) 
+						@temporaryMappings[childID] = child 
 					end
+
 					# Cleanup filename arrays
 					parents.each { |parent| parent.close()}
 					parents.clear()
