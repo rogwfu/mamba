@@ -4,6 +4,8 @@ module Mamba
 	module Algorithms
 		module Helpers
 			module CHC
+				INCEST_PREVENTION_INITIAL_THRESHOLD = 0.25
+
 				# Metaprogramming for additional options to GA Configuration Hash
 				def self.included(base)
 					class << base
@@ -12,6 +14,8 @@ module Mamba
 								# Delete unused rates from the genetic algorithm's configuration
 								gaConfig.delete("Mutation Rate")
 								gaConfig.delete("Crossover Rate")
+								# Starting incest prevention factor (Historical Initial Threshold)
+								gaConfig["Incest Prevention"] = INCEST_PREVENTION_INITIAL_THRESHOLD
 							end
 						end
 					end
@@ -41,7 +45,7 @@ module Mamba
 					end
 
 					@logger.info("Largest File size is: #{largestChromosomeSize}")
-					@logger.info("Incest Prevention should be: #{largestChromosomeSize/4}")
+					@logger.info("Incest Prevention should be: #{largestChromosomeSize * @simpleGAConfig["Incest Prevention"]}")
 				end
 
 				# Half Uniform crossover (HUX) with incest prevention
