@@ -35,11 +35,6 @@ module Mamba
 						uniform_crossover(parents, childID, child, incestThreshold)
 					end
 
-					# Cleanup the mess from this population
-#					cleanup()
-
-					# Hack for right now
-#					@simpleGAConfig['Population Size'] = @testSetMappings.size() 
 					@logger.info("Temporary test set mapping: #{@temporaryMappings.inspect()}")
 					# Test the fitness of the intermediate children
 					@temporaryMappings.each do |key, value|
@@ -49,19 +44,24 @@ module Mamba
 						@reporter.numCasesRun = @reporter.numCasesRun + 1
 					end
 
+					# Evaluated the candidate chromosomes, so cleanup the mapping
+					@temporaryMappings.clear()
+
 					# Sort the combined array
 					@logger.info(@population.inspect)
 					@sorted_population = @population.sort()
-					@logger.info("Class of new variable: #{@sorted_population.class()}")
 					@logger.info(@sorted_population.inspect)
 
-					@logger.info("Sorted array size: #{@population.size()}")
+					@logger.info("Sorted array size: #{@sorted_population.size()}")
 					# Sorted now, so copy over to the temporary mappings (renumber), copy files over, and good to go
 					@simpleGAConfig['Population Size'].times do |tim|
-						@logger.info("New Population Member: #{@sorted_population[@population.size() - 1 - tim]}")
+						filename1 = "tests" + File::SEPARATOR + "#{@nextGenerationNumber - 1}.#{@sorted_population[@sorted_population.size() - 1 - tim].id}." + @testSetMappings[0].split(".")[-1] 
+						filename2 = "tests" + File::SEPARATOR + "#{@nextGenerationNumber}.#{tim}." + @testSetMappings[0].split(".")[-1] 
+						FileUtils.cp(filename1, filename2) 
+						@temporaryMappings[tim] = filename2 
 					end
 
-					exit(1)
+					@logger.info("New Testset Mappings: #{@temporaryMappings.inspect()}")
 					cleanup()
 				end
 
@@ -99,7 +99,7 @@ module Mamba
 					end
 
 					@logger.info("In open function: " + parents.inspect())
-					child = "tests" + File::SEPARATOR + "#{@nextGenerationNumber}."  + "#{childID}." + parents[0].path.split(".")[-1] 
+					child = "tests" + File::SEPARATOR + "#{@nextGenerationNumber - 1}."  + "#{childID}." + parents[0].path.split(".")[-1] 
 					@logger.info("In open children: " + child.inspect())
 
 					return [parents, child]
