@@ -51,10 +51,18 @@ module Mamba
 
 					# Sort the combined array
 					@logger.info(@population.inspect)
-					@population.sort!
-					@logger.info(@population.inspect)
+					@sorted_population = @population.sort()
+					@logger.info("Class of new variable: #{@sorted_population.class()}")
+					@logger.info(@sorted_population.inspect)
+
+					@logger.info("Sorted array size: #{@population.size()}")
+					# Sorted now, so copy over to the temporary mappings (renumber), copy files over, and good to go
+					@simpleGAConfig['Population Size'].times do |tim|
+						@logger.info("New Population Member: #{@sorted_population[@population.size() - 1 - tim]}")
+					end
 
 					exit(1)
+					cleanup()
 				end
 
 				# Calculate incest prevention measurement
