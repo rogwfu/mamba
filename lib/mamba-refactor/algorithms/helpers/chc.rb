@@ -76,8 +76,9 @@ module Mamba
 						end
 
 						@logger.info("New Testset Mappings: #{@temporaryMappings.inspect()}")
-						cleanup()
 					end
+
+					cleanup()
 				end
 
 				# Calculate incest prevention measurement
@@ -169,6 +170,7 @@ module Mamba
 					# Copy the fittest chromosome
 					filename = "tests" + File::SEPARATOR + "#{@nextGenerationNumber}.0." + @testSetMappings[0].split(".")[-1] 
 					FileUtils.cp(fittestChromosome, filename) 
+					@temporaryMappings[0] = filename 
 
 					# Mutate a percentage of the new population (based on fittest chromosome)
 					mutate(fittestChromosome, numberToMutate)
@@ -180,13 +182,13 @@ module Mamba
 						oldChromosomeFilename = "tests" + File::SEPARATOR + "0.#{initialChromosome}." + fittestChromosome.split(".")[-1]
 						newChromosomeFilename = "tests" + File::SEPARATOR + "#{@nextGenerationNumber}.#{chromosomeID}." + fittestChromosome.split(".")[-1]
 						FileUtils.cp(oldChromosomeFilename, newChromosomeFilename) 
+						@temporaryMappings[chromosomeID] = newChromosomeFilename
 					end
 
 					# Reset threshold
 					@simpleGAConfig["Incest Prevention"] = INCEST_PREVENTION_INITIAL_THRESHOLD
 
 					# Increment restart counter, check if we need to stop it
-					exit(1)
 				end
 
 				# Mutate a percentage of the new population
@@ -203,6 +205,7 @@ module Mamba
 							chromosomeFD.seek(mutationPoint, IO::SEEK_SET)
 							chromosomeFD.write(randomMutator.bytes(rand(10) + 1)) 
 						end
+						@temporaryMappings[chromosomeID] = newChromosomeFilename 
 					end
 				end
 			end
