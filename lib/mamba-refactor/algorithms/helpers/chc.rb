@@ -5,6 +5,7 @@ module Mamba
 		module Helpers
 			module CHC
 				INCEST_PREVENTION_INITIAL_THRESHOLD = 0.25
+				MINIMUM_INCEST_PREVENTION_THRESHOLD = 0.05
 
 				# Metaprogramming for additional options to GA Configuration Hash
 				def self.included(base)
@@ -24,45 +25,59 @@ module Mamba
 
 				def evolve() 
 					incestThreshold = calculate_incest_prevention()
-					0.step(@simpleGAConfig['Population Size']-1, 1) do |childID|
-						# Append candidate to the name
-						childID = childID.to_s() + "c"
 
-						# Randomly select parents
-						parents, child = open_parents_and_children(childID, "random")
+					until (@temporaryMappings.size > 0 or @simpleGAConfig['Incest Prevention'] <= MINIMUM_INCEST_PREVENTION_THRESHOLD) do
+						0.step(@simpleGAConfig['Population Size']-1, 1) do |childID|
+							# Append candidate to the name
+							childID = childID.to_s() + "c"
 
-						# Perform crossover based on incest threshold
-						uniform_crossover(parents, childID, child, incestThreshold)
+							# Randomly select parents
+							parents, child = open_parents_and_children(childID, "random")
+
+							# Perform crossover based on incest threshold
+							uniform_crossover(parents, childID, child, incestThreshold)
+						end
+
+						# Check for decrementing the incest prevention
+						if(@temporaryMappings.size == 0) then
+							@simpleGAConfig['Incest Prevention'] = @simpleGAConfig['Incest Prevention'] * 0.50
+							@logger.info("Decrementing incest prevention threshold to: #{@simpleGAConfig['Incest Prevention']}")
+						end
 					end
 
-					@logger.info("Temporary test set mapping: #{@temporaryMappings.inspect()}")
-					# Test the fitness of the intermediate children
-					@temporaryMappings.each do |key, value|
-						@executor.run(@logger, value) 
-						fitness = rand(25).to_s()
-						@population.push(Chromosome.new("#{key}", fitness))
-						@reporter.numCasesRun = @reporter.numCasesRun + 1
+					# Check for cataclysmic mutation
+					if(@simpleGAConfig['Incest Prevention'] <= MINIMUM_INCEST_PREVENTION_THRESHOLD) then
+						cataclysimic_mutation()
+					else
+						@logger.info("Temporary test set mapping: #{@temporaryMappings.inspect()}")
+						# Test the fitness of the intermediate children
+						@temporaryMappings.each do |key, value|
+							@executor.run(@logger, value) 
+							fitness = rand(25).to_s()
+							@population.push(Chromosome.new("#{key}", fitness))
+							@reporter.numCasesRun = @reporter.numCasesRun + 1
+						end
+
+						# Evaluated the candidate chromosomes, so cleanup the mapping
+						@temporaryMappings.clear()
+
+						# Sort the combined array
+						@logger.info(@population.inspect)
+						@sorted_population = @population.sort()
+						@logger.info(@sorted_population.inspect)
+
+						@logger.info("Sorted array size: #{@sorted_population.size()}")
+						# Sorted now, so copy over to the temporary mappings (renumber), copy files over, and good to go
+						@simpleGAConfig['Population Size'].times do |tim|
+							filename1 = "tests" + File::SEPARATOR + "#{@nextGenerationNumber - 1}.#{@sorted_population[@sorted_population.size() - 1 - tim].id}." + @testSetMappings[0].split(".")[-1] 
+							filename2 = "tests" + File::SEPARATOR + "#{@nextGenerationNumber}.#{tim}." + @testSetMappings[0].split(".")[-1] 
+							FileUtils.cp(filename1, filename2) 
+							@temporaryMappings[tim] = filename2 
+						end
+
+						@logger.info("New Testset Mappings: #{@temporaryMappings.inspect()}")
+						cleanup()
 					end
-
-					# Evaluated the candidate chromosomes, so cleanup the mapping
-					@temporaryMappings.clear()
-
-					# Sort the combined array
-					@logger.info(@population.inspect)
-					@sorted_population = @population.sort()
-					@logger.info(@sorted_population.inspect)
-
-					@logger.info("Sorted array size: #{@sorted_population.size()}")
-					# Sorted now, so copy over to the temporary mappings (renumber), copy files over, and good to go
-					@simpleGAConfig['Population Size'].times do |tim|
-						filename1 = "tests" + File::SEPARATOR + "#{@nextGenerationNumber - 1}.#{@sorted_population[@sorted_population.size() - 1 - tim].id}." + @testSetMappings[0].split(".")[-1] 
-						filename2 = "tests" + File::SEPARATOR + "#{@nextGenerationNumber}.#{tim}." + @testSetMappings[0].split(".")[-1] 
-						FileUtils.cp(filename1, filename2) 
-						@temporaryMappings[tim] = filename2 
-					end
-
-					@logger.info("New Testset Mappings: #{@temporaryMappings.inspect()}")
-					cleanup()
 				end
 
 				# Calculate incest prevention measurement
@@ -145,6 +160,50 @@ module Mamba
 				def cataclysimic_mutation()
 					# Copy the best chromosome over to the new population
 					# Remaining elements are formed by a random mutation of about 35% of the bits in the best element?
+					@logger.info("In the cataclysimic_mutation")
+
+					# Calculate population mix
+					fittestChromosome = @testSetMappings[@population.max().id]
+					numberToMutate = (@simpleGAConfig['Population Size'] * 0.35).floor()
+
+					# Copy the fittest chromosome
+					filename = "tests" + File::SEPARATOR + "#{@nextGenerationNumber}.0." + @testSetMappings[0].split(".")[-1] 
+					FileUtils.cp(fittestChromosome, filename) 
+
+					# Mutate a percentage of the new population (based on fittest chromosome)
+					mutate(fittestChromosome, numberToMutate)
+
+					# Seed the rest with random members of the initial population 
+					(numberToMutate + 1).upto(@simpleGAConfig['Population Size']-1) do |chromosomeID|
+						@logger.info("Copying over chromosome number: #{chromosomeID}")
+						initialChromosome = rand(@simpleGAConfig['Population Size'])
+						oldChromosomeFilename = "tests" + File::SEPARATOR + "0.#{initialChromosome}." + fittestChromosome.split(".")[-1]
+						newChromosomeFilename = "tests" + File::SEPARATOR + "#{@nextGenerationNumber}.#{chromosomeID}." + fittestChromosome.split(".")[-1]
+						FileUtils.cp(oldChromosomeFilename, newChromosomeFilename) 
+					end
+
+					# Reset threshold
+					@simpleGAConfig["Incest Prevention"] = INCEST_PREVENTION_INITIAL_THRESHOLD
+
+					# Increment restart counter, check if we need to stop it
+					exit(1)
+				end
+
+				# Mutate a percentage of the new population
+				# @param [String] Filename of the current fittest chromosome
+				# @param [Fixnum] The number of chromosomes to mutate (Base chromosome is the fittest chromosome)
+				def mutate(fittestChromosome, numberToMutate)
+					1.upto(numberToMutate) do |chromosomeID|
+						randomMutator = RandomGenerator.new() 	
+						@logger.info("Mutating Chromosome: #{chromosomeID}")
+						newChromosomeFilename = "tests" + File::SEPARATOR + "#{@nextGenerationNumber}.#{chromosomeID}." + fittestChromosome.split(".")[-1]
+						FileUtils.cp(fittestChromosome, newChromosomeFilename) 
+						File.open(newChromosomeFilename, "r+b")	do |chromosomeFD|
+							mutationPoint = rand(chromosomeFD.size())
+							chromosomeFD.seek(mutationPoint, IO::SEEK_SET)
+							chromosomeFD.write(randomMutator.bytes(rand(10) + 1)) 
+						end
+					end
 				end
 			end
 		end
