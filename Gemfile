@@ -22,6 +22,6 @@ group :development do
   gem "mongo", ">=1.3.1"
   gem "amqp", ">=0.7.1"
   gem "eventmachine", ">=0.12.10"
-  gem "hpricot", ">=0.8.4"
+  gem "hpricot", ">=0.8.4" # Change to nokogiri
   gem "amatch", ">=0.2.6"
 end

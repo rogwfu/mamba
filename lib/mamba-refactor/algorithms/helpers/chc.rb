@@ -25,6 +25,9 @@ module Mamba
 				def evolve() 
 					incestThreshold = calculate_incest_prevention()
 					0.step(@simpleGAConfig['Population Size']-1, 1) do |childID|
+						# Append candidate to the name
+						childID = childID.to_s() + "c"
+
 						# Randomly select parents
 						parents, child = open_parents_and_children(childID, "random")
 
@@ -33,10 +36,25 @@ module Mamba
 					end
 
 					# Cleanup the mess from this population
-					cleanup()
+#					cleanup()
 
 					# Hack for right now
-					@simpleGAConfig['Population Size'] = @testSetMappings.size() 
+#					@simpleGAConfig['Population Size'] = @testSetMappings.size() 
+					@logger.info("Temporary test set mapping: #{@temporaryMappings.inspect()}")
+					# Test the fitness of the intermediate children
+					@temporaryMappings.each do |key, value|
+						@executor.run(@logger, value) 
+						fitness = rand(25).to_s()
+						@population.push(Chromosome.new("#{key}", fitness))
+						@reporter.numCasesRun = @reporter.numCasesRun + 1
+					end
+
+					# Sort the combined array
+					@logger.info(@population.inspect)
+					@population.sort!
+					@logger.info(@population.inspect)
+
+					exit(1)
 				end
 
 				# Calculate incest prevention measurement
@@ -61,6 +79,7 @@ module Mamba
 				end
 
 				# Function to compose new filenames for children of the next generation
+				# c for a candidate child?
 				# @param [Fixnum] The current child number being generated
 				# @param [String] The selection method for the parents
 				# @returns [Array, String] Opens File descriptors for parents and children  
@@ -96,7 +115,6 @@ module Mamba
 						FileUtils.cp(parents[0].path, child) 
 						@temporaryMappings[childID] = child 
 					end
-
 					# Cleanup filename arrays
 					parents.each { |parent| parent.close()}
 					parents.clear()
