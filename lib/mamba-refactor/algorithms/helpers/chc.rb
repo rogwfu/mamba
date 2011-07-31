@@ -86,7 +86,11 @@ module Mamba
 				def calculate_incest_prevention()
 					largestChromosomeSize = 0
 					@testSetMappings.each_value do |testFile|
+						@logger.info("Incest prevention: #{testFile}")
 						chromosomeSize = File.size?(testFile)
+						if(chromosomeSize == nil) then
+							@logger.info("This doesn't exist: #{testFile}")
+						end
 						if(chromosomeSize > largestChromosomeSize) then
 							largestChromosomeSize = chromosomeSize
 						end
@@ -134,9 +138,30 @@ module Mamba
 
 					@logger.info("Hamming distance is: #{hammingDistance}")
 					if(hammingDistance >= incestThreshold) then
+						
 						@logger.info("Greater than threshold")
 						@logger.info("Copying: #{parents[0].path} to #{child}")
 						FileUtils.cp(parents[0].path, child) 
+						# Use the smaller parent to limit crawl to infinity
+#						childSize = parents[0].size()
+#						if(parents[0].size() > parents[1].size)  then
+#							childSize = parents[1].size
+#						end
+#
+#						@logger.info("Child Size is: #{childSize}")
+#
+#						File.new(child, "wb") do |childFD| 
+#							0.upto(childSize) do
+#								if(rand() < 0.50) then
+#									childFD.write(parents[0].read(1))
+#									parents[1].read(1)
+#								else
+#									childFD.write(parents[1].read(1))
+#									parents[0].read(1)
+#								end
+#							end
+#						end
+
 						@temporaryMappings[childID] = child 
 					end
 					# Cleanup filename arrays
