@@ -49,36 +49,42 @@ module Mamba
 					if(@simpleGAConfig['Incest Prevention'] <= MINIMUM_INCEST_PREVENTION_THRESHOLD) then
 						cataclysimic_mutation()
 					else
-						@logger.info("Temporary test set mapping: #{@temporaryMappings.inspect()}")
-						# Test the fitness of the intermediate children
-						@temporaryMappings.each do |key, value|
-							@executor.run(@logger, value) 
-							fitness = rand(25).to_s()
-							@population.push(Chromosome.new("#{key}", fitness))
-							@reporter.numCasesRun = @reporter.numCasesRun + 1
-						end
 
-						# Evaluated the candidate chromosomes, so cleanup the mapping
-						@temporaryMappings.clear()
+						evaluate_intermediate_children()
 
 						# Sort the combined array
 						@logger.info(@population.inspect)
 						@sorted_population = @population.sort()
 						@logger.info(@sorted_population.inspect)
-
 						@logger.info("Sorted array size: #{@sorted_population.size()}")
-						# Sorted now, so copy over to the temporary mappings (renumber), copy files over, and good to go
-						@simpleGAConfig['Population Size'].times do |tim|
-							filename1 = "tests" + File::SEPARATOR + "#{@nextGenerationNumber - 1}.#{@sorted_population[@sorted_population.size() - 1 - tim].id}." + @testSetMappings[0].split(".")[-1] 
-							filename2 = "tests" + File::SEPARATOR + "#{@nextGenerationNumber}.#{tim}." + @testSetMappings[0].split(".")[-1] 
-							FileUtils.cp(filename1, filename2) 
-							@temporaryMappings[tim] = filename2 
-						end
 
-						@logger.info("New Testset Mappings: #{@temporaryMappings.inspect()}")
+						spawn_new_generation()
 					end
 
 					cleanup()
+				end
+
+				def evaluate_intermediate_children()
+					# Test the fitness of the intermediate children
+					@temporaryMappings.each do |key, value|
+						@executor.run(@logger, value) 
+						fitness = rand(25).to_s()
+						@population.push(Chromosome.new("#{key}", fitness))
+						@reporter.numCasesRun = @reporter.numCasesRun + 1
+					end
+
+					# Evaluated the candidate chromosomes, so cleanup the mapping
+					@temporaryMappings.clear()
+				end
+
+				def spawn_new_generation()
+					# Sorted now, so copy over to the temporary mappings (renumber), copy files over, and good to go
+					@simpleGAConfig['Population Size'].times do |tim|
+						filename1 = "tests" + File::SEPARATOR + "#{@nextGenerationNumber - 1}.#{@sorted_population[@sorted_population.size() - 1 - tim].id}." + @testSetMappings[0].split(".")[-1] 
+						filename2 = "tests" + File::SEPARATOR + "#{@nextGenerationNumber}.#{tim}." + @testSetMappings[0].split(".")[-1] 
+						FileUtils.cp(filename1, filename2) 
+						@temporaryMappings[tim] = filename2 
+					end
 				end
 
 				# Calculate incest prevention measurement
@@ -135,35 +141,37 @@ module Mamba
 					# Calculate the hamming distance between the parents
 					hamming = Amatch::Hamming.new(parents[0].read())
 					hammingDistance = hamming.match(parents[1].read())
+					parents.each { |parent| parent.rewind()}
 
 					@logger.info("Hamming distance is: #{hammingDistance}")
 					if(hammingDistance >= incestThreshold) then
 						
 						@logger.info("Greater than threshold")
 						@logger.info("Copying: #{parents[0].path} to #{child}")
-						FileUtils.cp(parents[0].path, child) 
+#						FileUtils.cp(parents[0].path, child) 
 						# Use the smaller parent to limit crawl to infinity
-#						childSize = parents[0].size()
-#						if(parents[0].size() > parents[1].size)  then
-#							childSize = parents[1].size
-#						end
-#
-#						@logger.info("Child Size is: #{childSize}")
-#
-#						File.new(child, "wb") do |childFD| 
-#							0.upto(childSize) do
-#								if(rand() < 0.50) then
-#									childFD.write(parents[0].read(1))
-#									parents[1].read(1)
-#								else
-#									childFD.write(parents[1].read(1))
-#									parents[0].read(1)
-#								end
-#							end
-#						end
+						childSize = parents[0].size()
+						if(parents[0].size() > parents[1].size)  then
+							childSize = parents[1].size
+						end
+
+						@logger.info("Child Size is: #{childSize}")
+
+						File.open(child, "w+b") do |childFD| 
+							0.upto(childSize) do
+								if(rand() < 0.002) then
+									childFD.write(parents[0].read(1))
+									parents[1].read(1)
+								else
+									childFD.write(parents[1].read(1))
+									parents[0].read(1)
+								end
+							end
+						end
 
 						@temporaryMappings[childID] = child 
 					end
+
 					# Cleanup filename arrays
 					parents.each { |parent| parent.close()}
 					parents.clear()
