@@ -12,6 +12,11 @@
 #
 # No mutation is applied during recombination
 # Detect when Difference threshold (L/4) has dropped to zero and no new offspring generated, then go into cataclysmic mutation
+# "Incest Prevention"
+# Random selection
+# Half Uniform crossover - 50% of the bytes are switched at random
+# Hamming distance does not exceed the distance threshold
+
 require 'amatch'
 
 module Mamba

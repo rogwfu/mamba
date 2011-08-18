@@ -1,6 +1,7 @@
 module Mamba
 	module Algorithms
-		class DistributedByteGeneticAlgorithm < DistributedSimpleGeneticAlgorithm
+		class DistributedCHCGeneticAlgorithm < DistributedSimpleGeneticAlgorithm
+			include Mamba::Algorithms::Helpers::CHC
 		end
 	end
 end
