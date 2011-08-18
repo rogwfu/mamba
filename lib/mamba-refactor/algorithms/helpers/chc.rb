@@ -1,3 +1,17 @@
+# CHC Algorithm Explanation:
+#
+#	- Incest prevention
+#		- Calculate the hamming distance between the two chromosomes
+#		- If parents differ by L/4, where L = length of the strings in bits, then mate (mating threshold "incest prevention")
+#	- If no offspring are inserted into the population then the threshold is reduced by 1 (need to reinvent this for my situation)
+
+# uniform crossover half the bits "that differ between the two parents"
+#	- find all the bit positions that differ between the two parents
+#	- randomly select a position and swap the bits
+#	- repeat this process until half of the differing bits have been swapped
+#
+# No mutation is applied during recombination
+# Detect when Difference threshold (L/4) has dropped to zero and no new offspring generated, then go into cataclysmic mutation
 require 'amatch'
 
 module Mamba
@@ -6,15 +20,19 @@ module Mamba
 			module CHC
 				INCEST_PREVENTION_INITIAL_THRESHOLD = 0.25
 				MINIMUM_INCEST_PREVENTION_THRESHOLD = 0.05
+				TESTED_CROSSOVER_RATE = 0.002
 
 				# Metaprogramming for additional options to GA Configuration Hash
+				# @param [Module] The module that included this module
 				def self.included(base)
 					class << base
 						def generate_config()
 							self.superclass.generate_config do |gaConfig|
 								# Delete unused rates from the genetic algorithm's configuration
 								gaConfig.delete("Mutation Rate")
-								gaConfig.delete("Crossover Rate")
+
+								# Set a good crossover rate since this is uniform crossover
+								gaConfig["Crossover Rate"] = TESTED_CROSSOVER_RATE 
 
 								# Starting incest prevention factor (Historical Initial Threshold)
 								gaConfig["Incest Prevention"] = INCEST_PREVENTION_INITIAL_THRESHOLD
@@ -23,12 +41,15 @@ module Mamba
 					end
 				end
 
+				# Evolve the next population 
 				def evolve() 
 					incestThreshold = calculate_incest_prevention()
 
 					until (@temporaryMappings.size > 0 or @simpleGAConfig['Incest Prevention'] <= MINIMUM_INCEST_PREVENTION_THRESHOLD) do
+
+						# Generate candidate children
 						0.step(@simpleGAConfig['Population Size']-1, 1) do |childID|
-							# Append candidate to the name
+							# Append candidate to the name (add a c)
 							childID = childID.to_s() + "c"
 
 							# Randomly select parents
@@ -49,14 +70,13 @@ module Mamba
 					if(@simpleGAConfig['Incest Prevention'] <= MINIMUM_INCEST_PREVENTION_THRESHOLD) then
 						cataclysimic_mutation()
 					else
-
 						evaluate_intermediate_children()
 
 						# Sort the combined array
-						@logger.info(@population.inspect)
 						@sorted_population = @population.sort()
-						@logger.info(@sorted_population.inspect)
-						@logger.info("Sorted array size: #{@sorted_population.size()}")
+#						@logger.info(@population.inspect)
+#						@logger.info(@sorted_population.inspect)
+#						@logger.info("Sorted array size: #{@sorted_population.size()}")
 
 						spawn_new_generation()
 					end
@@ -64,6 +84,7 @@ module Mamba
 					cleanup()
 				end
 
+				# Test the intermediate children
 				def evaluate_intermediate_children()
 					# Test the fitness of the intermediate children
 					@temporaryMappings.each do |key, value|
@@ -77,6 +98,7 @@ module Mamba
 					@temporaryMappings.clear()
 				end
 
+				# Create a new generation from the old generation and the candidate children
 				def spawn_new_generation()
 					# Sorted now, so copy over to the temporary mappings (renumber), copy files over, and good to go
 					@simpleGAConfig['Population Size'].times do |tim|
@@ -92,7 +114,6 @@ module Mamba
 				def calculate_incest_prevention()
 					largestChromosomeSize = 0
 					@testSetMappings.each_value do |testFile|
-						@logger.info("Incest prevention: #{testFile}")
 						chromosomeSize = File.size?(testFile)
 						if(chromosomeSize == nil) then
 							@logger.info("This doesn't exist: #{testFile}")
@@ -104,16 +125,12 @@ module Mamba
 
 					# Average Chromosome Length * Incest Prevention Measure
 					currentIncestThreshold = (largestChromosomeSize/@testSetMappings.size()) *  @simpleGAConfig["Incest Prevention"]
-
-					@logger.info("Largest File size is: #{largestChromosomeSize}")
-					@logger.info("Average File size is: #{largestChromosomeSize/@testSetMappings.size()}")
-					@logger.info("Incest Prevention should be: #{currentIncestThreshold}")
+					@logger.info("Incest Prevention factor is: #{currentIncestThreshold}")
 
 					return(currentIncestThreshold)
 				end
 
 				# Function to compose new filenames for children of the next generation
-				# c for a candidate child?
 				# @param [Fixnum] The current child number being generated
 				# @param [String] The selection method for the parents
 				# @returns [Array, String] Opens File descriptors for parents and children  
@@ -124,10 +141,7 @@ module Mamba
 						parents << File.open(@testSetMappings[@population.send(selectionMethod.to_sym()).id], "rb") 
 					end
 
-					@logger.info("In open function: " + parents.inspect())
 					child = "tests" + File::SEPARATOR + "#{@nextGenerationNumber - 1}."  + "#{childID}." + parents[0].path.split(".")[-1] 
-					@logger.info("In open children: " + child.inspect())
-
 					return [parents, child]
 				end
 
@@ -146,20 +160,18 @@ module Mamba
 					@logger.info("Hamming distance is: #{hammingDistance}")
 					if(hammingDistance >= incestThreshold) then
 						
-						@logger.info("Greater than threshold")
 						@logger.info("Copying: #{parents[0].path} to #{child}")
-#						FileUtils.cp(parents[0].path, child) 
+
 						# Use the smaller parent to limit crawl to infinity
 						childSize = parents[0].size()
 						if(parents[0].size() > parents[1].size)  then
 							childSize = parents[1].size
 						end
 
-						@logger.info("Child Size is: #{childSize}")
-
+						# Perform the uniform crossover
 						File.open(child, "w+b") do |childFD| 
 							0.upto(childSize) do
-								if(rand() < 0.002) then
+								if(rand() < @simpleGAConfig['Crossover Rate']) then
 									childFD.write(parents[0].read(1))
 									parents[1].read(1)
 								else
@@ -176,18 +188,6 @@ module Mamba
 					parents.each { |parent| parent.close()}
 					parents.clear()
 
-					#	- Incest prevention
-					#		- Calculate the hamming distance between the two chromosomes
-					#		- If parents differ by L/4, where L = length of the strings in bits, then mate (mating threshold "incest prevention")
-					#	- If no offspring are inserted into the population then the threshold is reduced by 1 (need to reinvent this for my situation)
-
-					# uniform crossover half the bits "that differ between the two parents"
-					#	- find all the bit positions that differ between the two parents
-					#	- randomly select a position and swap the bits
-					#	- repeat this process until half of the differing bits have been swapped
-					#
-					# No mutation is applied during recombination
-					# Detect when Difference threshold (L/4) has dropped to zero and no new offspring generated, then go into cataclysmic mutation
 				end
 
 				# Reinitialize the population 
@@ -245,3 +245,5 @@ module Mamba
 		end
 	end
 end
+
+
