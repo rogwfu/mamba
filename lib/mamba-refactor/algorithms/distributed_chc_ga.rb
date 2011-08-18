@@ -14,10 +14,20 @@ module Mamba
 					@population.push(Chromosome.new(chromosomeInfo[1].to_i(), chromosomeInfo[2]))
 					# Check for condition to stop and condition to stop and evolve
 					if(@population.size == @simpleGAConfig['Population Size']) then
-						@logger.info("Reached the full population size")
-						@topic_exchange.publish("shutdown", :key => "commands")
-					end
+						@logger.info(@population.inspect())
+						statistics()
 
+						@nextGenerationNumber = @nextGenerationNumber + 1
+						unless (@nextGenerationNumber) == @simpleGAConfig['Maximum Generations'] then
+							@topic_exchange.publish("shutdown", :key => "commands")
+							evolve() 
+						#	@testSetMappings.each_key do |key|
+						#		seed_distributed(key)
+						#	end
+						else
+							@topic_exchange.publish("shutdown", :key => "commands")
+						end
+					end
 				end
 			end
 

@@ -75,7 +75,12 @@ module Mamba
 					if(@simpleGAConfig['Incest Prevention'] <= MINIMUM_INCEST_PREVENTION_THRESHOLD) then
 						cataclysimic_mutation()
 					else
-						evaluate_intermediate_children()
+						# Send test cases to cluster for processing (Not tested yet)
+						if block_given? then
+							yield
+						else
+							evaluate_intermediate_children()
+						end
 
 						# Sort the combined array
 						@sorted_population = @population.sort()
@@ -85,6 +90,7 @@ module Mamba
 
 						spawn_new_generation()
 					end
+					# Hack but should work?
 
 					cleanup()
 				end
