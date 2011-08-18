@@ -1,8 +1,8 @@
 require 'mamba-refactor'
 
 class Tools < Thor
-	IDAPRO   = "/Applications/ida/idaq.app/Contents/MacOS/idaq"
-	IDAPRO64 = "/Applications/ida/idaq.app/Contents/MacOS/idaq64"
+	IDAPro   = "/Applications/ida/idaq.app/Contents/MacOS/idaq"
+	IDAPro64 = "/Applications/ida/idaq.app/Contents/MacOS/idaq64"
 
 	namespace :tools
 	include Thor::Actions
@@ -24,8 +24,8 @@ class Tools < Thor
 	method_option :architecture, :type => :boolean, :default => false, :aliases => "-a", :desc => "Turn 64 bit support on"
 	method_option :ida, :type => :string, :default => "", :aliases => "-i", :desc => "Set a different IDA Pro path"
 	def disassemble()
-		validate_existence(options[:object])
 		validate_ida()
+		validate_existence(options[:object])
 		destination = options[:object].split(File::SEPARATOR)[-1]
 		say "Info: Copying #{options[:object]} to #{destination}", :blue
 		FileUtils.cp(options[:object], destination)
@@ -66,9 +66,21 @@ class Tools < Thor
 
 		# Make sure IDA Pro is installed for this tool to work 
 		def validate_ida()
-
-	#method_option :architecture, :type => :boolean, :default => false, :aliases => "-a", :desc => "Turn 64 bit support on"
-	#method_option :ida, :type => :string, :default => "", :aliases => "-i", :desc => "Set a different IDA Pro path"
+			# Check for custom IDA Pro installed
+			if(!options[:ida].empty?()) then
+				validate_existence(options[:ida])
+				if(!File.executable?(options[:ida])) then
+					say "Error: File (#{options[:ida]}) is not executable", :red
+					exit(1)
+				end
+			else
+				# Check for the different architectures
+				if(!options[:architecture]) then
+					validate_existence(IDAPro)
+				else
+					validate_existence(IDAPro64)
+				end
+			end
 		end
 
 		# Validate the terms filename given against a strict whitelist
