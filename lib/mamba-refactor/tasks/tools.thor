@@ -7,8 +7,9 @@ class Tools < Thor
 	check_unknown_options!() 
 
 	desc "seed", "Seed test cases from google searches"
-	method_option	:filetype,	:default => "pdf", :aliases => "-f", :desc => "Filetype to download examples (ex. pdf, doc, ppt)", :required => true
-	method_option	:num, :default => 10, :type => :numeric, :aliases => "-n", :desc => "Number of files to download", :required => true
+	method_option   :clean, :default => false, :type => :boolean, :aliases => "-c", :desc => "Cleanup downloaded files, since they are zipped"
+	method_option	:filetype,	:default => "pdf", :aliases => "-f", :desc => "Filetype to download examples (ex. pdf, doc, ppt)"	#, :required => true
+	method_option	:num, :default => 10, :type => :numeric, :aliases => "-n", :desc => "Number of files to download"				#, :required => true
 	method_option	:terms, :aliases => "-t", :desc => "File containing search terms to mix into test case seeding", :required => false 
 	method_option   :zip, :default => false, :type => :boolean, :aliases => "-z", :desc => "Zip the test cases downloaded by the google crawler", :required => false
 	# Retrieves test cases from google searches 
@@ -25,6 +26,14 @@ class Tools < Thor
 		if(options[:zip]) then
 			googler.zip(options[:filetype])
 		end
+
+		# Cleanup the directory
+		if(options[:zip] and options[:clean]) then
+			cleanup()
+		end
+
+		# Remove residual mkmf.log
+		remove_file("mkmf.log")
 	end
 
 	no_tasks do
@@ -36,6 +45,13 @@ class Tools < Thor
 				say "Error: Must conform to: \w\.?\w? and it must reside in the same directory", :red
                 exit(1)
             end
+		end
+
+		# Cleanup the downloaded files since a zip file already has the tests 
+		def cleanup()
+			Dir.glob("*.#{options[:filetype]}").each do |downloadedFile|
+				remove_file(downloadedFile)
+			end
 		end
 	end
 end
