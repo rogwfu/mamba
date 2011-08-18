@@ -10,15 +10,13 @@ module Mamba
 		# @todo Redirect the output of find_executable to not show up on the screen 
 		# @todo Better method for tracking mamba version information
 		# @todo Switch on mongodb os information
-		# @todo Fix the mkmf.log file from being created
 		def dstart() 
 			say "Mamba Fuzzing Framework: Starting Mongodb database", :blue
 			mongoPath = [ENV['GEM_HOME'], "gems", "mamba-refactor-" + @@version, "ext", "mongodb", "mongodb-osx-x86_64-1.8.2-rc3", "bin"].join(File::SEPARATOR)
-			mongod = find_executable("mongod", mongoPath + File::SEPARATOR + ENV['PATH'])
+			mongod = find_executable0("mongod", mongoPath + File::SEPARATOR + ENV['PATH'])
 			storageDir = Dir.pwd + File::SEPARATOR + "databases" + File::SEPARATOR
 			logFile = storageDir + "mongodb.log"
 			system("#{mongod} --fork --logpath #{logFile} --logappend --dbpath #{storageDir}")
-			FileUtils.rm("mkmf.log")
 		end	
 
 		desc "dstop", "Stop the Mongodb database for distribution"
@@ -38,11 +36,10 @@ module Mamba
 		def qstart() 
 			say "Mamba Fuzzing Framework: Starting rabbitmq queues", :blue
 			rabbitmqPath = [ENV['GEM_HOME'], "gems", "mamba-refactor-" + @@version, "ext", "rabbitmq", "rabbitmq-server-2.3.1", "scripts"].join(File::SEPARATOR)
-			rabbitmq = find_executable("rabbitmq-server", rabbitmqPath + File::SEPARATOR + ENV['PATH'])
+			rabbitmq = find_executable0("rabbitmq-server", rabbitmqPath + File::SEPARATOR + ENV['PATH'])
 			queueBaseDir = Dir.pwd + File::SEPARATOR + "queues"
 			queueLogDir = Dir.pwd + File::SEPARATOR + "logs" + File::SEPARATOR + "rabbitmq"
 			system("export RABBITMQ_MNESIA_BASE=#{queueBaseDir}; export RABBITMQ_LOG_BASE=#{queueLogDir}; #{rabbitmq} -detached")
-			FileUtils.rm("mkmf.log") if File.exists?("mkmf.log")
 		end	
 
 		desc "qreset", "Resetting the rabbitmq queueing system"
@@ -50,9 +47,8 @@ module Mamba
 		def qreset() 
 			say "Mamba Fuzzing Framework: Resetting rabbitmq queues", :blue
 			rabbitmqPath = [ENV['GEM_HOME'], "gems", "mamba-refactor-" + @@version, "ext", "rabbitmq", "rabbitmq-server-2.3.1", "scripts"].join(File::SEPARATOR)
-			rabbitmqctl = find_executable("rabbitmqctl", rabbitmqPath + File::SEPARATOR + ENV['PATH'])
+			rabbitmqctl = find_executable0("rabbitmqctl", rabbitmqPath + File::SEPARATOR + ENV['PATH'])
 			system("#{rabbitmqctl} force_reset")
-			FileUtils.rm("mkmf.log")
 		end
 
 		desc "qstop", "Stop the rabbitmq queueing system"
@@ -60,9 +56,8 @@ module Mamba
 		def qstop() 
 			say "Mamba Fuzzing Framework: Stopping rabbitmq queues", :blue
 			rabbitmqPath = [ENV['GEM_HOME'], "gems", "mamba-refactor-" + @@version, "ext", "rabbitmq", "rabbitmq-server-2.3.1", "scripts"].join(File::SEPARATOR)
-			rabbitmqctl = find_executable("rabbitmqctl", rabbitmqPath + File::SEPARATOR + ENV['PATH'])
+			rabbitmqctl = find_executable0("rabbitmqctl", rabbitmqPath + File::SEPARATOR + ENV['PATH'])
 			system("#{rabbitmqctl} stop")
-			FileUtils.rm("mkmf.log") if File.exists?("mkmf.log")
 		end
 
 		desc "start", "Start all distributed fuzzing components"

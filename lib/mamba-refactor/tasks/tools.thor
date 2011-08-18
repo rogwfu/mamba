@@ -24,13 +24,15 @@ class Tools < Thor
 	method_option :architecture, :type => :boolean, :default => false, :aliases => "-a", :desc => "Turn 64 bit support on"
 	method_option :ida, :type => :string, :default => "", :aliases => "-i", :desc => "Set a different IDA Pro path"
 	def disassemble()
-		validate_ida()
+		ida = validate_ida()
 		validate_existence(options[:object])
 		destination = options[:object].split(File::SEPARATOR)[-1]
 		say "Info: Copying #{options[:object]} to #{destination}", :blue
 		FileUtils.cp(options[:object], destination)
-
-#		FileUtils.rm(destination)
+		idaAnalysisScript = find_autoanalysis_script()
+		# Need to whitelist options[:object]
+		system("#{ida} -A -OIDAPython:#{idaAnalysisScript} #{options[:object]}")
+		FileUtils.rm(destination)
 	end
 
 	# Retrieves test cases from google searches 
@@ -55,6 +57,15 @@ class Tools < Thor
 	end
 
 	no_tasks do
+		def find_autoanalysis_script()
+			analysisScript = find_executable0("func-auto.py")
+			if(analysisScript == nil) then
+				say "Error: Analysis script (func-auto.py) not found in #{ENV['PATH']}", :red
+				exit(1)
+			end
+			return(analysisScript)
+		end
+
 		# Make sure the requested file exists
 		# @param [String] The filename to check for existence
 		def validate_existence(filename)
@@ -73,12 +84,15 @@ class Tools < Thor
 					say "Error: File (#{options[:ida]}) is not executable", :red
 					exit(1)
 				end
+				return(options[:ida])
 			else
 				# Check for the different architectures
 				if(!options[:architecture]) then
 					validate_existence(IDAPro)
+					return(IDAPro)
 				else
 					validate_existence(IDAPro64)
+					return(IDAPro64)
 				end
 			end
 		end
