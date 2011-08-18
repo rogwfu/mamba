@@ -27,6 +27,14 @@ class Tools < Thor
 		end
 	end
 
+	# Draw matlab coverage graph of disassembly (Must run this in the top level directory)
+	desc "coverage", "Generate a matlab coverage graph"
+	method_option	:disassembly,	:default => "", :aliases => "-d", :desc => "IDA Pro Disassembly Library"
+	def coverage
+		validate_disassembly()
+		coverageCalculator = Kernel.const_get("Mamba").const_get("Tools"). const_get("Coverage").new(options[:disassembly])
+	end
+
 	no_tasks do
 		# Validate the terms filename given against a strict whitelist
 		# @param [String] The filename continaing the terms
@@ -36,6 +44,14 @@ class Tools < Thor
 				say "Error: Must conform to: \w\.?\w? and it must reside in the same directory", :red
                 exit(1)
             end
+		end
+
+		# Make sure the disassembly file exists
+		def validate_disassembly()
+			if(!File.exists?(options[:disassembly]) then
+                say "Error: Disassembly file (#{termsFilename}) does not exist", :red
+				exit(1)
+			end
 		end
 	end
 end
