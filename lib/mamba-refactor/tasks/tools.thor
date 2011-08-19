@@ -35,7 +35,7 @@ class Tools < Thor
 		FileUtils.rm(destination)
 	end
 
-	# 
+	# Wrapper around otool to iterrogate an object for all shared objects linked against it 
 	desc "otool", "Runs otool recursively over an object to display linked objects"
 	method_option	:object, :type => :string, :default => "", :aliases => "-o", :desc => "Executable or shared library to examine with otool"
 	def otool()
@@ -50,7 +50,9 @@ class Tools < Thor
 		
 		# Find all the shared libraries
 		sharedLibraries = otool.gather_shared_libraries()
-		puts sharedLibraries.inspect()	
+		sharedLibraries.each do |sharedObject| 
+			say "#{sharedObject}", :blue
+		end
 	end
 
 	# Retrieves test cases from google searches 

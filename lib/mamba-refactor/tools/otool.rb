@@ -48,7 +48,7 @@ module Mamba
 					read_header()
 				end while(@needed.size() != 0)
 
-				return(@found)
+				return(@found.keys.sort())
 			end
 		end
 	end
