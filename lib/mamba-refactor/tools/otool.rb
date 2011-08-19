@@ -13,7 +13,11 @@ module Mamba
 
 				@needed = [objectFile]
 				@found = Hash.new()
-#				@executable_path = objectFile.split()
+
+				# Hack for now, please convert to regex
+				executablePathArr = objectFile.split(File::SEPARATOR)
+				executablePathArr.pop()
+				@executablePath = executablePathArr.join(File::SEPARATOR)
 			end
 
 			# Reads the shared libraries from an objects macho header
@@ -35,6 +39,12 @@ module Mamba
 				# Cleanup the entries
 				linkedObjects.each do |sharedObject|
 					sharedObject.sub!(/\(.*\)/, '').strip!().chomp!()
+
+					# Fix executable path variable in linker
+					if(sharedObject.start_with?("@executable_path")) then
+						sharedObject.gsub!(/@executable_path/, @executablePath)
+					end
+
 					if(!@found.has_key?(sharedObject)) then
 						@needed.push(sharedObject)
 					end
