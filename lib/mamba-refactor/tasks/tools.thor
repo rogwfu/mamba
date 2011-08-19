@@ -35,6 +35,24 @@ class Tools < Thor
 		FileUtils.rm(destination)
 	end
 
+	# 
+	desc "otool", "Runs otool recursively over an object to display linked objects"
+	method_option	:object, :type => :string, :default => "", :aliases => "-o", :desc => "Executable or shared library to examine with otool"
+	def otool()
+		validate_existence(options[:object])
+		otool = Kernel.const_get("Mamba").const_get("Tools"). const_get("OTool").new(options[:object])
+
+		# Check initialization
+		if(otool == nil) then
+			say "Error: otool not found in current path (#{ENV['PATH']})", :red
+			exit(1)
+		end
+		
+		# Find all the shared libraries
+		sharedLibraries = otool.gather_shared_libraries()
+		puts sharedLibraries.inspect()	
+	end
+
 	# Retrieves test cases from google searches 
 	desc "seed", "Seed test cases from google searches"
 	method_option	:filetype,	:default => "pdf", :aliases => "-f", :desc => "Filetype to download examples (ex. pdf, doc, ppt)", :required => true
