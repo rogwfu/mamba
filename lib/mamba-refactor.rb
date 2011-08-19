@@ -2,7 +2,9 @@
 require 'mamba-refactor/fuzzer'
 
 # Tools
+require 'mamba-refactor/tools/coverage'
 require 'mamba-refactor/tools/downloader'
+require 'mamba-refactor/tools/otool'
 
 # Helpers
 require 'mamba-refactor/algorithms/helpers/byte_mutation'

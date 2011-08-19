@@ -7,11 +7,11 @@ module Mamba
 			# @returns nil if otool is not found
 			def initialize(objectFile)
 				@otool = find_executable0('otool')
-				if(otool == nil) then
+				if(@otool == nil) then
 					return(nil)
 				end
 
-				@needed = Array.new(objectFile)
+				@needed = [objectFile]
 				@found = Hash.new()
 #				@executable_path = objectFile.split()
 			end
@@ -29,14 +29,14 @@ module Mamba
 				end
 
 				# Cleanup the output 
-				linkedFiles = output.split("\n")
-				linkedFiles.shift()
+				linkedObjects = output.split("\n")
+				linkedObjects.shift()
 
 				# Cleanup the entries
-				linkedFiles.each do |file|
-					file.sub!(/\(.*\)/, '').strip!().chomp!()
-					if(!found.has_key?(file)) then
-						@needed.push(file)
+				linkedObjects.each do |sharedObject|
+					sharedObject.sub!(/\(.*\)/, '').strip!().chomp!()
+					if(!@found.has_key?(sharedObject)) then
+						@needed.push(sharedObject)
 					end
 				end
 			end

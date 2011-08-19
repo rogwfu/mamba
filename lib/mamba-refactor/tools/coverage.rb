@@ -19,11 +19,11 @@ module Mamba
 				@mambaConfig = YAML.load_file("configs/Mamba.yml")
 				@fuzzerConfig = YAML.load_file("configs/#{@mambaConfig['type']}.yml")
 
-				if(@mambaConfig['type'] ~= /^Distributed/) then
+				#if(@mambaConfig['type'] ~= /^Distributed/) then
 					# Setup the database connections
-					database = Mongo::Connection.new(@mambaConfig['server'], @mambaConfig['port']).db(@mambaConfig['uuid'])
-					@grid = Mongo::Grid.new(database)
-				end
+				#	database = Mongo::Connection.new(@mambaConfig['server'], @mambaConfig['port']).db(@mambaConfig['uuid'])
+				#	@grid = Mongo::Grid.new(database)
+				#end
 
 				# Start the matlab files
 				@matlabFileSpace = File.open("function_coverage_space.m", "wb")
