@@ -19,6 +19,10 @@ class Tools < Thor
 
 
 	# Runs IDA Pro auto analysis and extracts the information in YAML serialization format 
+	# Ida Options: -A autonomous mode. IDA will not display dialog boxes.
+	#              -S Execute a script file when the database is opened. 
+	#              -o specify the output database (implies -c)
+	# http://www.hex-rays.com/idapro/idadoc/417.shtml 
 	desc "disassemble", "Extract disassembly information from IDA Pro into YAML serialization format"
 	method_option :object, :type => :string, :default => "", :aliases => "-o", :desc => "Executable or shared library to disassembly and extract"
 	method_option :architecture, :type => :boolean, :default => false, :aliases => "-a", :desc => "Turn 64 bit support on"
@@ -27,12 +31,11 @@ class Tools < Thor
 		ida = validate_ida()
 		validate_existence(options[:object])
 		destination = options[:object].split(File::SEPARATOR)[-1]
-		say "Info: Copying #{options[:object]} to #{destination}", :blue
-		FileUtils.cp(options[:object], destination)
 		idaAnalysisScript = find_autoanalysis_script()
-		# Need to whitelist options[:object]
-		system("#{ida} -A -OIDAPython:#{idaAnalysisScript} #{options[:object]}")
-		FileUtils.rm(destination)
+		say "Info: Disassembling and serializing #{options[:object]}...", :blue
+		# Need to whitelist options[:object] (this is ugly code)
+		system("#{ida} -A  -S\"#{idaAnalysisScript}\" -o#{destination} #{options[:object]}")
+		say "Info: Disassembling and serialization complete.", :blue
 	end
 
 	# Wrapper around otool to iterrogate an object for all shared objects linked against it 
@@ -83,7 +86,7 @@ class Tools < Thor
 				say "Error: Analysis script (func-auto.py) not found in #{ENV['PATH']}", :red
 				exit(1)
 			end
-			return(analysisScript)
+			return(Gem.bin_path('plympton-refactor', 'func-auto.py'))
 		end
 
 		# Make sure the requested file exists
