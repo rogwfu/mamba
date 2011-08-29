@@ -1,0 +1,106 @@
+Index: coregrind/m_libcassert.c
+===================================================================
+--- coregrind/m_libcassert.c	(revision 11504)
++++ coregrind/m_libcassert.c	(working copy)
+@@ -158,6 +158,11 @@
+    *(volatile Int*)0 = 'x';
+ }
+ 
++/*
++ * Enable the ability to call custom fault catcher
++ */
++extern void (*fault_catcher)(Int sig, Addr addr);
++
+ // Print the scheduler status.
+ void VG_(show_sched_status) ( void )
+ {
+@@ -251,7 +256,15 @@
+    }
+ 
+    if (VG_(clo_xml))
++   {
++    /*
++     * Signal crash, print detailed information
++     */
++     if(fault_catcher)
++        (*fault_catcher)(-1, (Addr)0);
++
+       VG_(printf_xml)("</valgrindoutput>\n");
++   }
+ 
+    // Treat vg_assert2(0, "foo") specially, as a panicky abort
+    if (VG_STREQ(expr, "0")) {
+@@ -272,7 +285,15 @@
+                     UnwindStartRegs* startRegs )
+ {
+    if (VG_(clo_xml))
++   {
++      /*
++       * Signal crash, print detailed information
++       */
++      if(fault_catcher)
++         (*fault_catcher)(-1, (Addr)0);
++
+       VG_(printf_xml)("</valgrindoutput>\n");
++   }
+    VG_(printf)("\n%s: the 'impossible' happened:\n   %s\n", name, str);
+    report_and_quit(report, startRegs);
+ }
+@@ -296,7 +317,15 @@
+ void VG_(unimplemented) ( Char* msg )
+ {
+    if (VG_(clo_xml))
++   {
++      /*
++       * Signal crash, print detailed information
++       */
++      if(fault_catcher)
++         (*fault_catcher)(-1, (Addr)0);
++
+       VG_(printf_xml)("</valgrindoutput>\n");
++   }
+    VG_(umsg)("\n");
+    VG_(umsg)("Valgrind detected that your program requires\n");
+    VG_(umsg)("the following unimplemented functionality:\n");
+Index: coregrind/m_signals.c
+===================================================================
+--- coregrind/m_signals.c	(revision 11504)
++++ coregrind/m_signals.c	(working copy)
+@@ -638,6 +638,11 @@
+ 
+ static SKSS skss;
+ 
++/*
++ * Pointer for custom fault catcher
++ */
++void (*fault_catcher)(Int sig, Addr addr) = NULL;
++
+ static Bool is_sig_ign(Int sigNo)
+ {
+    vg_assert(sigNo >= 1 && sigNo <= _VKI_NSIG);
+@@ -2123,7 +2128,6 @@
+    return True;
+ }
+ 
+-static void (*fault_catcher)(Int sig, Addr addr) = NULL;
+ 
+ void VG_(set_fault_catcher)(void (*catcher)(Int, Addr))
+ {
+@@ -2278,11 +2282,16 @@
+       check for that.  AFAIK the only use of the catcher right now is
+       memcheck's leak detector. */
+    if (fault_catcher) {
+-      vg_assert(VG_(in_generated_code) == False);
+ 
+       (*fault_catcher)(sigNo, (Addr)info->VKI_SIGINFO_si_addr);
+       /* If the catcher returns, then it didn't handle the fault,
+          so carry on panicking. */
++
++      /*
++       * Moved to catch faults with better accuracy 
++       * (Will get double printout, b/c assert)
++       */
++      vg_assert(VG_(in_generated_code) == False);
+    }
+ 
+    if (extend_stack_if_appropriate(tid, info)) {
