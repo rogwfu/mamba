@@ -20,7 +20,7 @@ module Mamba
 			@supportedTracers = 
 				{
 				"run"  => "",
-				"valgrind" => ENV['GEM_HOME'] + File::PATH_SEPARATOR + "mamba-refactor-0.0.0" +  File::PATH_SEPARATOR + "ext" +  File::PATH_SEPARATOR + "valgrind" +  File::PATH_SEPARATOR + "inst" +  File::PATH_SEPARATOR + "bin" +  File::PATH_SEPARATOR + "valgrind"
+				"valgrind" => ENV['GEM_HOME'] + File::PATH_SEPARATOR + "mamba-refactor-0.1.0" +  File::PATH_SEPARATOR + "ext" +  File::PATH_SEPARATOR + "valgrind" +  File::PATH_SEPARATOR + "trunk" + File::PATH_SEPARATOR + "inst" +  File::PATH_SEPARATOR + "bin" +  File::PATH_SEPARATOR + "valgrind"
 			}
 		
 			#
