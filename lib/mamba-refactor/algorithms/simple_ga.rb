@@ -10,9 +10,7 @@ module Mamba
 			DEFAULT_NUMBER_OF_GENERATIONS = 2
 			DEFAULT_POPULATION_SIZE = 4
 			DEFAULT_FITNESS_FUNCTION = "As"
-
 			DEFAULT_INITIAL_POPULATION_FILE = "tests" + File::SEPARATOR + "testset.zip"
-			#        DEFAULT_IDA_DUMP = "disassemblies/"
 			MAX_FILE_SIZE = 524288000 # Maximum of 500MB 
 
 			# Generate the YAML configuration file for Simple Genetic Algorithm Fuzzer
@@ -24,6 +22,7 @@ module Mamba
 				simpleGAConfig['Population Size'] = 	DEFAULT_POPULATION_SIZE 
 				simpleGAConfig['Fitness Function'] = 	DEFAULT_FITNESS_FUNCTION	
 				simpleGAConfig['Initial Population'] =  DEFAULT_INITIAL_POPULATION_FILE
+				simpleGAConfig['Disassembly'] =		    ""	
 				yield(simpleGAConfig) if block_given?()
 				super(simpleGAConfig)
 			end
@@ -34,10 +33,23 @@ module Mamba
 				super(mambaConfig)
 				@simpleGAConfig = read_fuzzer_config(self.to_s())
 
+
 				#
 				# Print configuration to a log file
 				#
 				dump_config(@simpleGAConfig)
+
+				# Error check disassembly information
+				if(!File.exists?(@simpleGAConfig['Disassembly'])) then
+					@logger.fatal("Disassembly file is not valid (#{@simpleGAConfig['Disassembly']})")
+					exit(1)
+				end
+
+				# Error Check Population File
+				if(!File.exists?(@simpleGAConfig['Initial Population'])) then
+					@logger.fatal("Initial Population file is not valid (#{@simpleGAConfig['Initial Population']})")
+					exit(1)
+				end
 
 				#
 				# Initialize object members 
@@ -46,6 +58,7 @@ module Mamba
 				@testSetMappings = Hash.new()
 				@temporaryMappings = Hash.new()
 				@nextGenerationNumber = 0
+				@objectDisassembly = Plympton::Disassembly.new(@simpleGAConfig['Disassembly'], @simpleGAConfig['Fitness Function'])
 			end
 
 			# Run the fuzzing job

@@ -1,3 +1,6 @@
+# Third party libraries
+require 'plympton-refactor'
+
 # Base Functionality
 require 'mamba-refactor/fuzzer'
 
