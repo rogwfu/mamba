@@ -10,7 +10,11 @@ module Mamba
 		# Initialize a chromosome with an id and fitness
 		def initialize(id=0,fitness="0.0")
 			@id = id
-			@fitness = BigDecimal(fitness)
+			if(!fitness.kind_of?(BigDecimal)) then
+				@fitness = BigDecimal(fitness)
+			else
+				@fitness = fitness
+			end
 		end
 
 		# Comparison method for different chromosomes

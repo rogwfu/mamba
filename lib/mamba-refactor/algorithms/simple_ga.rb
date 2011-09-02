@@ -67,10 +67,14 @@ module Mamba
 				seed()
 
 				@simpleGAConfig['Maximum Generations'].times do |generationNumber|
+					@logger.info("Generation #{generationNumber} out of #{@simpleGAConfig['Maximum Generations']}")
 					@nextGenerationNumber = generationNumber + 1
 					@simpleGAConfig['Population Size'].times do |chromosomeID|
-						@executor.run(@logger, @testSetMappings[chromosomeID])  
-						fitness = rand(25).to_s()
+						traceFile = @testSetMappings[chromosomeID] + ".trace.xml"
+						@executor.valgrind(@logger, @testSetMappings[chromosomeID], @objectDisassembly.attributes.name, traceFile)  
+						@objectDisassembly.valgrind_coverage(traceFile)
+						fitness = @objectDisassembly.evaluate()
+						@logger.info("Member #{chromosomeID} Fitness: #{fitness.to_s('F')}")
 						@population.push(Chromosome.new(chromosomeID, fitness))
 						@reporter.numCasesRun = @reporter.numCasesRun + 1
 					end
@@ -88,11 +92,11 @@ module Mamba
 				0.step(@simpleGAConfig['Population Size']-1, 2) do |childID|
 					parents, children = open_parents_and_children(childID)
 
-					@logger.info("=================CHILDREN===============")
-					@logger.info("Evolving: #{@nextGenerationNumber}")
-					@logger.info("Parents: #{parents}")
-					@logger.info("Children: #{children}")
-					@logger.info("========================================")
+#					@logger.info("=================CHILDREN===============")
+#					@logger.info("Evolving: #{@nextGenerationNumber}")
+#					@logger.info("Parents: #{parents}")
+#					@logger.info("Children: #{children}")
+#					@logger.info("========================================")
 
 					crossover(parents, children)
 					mutate(children)
@@ -124,14 +128,14 @@ module Mamba
 				2.times do
 					parents << File.open(@testSetMappings[@population.roulette().id], "rb") 
 				end
-				@logger.info("In open function: " + parents.inspect())
+#				@logger.info("In open function: " + parents.inspect())
 
 				2.times do |iter| 
 					id = childID + iter
 					children << "tests" + File::SEPARATOR + "#{@nextGenerationNumber}."  + "#{id}." + parents[iter].path.split(".")[-1] 
 					@temporaryMappings[childID + iter] = children[iter] 
 				end
-				@logger.info("In open children: " + children.inspect())
+#				@logger.info("In open children: " + children.inspect())
 
 				return [parents, children]
 			end
@@ -142,11 +146,11 @@ module Mamba
 			def crossover(parents, children)
 				if(rand() <= @simpleGAConfig['Crossover Rate']) then
 					crossoverPoint = crossover_point(parents)
-					@logger.info("Crossover Point is: #{crossoverPoint}")
+#					@logger.info("Crossover Point is: #{crossoverPoint}")
 					crossover_files(parents, children, crossoverPoint)	
 				else
 					2.times do |iter|
-						@logger.info("Copying: #{parents[iter].path} to #{children[iter]}")
+#						@logger.info("Copying: #{parents[iter].path} to #{children[iter]}")
 						FileUtils.cp(parents[iter].path, children[iter]) 
 						children[iter] = File.open(children[iter], "r+b")
 					end
@@ -217,7 +221,7 @@ module Mamba
 			def elitism()
 				@population.fittestChromosome
 				replaceChromsomeID = rand(@simpleGAConfig['Population Size'])
-				@logger.info("Running elitism: #{@testSetMappings[@population.fittestChromosome.id]} to #{@temporaryMappings[replaceChromsomeID]}")
+#				@logger.info("Running elitism: #{@testSetMappings[@population.fittestChromosome.id]} to #{@temporaryMappings[replaceChromsomeID]}")
 				FileUtils.cp(@testSetMappings[@population.fittestChromosome.id], @temporaryMappings[replaceChromsomeID]) 
 			end
 
