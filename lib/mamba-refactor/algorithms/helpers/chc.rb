@@ -67,7 +67,7 @@ module Mamba
 						# Check for decrementing the incest prevention
 						if(@temporaryMappings.size == 0) then
 							@simpleGAConfig['Incest Prevention'] = @simpleGAConfig['Incest Prevention'] * 0.50
-							@logger.info("Decrementing incest prevention threshold to: #{@simpleGAConfig['Incest Prevention']}")
+#							@logger.info("Decrementing incest prevention threshold to: #{@simpleGAConfig['Incest Prevention']}")
 						end
 					end
 
@@ -136,7 +136,7 @@ module Mamba
 
 					# Average Chromosome Length * Incest Prevention Measure
 					currentIncestThreshold = (largestChromosomeSize/@testSetMappings.size()) *  @simpleGAConfig["Incest Prevention"]
-					@logger.info("Incest Prevention factor is: #{currentIncestThreshold}")
+#					@logger.info("Incest Prevention factor is: #{currentIncestThreshold}")
 
 					return(currentIncestThreshold)
 				end
@@ -168,10 +168,10 @@ module Mamba
 					hammingDistance = hamming.match(parents[1].read())
 					parents.each { |parent| parent.rewind()}
 
-					@logger.info("Hamming distance is: #{hammingDistance}")
+#					@logger.info("Hamming distance is: #{hammingDistance}")
 					if(hammingDistance >= incestThreshold) then
 						
-						@logger.info("Copying: #{parents[0].path} to #{child}")
+#						@logger.info("Copying: #{parents[0].path} to #{child}")
 
 						# Use the smaller parent to limit crawl to infinity
 						childSize = parents[0].size()
@@ -205,7 +205,7 @@ module Mamba
 				def cataclysimic_mutation()
 					# Copy the best chromosome over to the new population
 					# Remaining elements are formed by a random mutation of about 35% of the bits in the best element?
-					@logger.info("In the cataclysimic_mutation")
+#					@logger.info("In the cataclysimic_mutation")
 
 					# Calculate population mix
 					fittestChromosome = @testSetMappings[@population.max().id]
@@ -221,7 +221,7 @@ module Mamba
 
 					# Seed the rest with random members of the initial population 
 					(numberToMutate + 1).upto(@simpleGAConfig['Population Size']-1) do |chromosomeID|
-						@logger.info("Copying over chromosome number: #{chromosomeID}")
+#						@logger.info("Copying over chromosome number: #{chromosomeID}")
 						initialChromosome = rand(@simpleGAConfig['Population Size'])
 						oldChromosomeFilename = "tests" + File::SEPARATOR + "0.#{initialChromosome}." + fittestChromosome.split(".")[-1]
 						newChromosomeFilename = "tests" + File::SEPARATOR + "#{@nextGenerationNumber}.#{chromosomeID}." + fittestChromosome.split(".")[-1]
@@ -241,7 +241,7 @@ module Mamba
 				def mutate(fittestChromosome, numberToMutate)
 					1.upto(numberToMutate) do |chromosomeID|
 						randomMutator = RandomGenerator.new() 	
-						@logger.info("Mutating Chromosome: #{chromosomeID}")
+#						@logger.info("Mutating Chromosome: #{chromosomeID}")
 						newChromosomeFilename = "tests" + File::SEPARATOR + "#{@nextGenerationNumber}.#{chromosomeID}." + fittestChromosome.split(".")[-1]
 						FileUtils.cp(fittestChromosome, newChromosomeFilename) 
 						File.open(newChromosomeFilename, "r+b")	do |chromosomeFD|
