@@ -120,13 +120,14 @@ module Mamba
 
 			# Function to compose new filenames for children of the next generation
 			# @param [Fixnum] The current child number being generated
+			# @param [String] The selection method for the parents
 			# @returns [Array, Array] Opens File descriptors for parents and children  
-			def open_parents_and_children(childID)
+			def open_parents_and_children(childID, selectionMethod="roulette")
 				parents = Array.new()
 				children = Array.new()
 
 				2.times do
-					parents << File.open(@testSetMappings[@population.roulette().id], "rb") 
+					parents << File.open(@testSetMappings[@population.send(selectionMethod.to_sym()).id], "rb") 
 				end
 #				@logger.info("In open function: " + parents.inspect())
 

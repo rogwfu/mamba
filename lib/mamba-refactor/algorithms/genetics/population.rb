@@ -78,7 +78,7 @@ module Mamba
 		# (An Introduction to Genetic Algorithms - pg. 166)
 		# @return [Chromosome] A chromosome proportionally selected by fitness
 		def roulette()
-			spinValue = random()
+			spinValue = randomValue()
 			rouletteValue = BigDecimal("0.0")
 			@chromosomes.each do |chromosome|
 				rouletteValue += chromosome.fitness
@@ -92,6 +92,16 @@ module Mamba
 			# Saftey, Return last element
 			#
 			return(@chromosomes[-1])
+		end
+
+		# For the CHC algorithm (no bias of chromosome fitness)
+		# @return [Chromosome] A randomly selected chromosome
+		def random()
+			if(size() > 0) then
+				return(@chromosomes[rand(size())])
+			else
+				return nil
+			end
 		end
 
 		# Convenience method for printing a population
@@ -115,7 +125,7 @@ module Mamba
 
 		# Generate a random value bounded by the population fitness
 		# @return [BigDecimal] A random value 
-		def random()
+		def randomValue()
 			randVal = 0.0
 
 			# Error case for fitness being zero
