@@ -25,6 +25,7 @@ module Mamba
 
 					# Try to kill the applescript process to eliminate zombies
 					begin
+						Process.kill(0, appscriptPid)
 						Process.kill("INT", appscriptPid)
 						Process.wait(appscriptPid)
 					rescue
@@ -86,7 +87,8 @@ module Mamba
 		def application_cleanup()
 			# Cleanup the application
 			begin
-				Process.kill("INT", @runningPid)
+				Process.kill(0, @runningPid)
+				Process.kill("KILL", @runningPid)
 				Process.wait(@runningPid)
 			rescue 
 			ensure

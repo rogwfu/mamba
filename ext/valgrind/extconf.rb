@@ -15,7 +15,8 @@ end
 valgrindTag = "VALGRIND_3_6_1"
 
 puts "===== Pulling valgrind tag: #{valgrindTag} ====="
-system("#{tools["svn"]} co svn://svn.valgrind.org/valgrind/tags/#{valgrindTag} trunk")
+#system("#{tools["svn"]} co svn://svn.valgrind.org/valgrind/tags/#{valgrindTag} trunk")
+system("cp -R /tmp/trunk .")
 
 puts "===== Patching Valgrind ====="
 system("cp ../../valgrind-patches/*.patch trunk/")
