@@ -1,0 +1,469 @@
+Index: configure.in
+===================================================================
+--- configure.in	(revision 12005)
++++ configure.in	(working copy)
+@@ -1969,6 +1969,8 @@
+    exp-bbv/tests/arm-linux/Makefile
+    exp-dhat/Makefile
+    exp-dhat/tests/Makefile
++   rufus/Makefile
++   rufus/tests/Makefile
+ ])
+ AC_CONFIG_FILES([coregrind/link_tool_exe_linux],
+                 [chmod +x coregrind/link_tool_exe_linux])
+Index: rufus/tests/Makefile.am
+===================================================================
+--- rufus/tests/Makefile.am	(revision 0)
++++ rufus/tests/Makefile.am	(revision 0)
+@@ -0,0 +1 @@
++# Comment
+Index: rufus/docs/rf-manual.xml
+===================================================================
+--- rufus/docs/rf-manual.xml	(revision 0)
++++ rufus/docs/rf-manual.xml	(revision 0)
+@@ -0,0 +1,25 @@
++<?xml version="1.0"?> <!-- -*- sgml -*- -->
++<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
++  "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
++
++
++<chapter id="rl-manual" xreflabel="Nulgrind">
++
++<title>Rufus: A simple Valgrind hit tracing tool</title>
++
++<para>To use this tool, you must specify
++<option>--tool=rufus</option> on the Valgrind
++command line.</para>
++
++<sect1 id="ms-manual.overview" xreflabel="Overview">
++<title>Overview</title>
++
++<para>Rufus is a simple hit tracing tool which dumps output to xml. </para>
++
++<para>Note that you need to use the option <option>--tool=rufus</option> to run
++    Rufus.</para>
++
++</sect1>
++
++</chapter>
++
+Index: rufus/docs/Makefile.am
+===================================================================
+--- rufus/docs/Makefile.am	(revision 0)
++++ rufus/docs/Makefile.am	(revision 0)
+@@ -0,0 +1 @@
++# Comment
+Index: rufus/Makefile.am
+===================================================================
+--- rufus/Makefile.am	(revision 0)
++++ rufus/Makefile.am	(revision 0)
+@@ -0,0 +1,57 @@
++include $(top_srcdir)/Makefile.tool.am
++
++EXTRA_DIST = docs/rf-manual.xml
++
++#----------------------------------------------------------------------------
++# rufus-<platform>
++#----------------------------------------------------------------------------
++
++noinst_PROGRAMS  = rufus-@VGCONF_ARCH_PRI@-@VGCONF_OS@
++if VGCONF_HAVE_PLATFORM_SEC
++noinst_PROGRAMS += rufus-@VGCONF_ARCH_SEC@-@VGCONF_OS@
++endif
++
++RUFUS_SOURCES_COMMON = \
++	rf_main.c
++
++rufus_@VGCONF_ARCH_PRI@_@VGCONF_OS@_SOURCES      = \
++	$(RUFUS_SOURCES_COMMON)
++rufus_@VGCONF_ARCH_PRI@_@VGCONF_OS@_CPPFLAGS     = \
++	$(AM_CPPFLAGS_@VGCONF_PLATFORM_PRI_CAPS@)
++rufus_@VGCONF_ARCH_PRI@_@VGCONF_OS@_CFLAGS       = \
++	$(AM_CFLAGS_@VGCONF_PLATFORM_PRI_CAPS@)
++rufus_@VGCONF_ARCH_PRI@_@VGCONF_OS@_DEPENDENCIES = \
++	$(TOOL_DEPENDENCIES_@VGCONF_PLATFORM_PRI_CAPS@)
++rufus_@VGCONF_ARCH_PRI@_@VGCONF_OS@_LDADD        = \
++	$(TOOL_LDADD_@VGCONF_PLATFORM_PRI_CAPS@)
++rufus_@VGCONF_ARCH_PRI@_@VGCONF_OS@_LDFLAGS      = \
++	$(TOOL_LDFLAGS_@VGCONF_PLATFORM_PRI_CAPS@)
++rufus_@VGCONF_ARCH_PRI@_@VGCONF_OS@_LINK = \
++	$(top_builddir)/coregrind/link_tool_exe_@VGCONF_OS@ \
++	@VALT_LOAD_ADDRESS_PRI@ \
++	$(LINK) \
++	$(rufus_@VGCONF_ARCH_PRI@_@VGCONF_OS@_CFLAGS) \
++	$(rufus_@VGCONF_ARCH_PRI@_@VGCONF_OS@_LDFLAGS)
++
++if VGCONF_HAVE_PLATFORM_SEC
++rufus_@VGCONF_ARCH_SEC@_@VGCONF_OS@_SOURCES      = \
++	$(RUFUS_SOURCES_COMMON)
++rufus_@VGCONF_ARCH_SEC@_@VGCONF_OS@_CPPFLAGS     = \
++	$(AM_CPPFLAGS_@VGCONF_PLATFORM_SEC_CAPS@)
++rufus_@VGCONF_ARCH_SEC@_@VGCONF_OS@_CFLAGS       = \
++	$(AM_CFLAGS_@VGCONF_PLATFORM_SEC_CAPS@)
++rufus_@VGCONF_ARCH_SEC@_@VGCONF_OS@_DEPENDENCIES = \
++	$(TOOL_DEPENDENCIES_@VGCONF_PLATFORM_SEC_CAPS@)
++rufus_@VGCONF_ARCH_SEC@_@VGCONF_OS@_LDADD        = \
++	$(TOOL_LDADD_@VGCONF_PLATFORM_SEC_CAPS@)
++rufus_@VGCONF_ARCH_SEC@_@VGCONF_OS@_LDFLAGS      = \
++	$(TOOL_LDFLAGS_@VGCONF_PLATFORM_SEC_CAPS@)
++rufus_@VGCONF_ARCH_SEC@_@VGCONF_OS@_LINK = \
++	$(top_builddir)/coregrind/link_tool_exe_@VGCONF_OS@ \
++	@VALT_LOAD_ADDRESS_SEC@ \
++	$(LINK) \
++	$(rufus_@VGCONF_ARCH_SEC@_@VGCONF_OS@_CFLAGS) \
++	$(rufus_@VGCONF_ARCH_SEC@_@VGCONF_OS@_LDFLAGS)
++endif
++
++
+Index: rufus/rf_main.c
+===================================================================
+--- rufus/rf_main.c	(revision 0)
++++ rufus/rf_main.c	(revision 0)
+@@ -0,0 +1,333 @@
++/*--------------------------------------------------------------------*/
++/*--- Rufus: Track Code Coverage/Calculate statistics from YAML       */
++/*--- disassemblies.                                     rf_main.c ---*/
++/*--------------------------------------------------------------------*/
++
++/*
++   This file is part of Rufus, 
++
++   Copyright (C) 2010 Roger Seagle 
++      rseagle@utk.edu
++
++   This program is free software; you can redistribute it and/or
++   modify it under the terms of the GNU General Public License as
++   published by the Free Software Foundation; either version 2 of the
++   License, or (at your option) any later version.
++
++   This program is distributed in the hope that it will be useful, but
++   WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++   General Public License for more details.
++
++   You should have received a copy of the GNU General Public License
++   along with this program; if not, write to the Free Software
++   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
++   02111-1307, USA.
++
++   The GNU General Public License is contained in the file COPYING.
++*/
++
++/*
++ * Mac OS X - List all the libraries to load (otool -l Calculator)
++ */
++#include "pub_tool_basics.h"
++#include "pub_tool_tooliface.h"
++#include "pub_tool_options.h"
++#include "pub_tool_libcbase.h"
++#include "pub_tool_libcprint.h"
++#include "pub_tool_debuginfo.h"
++#include "pub_tool_libcassert.h"
++#include "pub_tool_xarray.h"
++#include "pub_tool_clientstate.h"
++
++/*
++ * For Signal Catching and backtraces
++ */
++#include "pub_tool_vki.h"
++#include "pub_tool_signals.h"
++#include "pub_tool_threadstate.h"
++#include "pub_tool_stacktrace.h"
++
++/*
++ * For Writing the traceback
++ */
++#include "pub_tool_libcfile.h"
++#include "pub_tool_libcproc.h"
++
++/*
++ * VEX Specific Includes
++ */
++#include "libvex_guest_x86.h"
++
++#define DEBUG           0
++#define BUF_LEN         1000
++#define OBJECT          "--object"
++#define FILENAMESIZE    2056
++
++/*
++ * Globals
++ */
++Char *objMarker = NULL;
++Char crashfile[FILENAMESIZE];
++const DebugInfo* dinfo = NULL;
++
++/*
++ * Function Name: rf_process_cmd_line_option 
++ * Arguments: Char * - the options from the command line
++ *
++ * Description: Command line option handling
++ */
++static Bool rf_process_cmd_line_option(Char *arg)
++{
++    Char* tmp_str;
++
++    if VG_STR_CLO(arg, OBJECT, tmp_str) {
++        if(objMarker != NULL) {
++            VG_(message)(Vg_UserMsg, "Multiple --objects specified\n");
++            VG_(message)(Vg_UserMsg, "Currently Not Supported....\n");
++            return(False);
++        } else {
++            objMarker = tmp_str;
++        }
++    } else {
++        VG_(message)(Vg_UserMsg, "Unsupported Option\n");
++        return False;
++    }
++
++    return True;
++}
++
++/*
++ * Function Name: rf_print_usage 
++ * Arguments: void
++ *
++ * Description: Prints the options for the rufus valgrind tool
++ */
++static void rf_print_usage(void)
++{
++    VG_(printf)(
++            "    --object=<fullpath>  set the executable or shared object interested in tracing\n"
++            );
++}
++
++/*
++ * Function Name: rf_print_debug_usage 
++ * Arguments: void
++ *
++ * Description: Prints the usage for debugging
++ */
++static void rf_print_debug_usage(void)
++{
++    VG_(printf)("(none)\n");
++}
++
++/*
++ * Function Name: rf_post_clo_init 
++ * Arguments: void
++ *
++ * Description: Post processing after command line arguments processed
++ */
++static void rf_post_clo_init(void)
++{
++    /*
++     * Make sure an object was specified
++     */
++    if(objMarker == NULL) {
++        VG_(message)(Vg_UserMsg, "Error: --object not specified\n");
++        VG_(exit)(1);
++    }
++
++    /*
++     * Make sure XML Output is specified
++     */
++    if(!VG_(clo_xml)) {
++        VG_(message)(Vg_UserMsg, "Error: --xml=yes not specified\n");
++        VG_(exit)(1);
++    }
++
++    /*
++     * Setup the crash filename
++     */
++    VG_(snprintf)(crashfile, FILENAMESIZE, "/Users/%s/Library/Logs/DiagnosticReports/valgrind-rufus-signal.%d.crash", VG_(getenv)("USER"), VG_(getpid)());
++}
++
++/*
++ * Function Name: rf_instrument 
++ * Arguments: *Many*
++ *
++ * Description: The actual instrumentation function
++ */
++static IRSB* rf_instrument ( VgCallbackClosure* closure,
++        IRSB* sbIn,
++        VexGuestLayout* layout, 
++        VexGuestExtents* vge,
++        IRType gWordTy, IRType hWordTy )
++{
++
++    Int      idx;
++    IRSB     *sbOut;
++    IRStmt   *st;
++    Addr   origAddr;
++    static Char funcName[BUF_LEN];
++    static Char objName[BUF_LEN];
++	Char   *xmlPtr = 0;
++
++    /* We don't handle a host/guest word size mismatch */
++    if (gWordTy != hWordTy) {
++        VG_(tool_panic)("host/guest word size mismatch");
++    }
++
++    /*
++     * Check to see if the shared library has loaded yet 
++     */
++    if(!dinfo) 
++    {
++        /*
++         * Try to get the debug information for the loaded library
++         */
++        for (dinfo = VG_(next_DebugInfo)(0); dinfo; dinfo = VG_(next_DebugInfo)(dinfo))
++        {
++#if DEBUG
++            VG_(message)(Vg_UserMsg, "Object is: %s\n", VG_(DebugInfo_get_filename)(dinfo)); 
++            VG_(message)(Vg_UserMsg, "Obj Marker is: %s\n", objMarker); 
++#endif
++            if(VG_(strcmp)(objMarker,VG_(DebugInfo_get_filename)(dinfo)) == 0) 
++                break;
++        }
++    }
++
++    /* Set up SB */
++    sbOut = deepCopyIRSBExceptStmts(sbIn);
++
++    /* Copy verbatim any IR preamble preceding the first IMark */
++    idx = 0;
++    while ( (idx < sbIn->stmts_used) && (sbIn->stmts[idx]->tag!=Ist_IMark)) {
++        addStmtToIRSB( sbOut, sbIn->stmts[idx] );
++        idx++;
++    }
++
++    /* Get the first statement */
++    tl_assert(sbIn->stmts_used > 0);
++    st = sbIn->stmts[idx];
++
++    /* double check we are at a Mark statement */
++    tl_assert(Ist_IMark == st->tag);
++
++    origAddr=st->Ist.IMark.addr;
++
++    /*
++     * Grab the function name and the object its from
++     */
++    VG_(get_objname)(origAddr, objName, BUF_LEN);
++    VG_(get_fnname_w_offset)(origAddr, funcName, BUF_LEN);
++
++    /*
++     * Make sure its the object specified to trace 
++     */
++    if(VG_(strcmp)(objMarker, objName) == 0)
++    {
++        /*
++         * Special case if its the actual exe, it appears that the 
++         * offset requires adjusting for the IDA Pro disassembly to match.
++         */
++        if(VG_(strcmp)(objMarker, VG_(args_the_exename)) != 0)
++        {
++            origAddr = origAddr - VG_(DebugInfo_get_text_avma)(dinfo);
++        }
++	   /*
++       	* Normalize function name to remove xml like text
++       	*/
++    	while((xmlPtr = VG_(strstr)(funcName, "<"))) {
++       		*xmlPtr = '^';
++       	}       
++
++       	while((xmlPtr = VG_(strstr)(funcName, "&"))) {
++       		*xmlPtr = '^';
++       	}
++
++        VG_(printf_xml)("<hit><funcname>%s</funcname><offset>%#lx</offset></hit>\n", funcName, origAddr);
++    } 
++
++	/* Copy the statements to execute */
++    while(idx < sbIn->stmts_used) {
++        st=sbIn->stmts[idx];
++
++        /* Insert the original instruction */
++        addStmtToIRSB( sbOut, st );
++        idx++;
++    }
++
++    return sbOut;
++}
++
++/*
++ * Function Name: track_faults 
++ * Arguments:   Int  - signal number thrown
++ *              Addr - Address of the faulting instruction 
++ *
++ * Description: Function to print debug information if a fault occurs
++ */
++void track_faults(Int sig, Addr addr) 
++{
++    SysRes sres;
++    Int fd = -1;
++
++    /*
++     * Print the error to the xml log
++     */
++    VG_(printf_xml)("<fault><signal>%d</signal></fault>", sig);
++    VG_(get_and_pp_StackTrace)(VG_(get_running_tid)(), VG_(clo_backtrace_size));
++
++    /*
++     * Get the current pid and user (For fuzzer crash monitoring)
++     */
++    sres = VG_(open)(crashfile, VKI_O_CREAT|VKI_O_TRUNC|VKI_O_WRONLY,VKI_S_IRUSR|VKI_S_IWUSR|VKI_S_IRGRP|VKI_S_IWGRP);
++    if (sr_isError(sres))
++       VG_(printf_xml)("<error>Filename: %s could not be created", crashfile);
++    else {
++        fd = sr_Res(sres);
++        VG_(close)(fd);
++    }
++
++    return;
++}
++
++/*
++ * Function Name: rf_fini 
++ * Arguments: Int - exit code
++ *
++ * Description: Any finishing code
++ */
++static void rf_fini(Int exitcode)
++{
++}
++
++/*
++ * Function Name: rf_pre_clo_init 
++ * Arguments: void
++ *
++ * Description: Initializing the rufus tool
++ */
++static void rf_pre_clo_init(void)
++{
++   VG_(details_name)                ("Rufus");
++   VG_(details_version)             (NULL);
++   VG_(details_description)         ("Tool to aide in GA Fuzzing");
++   VG_(details_copyright_author)    (
++      "Copyright (C) 2002-2010, and GNU GPL'd, by Roger Seagle.");
++   VG_(details_bug_reports_to)      (VG_BUGS_TO);
++
++   VG_(basic_tool_funcs)            (rf_post_clo_init,
++                                     rf_instrument,
++                                     rf_fini);
++   VG_(set_fault_catcher)           (track_faults);
++
++   VG_(needs_xml_output)            ();
++
++   VG_(needs_command_line_options)  (rf_process_cmd_line_option,
++                                     rf_print_usage,
++                                     rf_print_debug_usage);
++   /* No needs, no core events to track */
++}
++
++VG_DETERMINE_INTERFACE_VERSION(rf_pre_clo_init)
+Index: Makefile.am
+===================================================================
+--- Makefile.am	(revision 12005)
++++ Makefile.am	(working copy)
+@@ -14,7 +14,8 @@
+ 
+ EXP_TOOLS = 	exp-ptrcheck \
+ 		exp-bbv \
+-		exp-dhat
++		exp-dhat \
++		rufus
+ 
+ # DDD: once all tools work on Darwin, TEST_TOOLS and TEST_EXP_TOOLS can be
+ # replaced with TOOLS and EXP_TOOLS.
