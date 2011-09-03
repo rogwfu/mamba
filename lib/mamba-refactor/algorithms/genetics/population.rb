@@ -118,6 +118,11 @@ module Mamba
 		def random()
 			randVal = 0.0
 
+			# Error case for fitness being zero
+			if(@fitness == BigDecimal("0.0")) then
+				return(BigDecimal("0.0"))
+			end
+
 			# Note: Number conversion here BigDecimal => Float may cause issues
 			begin
 				randVal = rand(@fitness) + rand()
