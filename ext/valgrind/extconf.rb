@@ -23,7 +23,8 @@ system("cd trunk ; #{tools["patch"]} -p0 < rufus.3.6.0.patch")
 system("cd trunk ; #{tools["patch"]} -p0 < signals.patch")
 
 puts "===== Building Valgrind ====="
-system("cd trunk ; ./autogen.sh ; ./configure --enable-only32bit --prefix=`pwd`/inst")
+#system("cd trunk ; ./autogen.sh ; ./configure --enable-only32bit --prefix=`pwd`/inst")
+system("cd trunk ; ./autogen.sh ; ./configure --prefix=`pwd`/inst")
 system("cd trunk ; #{tools["make"]}; #{tools["make"]} install")
 
 # Appease packaging library

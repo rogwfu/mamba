@@ -21,7 +21,23 @@ Jeweler::Tasks.new do |gem|
   gem.description = %Q{File format fuzzing framework including genetic algorithms and a distributed fuzzing environment.  The refactor improves by leveraging thor.}
   gem.email = "roger.seagle@gmail.com"
   gem.authors = ["Roger Seagle, Jr."]
+
   # dependencies defined in Gemfile
+  gem.add_dependency("thor", "=0.14.6")
+  gem.add_dependency("daemons", "=1.1.3")
+  gem.add_dependency("uuidtools", "=2.1.2")
+  gem.add_dependency("rubyzip", "=0.9.4")
+  gem.add_dependency("log4r", "=1.1.9")
+  gem.add_dependency("directory_watcher", "=1.4.0")
+  gem.add_dependency("rb-appscript", "=0.6.1")
+  gem.add_dependency("bson_ext", "=1.3.1")
+  gem.add_dependency("mongo", "=1.3.1")
+  gem.add_dependency("amqp", "=0.7.1")
+  gem.add_dependency("eventmachine", "=0.12.10")
+  gem.add_dependency("hpricot", "=0.8.4")
+  gem.add_dependency("plympton-refactor", "= 1.0.0")
+
+  # Extensions
   gem.extensions          = FileList['ext/**/extconf.rb']
 end
 Jeweler::RubygemsDotOrgTasks.new
