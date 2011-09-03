@@ -93,14 +93,23 @@ module Mamba
 					# Hack but should work?
 
 					cleanup()
+
+					# Stop running
+					if(@reporter.numCasesRun >= @simpleGAConfig['Maximum Generations'] * @simpleGAConfig['Population Size'] ) then
+						report()
+						exit(1)
+					end
 				end
 
 				# Test the intermediate children
 				def evaluate_intermediate_children()
 					# Test the fitness of the intermediate children
 					@temporaryMappings.each do |key, value|
-						@executor.run(@logger, value) 
-						fitness = rand(25).to_s()
+						traceFile = value + ".trace.xml"
+						@executor.valgrind(@logger, value, @objectDisassembly.attributes.name, traceFile)  
+						@objectDisassembly.valgrind_coverage(traceFile)
+						fitness = @objectDisassembly.evaluate()
+						@logger.info("Member value Fitness: #{fitness.to_s('F')}")
 						@population.push(Chromosome.new("#{key}", fitness))
 						@reporter.numCasesRun = @reporter.numCasesRun + 1
 					end
