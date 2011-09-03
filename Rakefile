@@ -36,6 +36,7 @@ Jeweler::Tasks.new do |gem|
   gem.add_dependency("eventmachine", "=0.12.10")
   gem.add_dependency("hpricot", "=0.8.4")
   gem.add_dependency("plympton-refactor", "= 1.0.0")
+  gem.add_dependency("amatch", "=0.2.6")
 
   # Extensions
   gem.extensions          = FileList['ext/**/extconf.rb']
