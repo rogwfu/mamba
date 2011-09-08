@@ -25,11 +25,9 @@ module Mamba
 				@reporter.numCasesRun = @reporter.numCasesRun + 1
 
 				if(@organizer)
-					@population.push(Chromosome.new(chromosomeInfo[1].to_i(), chromosomeInfo[2]))
-
+					@population.push(Chromosome.new(chromosomeInfo[1].to_i(), BigDecimal.new(chromosomeInfo[2])))
 					#
 					# Check for condition to stop and condition to stop and evolve
-					#
 					if(@population.size == @simpleGAConfig['Population Size']) then
 						@logger.info(@population.inspect())
 						statistics()
@@ -55,10 +53,9 @@ module Mamba
 
 				remoteFD = @storage.dbHandle.get(testCaseID)
 				testCaseFilename = "tests#{File::SEPARATOR}#{remoteFD.filename}"
+				traceFile = testCaseFilename + ".trace.xml"
 
-				#
 				# Optimization (Organizer already has all the files)
-				#
 				if(!@organizer) then
 					localFD = File.open(testCaseFilename, "w+b")
 					localFD.write(remoteFD.read())
@@ -66,26 +63,25 @@ module Mamba
 				end
 
 				@reporter.currentTestCase = remoteFD.filename 
-				@executor.run(@logger, testCaseFilename)
+
+				@executor.valgrind(@logger, testCaseFilename, @objectDisassembly.attributes.name, traceFile)  
+				@objectDisassembly.valgrind_coverage(traceFile)
+				fitness = @objectDisassembly.evaluate()
+				@logger.info("Member #{chromosomeID} Fitness: #{fitness.to_s('F')}")
 
 				# 
 				# Store the results in the "cloud" :)
-				#
 				#			@storage.dbHandle.put(File.open(newTestCaseFilename), :_id => "0:#{testCaseNumber}", :filename => newTestCaseFilename)
 
-				#
 				# Cleanup remotes
-				#
 				if(!@organizer) then
 					FileUtils.rm(testCaseFilename)
 				end
 
 				#			FileUtils.rm(testCaseFilename + ".xml")
 
-				#
 				# Post test case results 0.1.2
-				#
-				@topic_exchange.publish(testCaseID + "." + rand(25).to_s(), :key => "results")
+				@topic_exchange.publish(testCaseID + "." + fitness.to_s('F'), :key => "results")
 
 				# Acknowledge the test case is done
 				header.ack()	
