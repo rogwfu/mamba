@@ -77,6 +77,7 @@ module Mamba
 						@logger.info("Member #{chromosomeID} Fitness: #{fitness.to_s('F')}")
 						@population.push(Chromosome.new(chromosomeID, fitness))
 						@reporter.numCasesRun = @reporter.numCasesRun + 1
+						@reporter.currentTestCase = @testSetMappings[chromosomeID].split(File::SEPARATOR)[-1] 
 					end
 					statistics()
 

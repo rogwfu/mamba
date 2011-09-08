@@ -65,6 +65,7 @@ module Mamba
 					localFD.close()
 				end
 
+				@reporter.currentTestCase = remoteFD.filename 
 				@executor.run(@logger, testCaseFilename)
 
 				# 

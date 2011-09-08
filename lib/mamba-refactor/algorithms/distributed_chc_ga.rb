@@ -9,6 +9,7 @@ module Mamba
 				chromosomeInfo = payload.split(".")
 				@logger.info("Chromosome[#{chromosomeInfo[1]}]: #{chromosomeInfo[2]}")
 				@reporter.numCasesRun = @reporter.numCasesRun + 1
+#				@reporter.currentTestCase = remoteFD.filename
 				
 				if(@organizer)
 					@population.push(Chromosome.new(chromosomeInfo[1].to_i(), chromosomeInfo[2]))
