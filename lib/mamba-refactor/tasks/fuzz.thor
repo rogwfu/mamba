@@ -141,6 +141,23 @@ class Fuzz < Thor
 			end
 		end
 	end
+	
+	desc "report", "Print a report of current activity to the logfile"
+	# Unpackage a mamba file to configure a fuzzing environment
+	def report()
+		say "Mamba Fuzzing Framework reporting to log file....", :blue
+		pidFiles = Daemons::PidFile.find_files(FileUtils.pwd(), "MambaFuzzingFramework")
+		if(pidFiles.length == 1) then
+			# Send the reporting signal (SIGINFO) to the fuzzer 
+			begin
+				Process.kill('SIGINFO', File.open(pidFiles[0]).readline().chomp().to_i())
+			rescue 
+				say "Error: Mamba Fuzzing Framework not running!", :red
+			end
+		else
+			say "Error: Mamba Fuzzing Framework not running!", :red
+		end
+	end
 
 	no_tasks do
 		# Reads the Mamba configuration file from the current environment

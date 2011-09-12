@@ -114,11 +114,7 @@ module Mamba
 
 		# Report the status of the fuzzer run (Start Time, Elapsed Time, Number of Test Cases, Number of Crashes, and Crashes themselves)
 		def report()
-			@logger.info("==========================================================")
-			@logger.info("                       STATUS")
-			@logger.info("==========================================================")
 			@reporter.print_report(@logger)
-			@logger.info("==========================================================")
 		end
 
 		private 

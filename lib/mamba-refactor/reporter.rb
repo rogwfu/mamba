@@ -9,8 +9,9 @@ module Mamba
 		attr_accessor	 :topic_exchange
 
 		# Initialize Reporter variables and create directory watcher instance
-		# @param [Boolean] Signifies if the fuzzer using this reporter is distributed (Default: False)
+		# @param [Boolean] Signifies if the fuzzer using this reporter is distributed (Default: false)
 		def initialize(distributed=false)
+			@reporter_logger = init_logger() 
 			@numCasesRun = 0
 			@numCrashes = 0
 			@currentTestCase = 0
@@ -40,6 +41,11 @@ module Mamba
 						self.send(detectionFunction, event)
 					end
 				end
+			end
+
+			# Install the real time reporter signal handler
+			Kernel.trap("INFO") do
+				print_report(@reporter_logger)	
 			end
 
 			return(self)
@@ -86,6 +92,10 @@ module Mamba
 		# Print information pertaining to run time, test cases run, and crashes
 		# @param [Logger] A log4r instance to print logging information on runtime and crashes
 		def print_report(logger)
+			logger.info("==========================================================")
+			logger.info("                       STATUS")
+			logger.info("==========================================================")
+
 			elapsedTime = Time.now() - @startTime
 			logger.info("Start Time:                #{@startTime.strftime("%B %d, %Y (%A)- %I:%M:%S %p")}")
 			logger.info("Elapsed Runtime:           #{elapsedTime} secs")
@@ -94,12 +104,11 @@ module Mamba
 			logger.info("Number of Crashes Found:   #{@crashes.size()}")
 			logger.info("Crashes:                   ")
 
-			#
 			# Format the crash string
-			#
 			@crashes.each do |key, crash|
 				logger.info(crash['CrashReport'] + " : " + crash['CrashTime'] + " : " + crash['ProbTestCase'].to_s())
 			end
+			logger.info("==========================================================")
 		end
 
 		private
@@ -114,5 +123,16 @@ module Mamba
 				raise "Error: Unsupported Operating System (#{Config::CONFIG["host_os"]})"
 			end
 		end
+
+        # @param [Type] Type of fuzzer, used to name the log file
+        # @return [Logger] A logger created from the log4r library
+        def init_logger()
+            logfilename         = "logs/Reporter." + Time.now.strftime("%Y-%m-%d-%H-%M-%S") + ".log"
+            logger              = Log4r::Logger.new('MambaFuzzer_Reporter')
+            pattern             = Log4r::PatternFormatter.new(:pattern => "%d %l %m")
+            logger.outputters   = Log4r::FileOutputter.new("mambareporterlogfile", :filename => logfilename, :formatter => pattern, :truncate => true)
+            logger.level        = Log4r::ALL
+            return(logger)
+        end
 	end
 end
