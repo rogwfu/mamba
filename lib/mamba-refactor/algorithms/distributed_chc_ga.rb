@@ -33,13 +33,12 @@ module Mamba
 
 							@nextGenerationNumber = @nextGenerationNumber + 1
 							unless (@reporter.numCasesRun >= (@simpleGAConfig['Maximum Generations'] * @simpleGAConfig['Population Size'])) then
-								@topic_exchange.publish("shutdown", :key => "commands")
-						#		evolve() 
+								evolve() 
 
 								# Reseed the next population
-						#		@testSetMappings.each_key do |key|
-						#			seed_distributed(key)
-						#		end
+								@testSetMappings.each_key do |key|
+									seed_distributed(key)
+								end
 
 							else
 								@topic_exchange.publish("shutdown", :key => "commands")

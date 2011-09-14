@@ -76,17 +76,10 @@ module Mamba
 						cataclysimic_mutation()
 					else
 						# Send test cases to cluster for processing (Not tested yet)
-						if block_given? then
-							yield
-						else
-							evaluate_intermediate_children()
-						end
+						evaluate_intermediate_children()
 
 						# Sort the combined array
 						@sorted_population = @population.sort()
-#						@logger.info(@population.inspect)
-#						@logger.info(@sorted_population.inspect)
-#						@logger.info("Sorted array size: #{@sorted_population.size()}")
 
 						spawn_new_generation()
 					end
