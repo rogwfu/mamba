@@ -2,7 +2,7 @@ require 'mkmf'
 
 module Mamba
 	class Distrib < Thor
-		@@version = "0.0.0"
+		@@version = "0.1.0"
 		namespace :distrib
 
 		desc "dstart", "Start the Mongodb database for distribution"
