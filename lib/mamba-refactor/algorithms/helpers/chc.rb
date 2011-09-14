@@ -97,7 +97,12 @@ module Mamba
 					# Stop running
 					if(@reporter.numCasesRun >= @simpleGAConfig['Maximum Generations'] * @simpleGAConfig['Population Size'] ) then
 						report()
-						exit(1)
+
+						if(@topic_exchange != nil) then
+							@topic_exchange.publish("shutdown", :key => "commands")
+						else
+							exit(1)
+						end
 					end
 				end
 

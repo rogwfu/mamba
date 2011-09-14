@@ -92,6 +92,7 @@ class Fuzz < Thor
 		Zip::ZipFile.open(packageFilename, Zip::ZipFile::CREATE) do |zipfile|
 			entries = Dir.glob("configs#{File::SEPARATOR}*.yml") + Dir.glob("disassemblies#{File::SEPARATOR}*") + Dir.glob("models#{File::SEPARATOR}*") + Dir.glob("tests#{File::SEPARATOR}*")
 			entries.each do |entry|
+				say "Adding: #{entry}", :blue
 				zipfile.add(entry, entry)
 			end
 		end
@@ -128,8 +129,8 @@ class Fuzz < Thor
 			zipfile.each do |entry|
 				#
 				# Sanity check the packaged filename (Whitelist)
-				#
-				if (entry.name =~ /^configs\/\w+\.yml/ or entry.name =~ /^disassemblies\/\w+\.fz/ or entry.name =~ /models\/\w+\.ml/ or entry.name =~ /^tests\/\w+\.\w+/) then
+				# I know the disassemblies has a directory traversal vuln in it
+				if (entry.name =~ /^configs\/\w+\.yml/ or entry.name =~ /^disassemblies\/[\w+.]fz/ or entry.name =~ /models\/\w+\.ml/ or entry.name =~ /^tests\/\w+\.\w+/) then
 					#
 					# Extract the contents
 					#

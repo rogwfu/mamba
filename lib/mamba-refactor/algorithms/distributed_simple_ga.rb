@@ -33,7 +33,7 @@ module Mamba
 						statistics()
 
 						@nextGenerationNumber = @nextGenerationNumber + 1
-						unless (@nextGenerationNumber) == @simpleGAConfig['Maximum Generations'] then
+						unless (@nextGenerationNumber == @simpleGAConfig['Maximum Generations']) then
 							evolve() 
 							@testSetMappings.each_key do |key|
 								seed_distributed(key)
@@ -67,7 +67,7 @@ module Mamba
 				@executor.valgrind(@logger, testCaseFilename, @objectDisassembly.attributes.name, traceFile)  
 				@objectDisassembly.valgrind_coverage(traceFile)
 				fitness = @objectDisassembly.evaluate()
-				@logger.info("Member #{chromosomeID} Fitness: #{fitness.to_s('F')}")
+				@logger.info("Member #{testCaseID} Fitness: #{fitness.to_s('F')}")
 
 				# 
 				# Store the results in the "cloud" :)
