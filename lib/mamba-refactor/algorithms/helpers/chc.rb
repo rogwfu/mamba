@@ -73,20 +73,31 @@ module Mamba
 
 					# Check for cataclysmic mutation
 					if(@simpleGAConfig['Incest Prevention'] <= MINIMUM_INCEST_PREVENTION_THRESHOLD) then
+#						@logger.info("Below the threshold: #{@simpleGAConfig['Incest Prevention']}")
 						cataclysimic_mutation()
 					else
+#						@logger.info("Above the threshold: #{@simpleGAConfig['Incest Prevention']}")
 						# Send test cases to cluster for processing (Not tested yet)
-						evaluate_intermediate_children()
+						if(@topic_exchange != nil) then
+							return(0)
+						else
+							evaluate_intermediate_children()
+						end
 
 						# Sort the combined array
 						@sorted_population = @population.sort()
 
 						spawn_new_generation()
 					end
+
 					# Hack but should work?
-
 					cleanup()
+					chc_check_stopping()
+					return(1)
+				end
 
+				# Function to test the stopping condition for CHC
+				def chc_check_stopping()
 					# Stop running
 					if(@reporter.numCasesRun >= @simpleGAConfig['Maximum Generations'] * @simpleGAConfig['Population Size'] ) then
 						report()

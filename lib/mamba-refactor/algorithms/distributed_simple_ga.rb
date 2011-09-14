@@ -98,6 +98,18 @@ module Mamba
 				@storage.dbHandle.put(File.open(@testSetMappings[testCaseNumber]), :_id => testCaseID, :filename => remoteTestCaseFilename)
 				@direct_exchange.publish(testCaseID, :routing_key => @queue.name)
 			end
+
+			# Function to handle seeding mongodb and rabbitmq for distributed genetic algorithm
+			# testCaseID Format: generationNumber.testcasenumber (e.g. 1.4 - means generation 1, chromosome 4)
+			# testCaseFilename format: generationNumber.testcasefilename (e.g. 2.4.pdf - means generation 2 chromomse 4 with filename 4.pdf)
+			# @param [Fixnum] The test case number
+			def seed_distributed_temp(testCaseNumber)
+				testCaseID = @nextGenerationNumber.to_s() + "." + testCaseNumber.to_s()
+				remoteTestCaseFilename = @temporaryMappings[testCaseNumber].split(File::SEPARATOR)[-1]
+				@storage.dbHandle.put(File.open(@temporaryMappings[testCaseNumber]), :_id => testCaseID, :filename => remoteTestCaseFilename)
+				@direct_exchange.publish(testCaseID, :routing_key => @queue.name)
+			end
+
 		end
 	end
 end

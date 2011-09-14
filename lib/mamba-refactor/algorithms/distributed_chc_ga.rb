@@ -33,15 +33,39 @@ module Mamba
 
 							@nextGenerationNumber = @nextGenerationNumber + 1
 							unless (@reporter.numCasesRun >= (@simpleGAConfig['Maximum Generations'] * @simpleGAConfig['Population Size'])) then
-								evolve() 
+								case evolve() 
+								when 0
+									# Reseed the intermediate population
+									@temporaryMappings.each do |key, value|
+										@logger.info("Key is: #{key}, Value is: #{value}")
+										seed_distributed_temp(key)
+									end
 
-								# Reseed the next population
-								@testSetMappings.each_key do |key|
-									seed_distributed(key)
+								when 1
+									# Reseed the next population
+									@testSetMappings.each_key do |key|
+										seed_distributed(key)
+									end
+								else
+									@logger.info("Unexpected case condition")
 								end
-
 							else
 								@topic_exchange.publish("shutdown", :key => "commands")
+							end
+						elsif(@population.size == (@simpleGAConfig['Population Size'] + @temporaryMappings.size)) then
+							# Sort the combined array
+							@sorted_population = @population.sort()
+
+							spawn_new_generation()
+
+							# Hack but should work?
+							cleanup()
+							chc_check_stopping()
+
+							# Reseed the next population
+							@testSetMappings.each do |key, value|
+								@logger.info("Key is: #{key}, Value is: #{value}")
+								seed_distributed(key)
 							end
 						end # end if 
 					end # define_method
