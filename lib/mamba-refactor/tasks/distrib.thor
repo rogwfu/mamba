@@ -25,10 +25,14 @@ module Mamba
 			say "Mamba Fuzzing Framework: Stopping Mongodb database", :blue
 			storageDir = Dir.pwd + File::SEPARATOR + "databases" + File::SEPARATOR
 			lockFile = storageDir + "mongod.lock"
-			lock = File.new(lockFile, "r")
-			pid = lock.readline().to_i()
-			lock.close()
-			Process.kill("SIGTERM", pid)
+			if(File.exists?(lockFile)) then
+				lock = File.new(lockFile, "r")
+				pid = lock.readline().to_i()
+				lock.close()
+				Process.kill("SIGTERM", pid)
+			else
+				say "Error: Mongodb Database not running", :red
+			end
 		end
 
 		desc "qstart", "Start the rabbitmq queueing system"
