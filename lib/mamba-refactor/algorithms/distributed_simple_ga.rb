@@ -69,16 +69,15 @@ module Mamba
 				fitness = @objectDisassembly.evaluate()
 				@logger.info("Member #{testCaseID} Fitness: #{fitness.to_s('F')}")
 
-				# 
 				# Store the results in the "cloud" :)
-				#			@storage.dbHandle.put(File.open(newTestCaseFilename), :_id => "0:#{testCaseNumber}", :filename => newTestCaseFilename)
+				@storage.dbHandle.put(File.open(traceFile), :_id => "#{testCaseID}.trace", :filename => traceFile)
+				FileUtils.rm(traceFile)
 
 				# Cleanup remotes
 				if(!@organizer) then
 					FileUtils.rm(testCaseFilename)
 				end
 
-				#			FileUtils.rm(testCaseFilename + ".xml")
 
 				# Post test case results 0.1.2
 				@topic_exchange.publish(testCaseID + "." + fitness.to_s('F'), :key => "results")
