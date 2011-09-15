@@ -91,8 +91,6 @@ class Fuzz < Thor
 		#
 		Zip::ZipFile.open(packageFilename, Zip::ZipFile::CREATE) do |zipfile|
 			entries = Dir.glob("configs#{File::SEPARATOR}*.yml") + Dir.glob("disassemblies#{File::SEPARATOR}*") + Dir.glob("models#{File::SEPARATOR}*") 
-			# Need to fix for certain distributed fuzzers (Mangle)
-i			#+ Dir.glob("tests#{File::SEPARATOR}*")
 			entries.each do |entry|
 				say "Adding: #{entry}", :blue
 				zipfile.add(entry, entry)
