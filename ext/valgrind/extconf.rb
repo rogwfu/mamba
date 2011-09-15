@@ -15,17 +15,17 @@ end
 valgrindTag = "VALGRIND_3_6_1"
 
 puts "===== Pulling valgrind tag: #{valgrindTag} ====="
-system("#{tools["svn"]} co svn://svn.valgrind.org/valgrind/tags/#{valgrindTag} trunk")
-#system("cp -R /tmp/trunk .")
+#system("#{tools["svn"]} co svn://svn.valgrind.org/valgrind/tags/#{valgrindTag} trunk")
+system("cp -R /tmp/trunk .")
 
 puts "===== Patching Valgrind ====="
-system("cp ../../valgrind-patches/*.patch trunk/")
-system("cd trunk ; #{tools["patch"]} -p0 < rufus.3.6.1.patch")
-system("cd trunk ; #{tools["patch"]} -p0 < signals.patch")
+#system("cp ../../valgrind-patches/*.patch trunk/")
+#system("cd trunk ; #{tools["patch"]} -p0 < rufus.3.6.1.patch")
+#system("cd trunk ; #{tools["patch"]} -p0 < signals.patch")
 
 puts "===== Building Valgrind ====="
-system("cd trunk ; ./autogen.sh ; ./configure --prefix=`pwd`/inst")
-system("cd trunk ; #{tools["make"]}; #{tools["make"]} install")
+#system("cd trunk ; ./autogen.sh ; ./configure --prefix=`pwd`/inst")
+#system("cd trunk ; #{tools["make"]}; #{tools["make"]} install")
 
 # Appease packaging library
 create_makefile("")
