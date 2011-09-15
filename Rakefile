@@ -33,7 +33,6 @@ Jeweler::Tasks.new do |gem|
   gem.add_dependency("bson_ext", "=1.3.1")
   gem.add_dependency("mongo", "=1.3.1")
   gem.add_dependency("amqp", "=0.7.1")
-  gem.add_dependency("eventmachine", "=0.12.10")
   gem.add_dependency("hpricot", "=0.8.4")
   gem.add_dependency("plympton-refactor", "= 1.0.0")
   gem.add_dependency("amatch", "=0.2.6")
