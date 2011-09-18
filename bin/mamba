@@ -41,7 +41,7 @@ module Mamba
 			mambaConfig = generate_config()
 			validate_params(mambaConfig)
 
-			%w(configs databases disassemblies logs models queues tests).each do |dirname|
+			%w(analysis configs databases disassemblies logs models queues tests).each do |dirname|
 				empty_directory name + "/" + dirname
 			end
 

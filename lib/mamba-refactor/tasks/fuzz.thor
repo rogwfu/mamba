@@ -238,7 +238,7 @@ class Fuzz < Thor
 		# Removes all configurations, databases, disassembles, logs, models, queues, and tests
 		# Ensures a clean environment for starting a new fuzzer
 		def cleanup_old_environment()
-			%w(configs databases disassemblies logs models queues tests).each do |dir|
+			%w(analysis configs databases disassemblies logs models queues tests).each do |dir|
 				FileUtils.rm_rf(Dir.glob("#{dir}#{File::SEPARATOR}*"), :secure => true)
 			end
 		end

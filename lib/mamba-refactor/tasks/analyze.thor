@@ -1,5 +1,6 @@
 require 'mkmf'
 require 'nokogiri'
+require 'mongo'
 
 module Mamba
 	class Analyze < Thor
@@ -19,7 +20,12 @@ module Mamba
 			error_check_root()
 			mambaConfig = read_config()
 			error_check_type(mambaConfig, true)
-			puts mambaConfig.inspect()
+
+			# Connect to the database
+			dbHandle = Mongo::Connection.new(mambaConfig[:server], mambaConfig[:port]).db(mambaConfig[:uuid])
+			gridHandle = Mongo::Grid.new(dbHandle)
+			enum_traces_distrib(dbHandle, gridHandle)
+
 		end
 
 		no_tasks do
@@ -55,10 +61,34 @@ module Mamba
 				end
 			end
 
+
+			# Enumerate all the trace files in the mongo database
+			# @param [Mongo] Handle to the mongo database
+			# @param [Grid] Handle to the Grid Filesystem 
+			def enum_traces_distrib(db, grid)
+				normalizedTestCaseNumber = 0
+				audit = File.open("analysis/audit.log", File::CREAT|File::TRUNC|File::RDWR)
+
+				fileCol = db["fs.files"]
+				fileCol.find({"filename" => /trace\.xml$/}).each do |row|
+					puts row["_id"]
+					traceFile = grid.get(row["_id"])
+					localfile = File.open(row['filename'], "wb")
+					localfile.write(traceFile.read())
+					localfile.close()
+					if(crashed?(row['filename'])) then
+
+					end
+#					FileUtils.rm(row['filename'])
+				end
+
+				# Loop over all generations, etc, think about c cases for CHC GA
+				#@storage.dbHandle.put(File.open(traceFile), :_id => "#{testCaseID}.trace", :filename => traceFile)
+				audit.close()
+			end
 			# Enumerate all the files in the tests directory
 			def enum_traces()
 				normalizedTestCaseNumber = 0
-
 				audit = File.open("analysis/audit.log", File::CREAT|File::TRUNC|File::RDWR)
 				Dir.foreach("tests") do |tfile|
 					# Check for an XML trace file

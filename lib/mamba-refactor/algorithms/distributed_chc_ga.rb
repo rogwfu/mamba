@@ -24,11 +24,18 @@ module Mamba
 						chromosomeInfo = payload.split(".")
 						@logger.info("Chromosome[#{chromosomeInfo[1]}]: #{chromosomeInfo[2]}")
 						@reporter.numCasesRun = @reporter.numCasesRun + 1
-						@population.push(Chromosome.new(chromosomeInfo[1].to_i(), BigDecimal.new(chromosomeInfo[2])))
+
+						# Check for an intermediate child
+						if(chromosomeInfo[1].include?("c"))
+							chromosomeInfo[1].gsub!(/c/,"")
+							@population.push(Chromosome.new(chromosomeInfo[1].to_i(), BigDecimal.new(chromosomeInfo[2]), true))
+						else
+							@population.push(Chromosome.new(chromosomeInfo[1].to_i(), BigDecimal.new(chromosomeInfo[2])))
+						end
 
 						# Check for condition to stop and condition to stop and evolve
 						if(@population.size == @simpleGAConfig['Population Size']) then
-							@logger.info(@population.inspect())
+#							@logger.info(@population.inspect())
 							statistics()
 
 							@nextGenerationNumber = @nextGenerationNumber + 1
@@ -37,7 +44,7 @@ module Mamba
 								when 0
 									# Reseed the intermediate population
 									@temporaryMappings.each do |key, value|
-										@logger.info("Key is: #{key}, Value is: #{value}")
+#										@logger.info("Key is: #{key}, Value is: #{value}")
 										seed_distributed_temp(key)
 									end
 
@@ -53,6 +60,10 @@ module Mamba
 								@topic_exchange.publish("shutdown", :key => "commands")
 							end
 						elsif(@population.size == (@simpleGAConfig['Population Size'] + @temporaryMappings.size)) then
+
+							# Cleanup the temporary mappings
+							@temporaryMappings.clear()
+
 							# Sort the combined array
 							@sorted_population = @population.sort()
 
@@ -64,7 +75,7 @@ module Mamba
 
 							# Reseed the next population
 							@testSetMappings.each do |key, value|
-								@logger.info("Key is: #{key}, Value is: #{value}")
+#								@logger.info("Key is: #{key}, Value is: #{value}")
 								seed_distributed(key)
 							end
 						end # end if 

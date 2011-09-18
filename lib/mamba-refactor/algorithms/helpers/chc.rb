@@ -119,7 +119,7 @@ module Mamba
 						@objectDisassembly.valgrind_coverage(traceFile)
 						fitness = @objectDisassembly.evaluate()
 						@logger.info("Member value Fitness: #{fitness.to_s('F')}")
-						@population.push(Chromosome.new("#{key}", fitness))
+						@population.push(Chromosome.new("#{key}", fitness, true))
 						@reporter.numCasesRun = @reporter.numCasesRun + 1
 					end
 
@@ -129,10 +129,18 @@ module Mamba
 
 				# Create a new generation from the old generation and the candidate children
 				def spawn_new_generation()
+#					@logger.info("Sorted population is: #{@sorted_population.inspect()}")
 					# Sorted now, so copy over to the temporary mappings (renumber), copy files over, and good to go
 					@simpleGAConfig['Population Size'].times do |tim|
-						filename1 = "tests" + File::SEPARATOR + "#{@nextGenerationNumber - 1}.#{@sorted_population[@sorted_population.size() - 1 - tim].id}." + @testSetMappings[0].split(".")[-1] 
+						# Check for an intermediate child
+						if(@sorted_population[@sorted_population.size() - 1 - tim].intermediate?()) then
+							filename1 = "tests" + File::SEPARATOR + "#{@nextGenerationNumber - 1}.#{@sorted_population[@sorted_population.size() - 1 - tim].id}c." + @testSetMappings[0].split(".")[-1] 
+						else
+							filename1 = "tests" + File::SEPARATOR + "#{@nextGenerationNumber - 1}.#{@sorted_population[@sorted_population.size() - 1 - tim].id}." + @testSetMappings[0].split(".")[-1] 
+						end
+
 						filename2 = "tests" + File::SEPARATOR + "#{@nextGenerationNumber}.#{tim}." + @testSetMappings[0].split(".")[-1] 
+#						@logger.info("Copying: #{filename1} to #{filename2}")
 						FileUtils.cp(filename1, filename2) 
 						@temporaryMappings[tim] = filename2 
 					end
@@ -223,7 +231,7 @@ module Mamba
 				def cataclysimic_mutation()
 					# Copy the best chromosome over to the new population
 					# Remaining elements are formed by a random mutation of about 35% of the bits in the best element?
-#					@logger.info("In the cataclysimic_mutation")
+					@logger.info("Performing Cataclysmic Mutation")
 
 					# Calculate population mix
 					fittestChromosome = @testSetMappings[@population.max().id]

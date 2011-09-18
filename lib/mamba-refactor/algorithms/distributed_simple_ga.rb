@@ -104,7 +104,7 @@ module Mamba
 			# testCaseFilename format: generationNumber.testcasefilename (e.g. 2.4.pdf - means generation 2 chromomse 4 with filename 4.pdf)
 			# @param [Fixnum] The test case number
 			def seed_distributed_temp(testCaseNumber)
-				testCaseID = @nextGenerationNumber.to_s() + "." + testCaseNumber.to_s()
+				testCaseID = (@nextGenerationNumber-1).to_s() + "." + testCaseNumber.to_s()
 				remoteTestCaseFilename = @temporaryMappings[testCaseNumber].split(File::SEPARATOR)[-1]
 				@storage.dbHandle.put(File.open(@temporaryMappings[testCaseNumber]), :_id => testCaseID, :filename => remoteTestCaseFilename)
 				@direct_exchange.publish(testCaseID, :routing_key => @queue.name)
