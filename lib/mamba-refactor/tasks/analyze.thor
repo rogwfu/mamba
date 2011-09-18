@@ -71,19 +71,35 @@ module Mamba
 
 				fileCol = db["fs.files"]
 				fileCol.find({"filename" => /trace\.xml$/}).each do |row|
-					puts row["_id"]
+					puts "#{row["_id"]}: #{row['filename']}"
+					# Write the trace file
 					traceFile = grid.get(row["_id"])
-					localfile = File.open(row['filename'], "wb")
-					localfile.write(traceFile.read())
-					localfile.close()
-					if(crashed?(row['filename'])) then
+					localFile = File.open(row['filename'], "wb")
+					localFile.write(traceFile.read())
+					localFile.close()
 
+					# Check if the trace caused a crash
+					if(crashed?(row['filename'])) then
+						puts "Crashed"
+						# Get the file extension
+						testcase = row['filename'].gsub(/\.trace\.xml/, '')
+						newFilename = "%08d%s" % [normalizedTestCaseNumber, File.extname(testcase)]
+
+						# Download the crashing test case
+						testcaseFile = grid.get(row["_id"].gsub(/\.trace/, ''))
+						localFile = File.open("analysis" + File::SEPARATOR +  newFilename, File::CREAT|File::TRUNC|File::RDWR)
+						localFile.write(testcaseFile.read())
+						localFile.close()
+
+						# Print some auditing for late
+						audit.puts ("#{normalizedTestCaseNumber}: #{row["_id"]}")
+						normalizedTestCaseNumber = normalizedTestCaseNumber + 1
 					end
-#					FileUtils.rm(row['filename'])
+
+					# Cleanup download trace file
+					FileUtils.rm(row['filename'])
 				end
 
-				# Loop over all generations, etc, think about c cases for CHC GA
-				#@storage.dbHandle.put(File.open(traceFile), :_id => "#{testCaseID}.trace", :filename => traceFile)
 				audit.close()
 			end
 			# Enumerate all the files in the tests directory
