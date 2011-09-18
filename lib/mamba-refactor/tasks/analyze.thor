@@ -1,5 +1,4 @@
 require 'mkmf'
-require 'socket'
 require 'nokogiri'
 
 module Mamba
@@ -12,7 +11,7 @@ module Mamba
 			error_check_root()
 			mambaConfig = read_config()
 			error_check_type(mambaConfig)
-			puts mambaConfig.inspect()
+			enum_traces()
 		end
 
 		desc "dgenetic", "Analyze distributed genetic algorithm crashes"
@@ -54,6 +53,34 @@ module Mamba
 					say "Error: No configs directory exsits: #{Dir.pwd()}!", :red
 					exit(1)
 				end
+			end
+
+			# Enumerate all the files in the tests directory
+			def enum_traces()
+				Dir.foreach("tests") do |tfile|
+					# Check for an XML trace file
+					if(tfile.match(/\.trace\.xml$/)) then
+						if(crashed?("tests" + File::SEPARATOR + tfile)) then
+							puts "Filename is: #{tfile}"
+						end
+					end
+				end
+			end
+
+			# Determine if the trace file contains a crash
+			# @param [String] The name of the xml trace file
+			def crashed?(traceFile)
+			    # Open the valgrind xml trace file
+				xmlFile = File.open(traceFile, "r")
+				xmlDoc = Nokogiri::XML(xmlFile)
+				fault = xmlDoc.xpath("//fault")
+
+				# Check for a stack trace
+				if(!fault.empty?()) then
+					return(true)
+				end
+
+				return(false)
 			end
 		end
 	end

@@ -24,4 +24,5 @@ group :development do
   gem "hpricot", ">=0.8.4"
   gem "plympton-refactor", "~> 1.0.0"
   gem "amatch", ">=0.2.6"
+  gem "nokogiri", "~> 1.5.0"
 end
