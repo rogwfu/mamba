@@ -57,14 +57,22 @@ module Mamba
 
 			# Enumerate all the files in the tests directory
 			def enum_traces()
+				normalizedTestCaseNumber = 0
+
+				audit = File.open("analysis/audit.log", File::CREAT|File::TRUNC|File::RDWR)
 				Dir.foreach("tests") do |tfile|
 					# Check for an XML trace file
 					if(tfile.match(/\.trace\.xml$/)) then
 						if(crashed?("tests" + File::SEPARATOR + tfile)) then
-							puts "Filename is: #{tfile}"
+							tfile.gsub!(/\.trace\.xml/, '')
+							newFilename = "%08d%s" % [normalizedTestCaseNumber, File.extname(tfile)]
+							FileUtils.cp("tests" + File::SEPARATOR + tfile, "analysis" + File::SEPARATOR + newFilename)
+							audit.puts ("#{normalizedTestCaseNumber}: tests/#{tfile}.xml.trace")
+							normalizedTestCaseNumber = normalizedTestCaseNumber + 1
 						end
 					end
 				end
+				audit.close()
 			end
 
 			# Determine if the trace file contains a crash
