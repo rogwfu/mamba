@@ -15,6 +15,11 @@ module Mamba
 		# Dynamically define appscript executors
 		def self.define_appscript_executors(appMonitor, application)
 			@@supportedTracers.each do |tracer, options|
+				# @param [Logger] Instance of a log4r logger
+				# @param [String] Filename of test case to run
+				# @param [String] Full path to the object being traced for valgrind emulation
+				# @param [String] Filename to log trace information for valgrind emulation
+				# @returns [String] The amount of time the test case ran  
 				define_method(tracer.to_sym()) do |log, newTestCase, objectName="", traceFile=""|
 					log.info("Running Test Case: #{newTestCase}")
 					runner = "#{@@supportedTracers[tracer]} #{application}" % [objectName, traceFile]
@@ -32,7 +37,7 @@ module Mamba
 					end
 
 					application_cleanup()
-					return [@runningPid, runtime]
+					return(runtime.to_s())
 				end
 			end
 		end
@@ -40,6 +45,11 @@ module Mamba
 		# Dynamically define cli executors
 		def self.define_cli_executors(appMonitor, deliveryMethod, application)
 			@@supportedTracers.each do |tracer, options|
+				# @param [Logger] Instance of a log4r logger
+				# @param [String] Filename of test case to run
+				# @param [String] Full path to the object being traced for valgrind emulation
+				# @param [String] Filename to log trace information for valgrind emulation
+				# @returns [String] The amount of time the test case ran  
 				define_method(tracer.to_sym()) do |log, newTestCase, objectName="", traceFile=""|
 					log.info("Running Test Case: #{newTestCase}")
 					runner = "#{@@supportedTracers[tracer]} #{application} #{deliveryMethod} #{newTestCase}" % [objectName, traceFile]
@@ -47,7 +57,7 @@ module Mamba
 					File.new("app.pid." + @runningPid.to_s(), "w+").close()
 					runtime = self.send(appMonitor.to_sym)
 					application_cleanup()
-					return [@runningPid, runtime]
+					return(runtime.to_s())
 				end
 			end
 		end

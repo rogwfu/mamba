@@ -64,9 +64,9 @@ module Mamba
 
 				@reporter.currentTestCase = remoteFD.filename 
 
-				@executor.valgrind(@logger, testCaseFilename, @objectDisassembly.attributes.name, traceFile)  
+				runtime = @executor.valgrind(@logger, testCaseFilename, @objectDisassembly.attributes.name, traceFile)  
 				@objectDisassembly.valgrind_coverage(traceFile)
-				fitness = @objectDisassembly.evaluate()
+				fitness = @objectDisassembly.evaluate(runtime)
 				@logger.info("Member #{testCaseID} Fitness: #{fitness.to_s('F')}")
 
 				# Store the results in the "cloud" :)

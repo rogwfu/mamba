@@ -71,9 +71,9 @@ module Mamba
 					@nextGenerationNumber = generationNumber + 1
 					@simpleGAConfig['Population Size'].times do |chromosomeID|
 						traceFile = @testSetMappings[chromosomeID] + ".trace.xml"
-						@executor.valgrind(@logger, @testSetMappings[chromosomeID], @objectDisassembly.attributes.name, traceFile)  
+						runtime = @executor.valgrind(@logger, @testSetMappings[chromosomeID], @objectDisassembly.attributes.name, traceFile)  
 						@objectDisassembly.valgrind_coverage(traceFile)
-						fitness = @objectDisassembly.evaluate()
+						fitness = @objectDisassembly.evaluate(runtime)
 						@logger.info("Member #{chromosomeID} Fitness: #{fitness.to_s('F')}")
 						@population.push(Chromosome.new(chromosomeID, fitness))
 						@reporter.numCasesRun = @reporter.numCasesRun + 1

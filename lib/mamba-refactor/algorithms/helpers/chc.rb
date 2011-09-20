@@ -115,9 +115,9 @@ module Mamba
 					# Test the fitness of the intermediate children
 					@temporaryMappings.each do |key, value|
 						traceFile = value + ".trace.xml"
-						@executor.valgrind(@logger, value, @objectDisassembly.attributes.name, traceFile)  
+						runtime = @executor.valgrind(@logger, value, @objectDisassembly.attributes.name, traceFile)  
 						@objectDisassembly.valgrind_coverage(traceFile)
-						fitness = @objectDisassembly.evaluate()
+						fitness = @objectDisassembly.evaluate(runtime)
 						@logger.info("Member value Fitness: #{fitness.to_s('F')}")
 						@population.push(Chromosome.new("#{key}", fitness, true))
 						@reporter.numCasesRun = @reporter.numCasesRun + 1
