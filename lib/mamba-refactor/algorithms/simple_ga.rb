@@ -131,7 +131,7 @@ module Mamba
 				2.times do
 					parents << File.open(@testSetMappings[@population.send(selectionMethod.to_sym()).id], "rb") 
 				end
-				@logger.info("In open function: " + parents.inspect())
+#				@logger.info("In open function: " + parents.inspect())
 
 				2.times do |iter| 
 					id = childID + iter
@@ -139,7 +139,7 @@ module Mamba
 					children << "tests" + File::SEPARATOR + "#{@nextGenerationNumber}."  + "#{id}." + parents[iter].path.split(".")[-1] 
 					@temporaryMappings[id] = children[iter] 
 				end
-				@logger.info("In open children: " + children.inspect())
+#				@logger.info("In open children: " + children.inspect())
 
 				return [parents, children]
 			end

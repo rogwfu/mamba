@@ -133,12 +133,12 @@ module Mamba
 					# Sorted now, so copy over to the temporary mappings (renumber), copy files over, and good to go
 					@simpleGAConfig['Population Size'].times do |tim|
 						# Check for an intermediate child
-						filename1 = "tests" + File::SEPARATOR + "#{@nextGenerationNumber - 1}.#{@sorted_population[@sorted_population.size() - 1 - tim].id}." + @testSetMappings[0].split(".")[-1] 
+						filename1 = "tests" + File::SEPARATOR + "#{@nextGenerationNumber - 1}.#{@sorted_population[@sorted_population.size() - 1 - tim].id}." + @testSetMappings["0"].split(".")[-1] 
 
-						filename2 = "tests" + File::SEPARATOR + "#{@nextGenerationNumber}.#{tim}." + @testSetMappings[0].split(".")[-1] 
-						@logger.info("Copying: #{filename1} to #{filename2}")
+						filename2 = "tests" + File::SEPARATOR + "#{@nextGenerationNumber}.#{tim}." + @testSetMappings["0"].split(".")[-1] 
+#						@logger.info("Copying: #{filename1} to #{filename2}")
 						FileUtils.cp(filename1, filename2) 
-						@temporaryMappings[tim] = filename2 
+						@temporaryMappings["#{tim}"] = filename2 
 					end
 				end
 
@@ -172,9 +172,6 @@ module Mamba
 
 					2.times do
 						id = @population.send(selectionMethod.to_sym()).id
-						@logger.info("ID is: #{id}")
-						@logger.info("Type is: #{id.class}")
-						@logger.info("#{@testSetMappings.inspect}")
 						parents << File.open(@testSetMappings[@population.send(selectionMethod.to_sym()).id], "rb") 
 					end
 
@@ -238,7 +235,7 @@ module Mamba
 					numberToMutate = (@simpleGAConfig['Population Size'] * 0.35).floor()
 
 					# Copy the fittest chromosome
-					filename = "tests" + File::SEPARATOR + "#{@nextGenerationNumber}.0." + @testSetMappings[0].split(".")[-1] 
+					filename = "tests" + File::SEPARATOR + "#{@nextGenerationNumber}.0." + @testSetMappings["0"].split(".")[-1] 
 					FileUtils.cp(fittestChromosome, filename) 
 					@temporaryMappings["0"] = filename 
 
@@ -253,7 +250,7 @@ module Mamba
 						oldChromosomeFilename = "tests" + File::SEPARATOR + "0.#{initialChromosome}." + fittestChromosome.split(".")[-1]
 						newChromosomeFilename = "tests" + File::SEPARATOR + "#{@nextGenerationNumber}.#{chromosomeID}." + fittestChromosome.split(".")[-1]
 						FileUtils.cp(oldChromosomeFilename, newChromosomeFilename) 
-						@temporaryMappings[chromosomeID] = newChromosomeFilename
+						@temporaryMappings["#{chromosomeID}"] = newChromosomeFilename
 					end
 
 					# Reset threshold
@@ -277,7 +274,7 @@ module Mamba
 							chromosomeFD.seek(mutationPoint, IO::SEEK_SET)
 							chromosomeFD.write(randomMutator.bytes(rand(10) + 1)) 
 						end
-						@temporaryMappings[chromosomeID] = newChromosomeFilename 
+						@temporaryMappings["#{chromosomeID}"] = newChromosomeFilename 
 					end
 				end
 			end
