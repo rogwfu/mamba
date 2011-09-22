@@ -20,12 +20,13 @@ module Mamba
 			# @param [AMQP::Protocol::Header] Header of an amqp message
 			# @param [String] Payload of an amqp message (test case results)
 			def results(header, payload)
-				chromosomeInfo = payload.split(".")
-				@logger.info("Chromosome[#{chromosomeInfo[1]}]: #{chromosomeInfo[2]}")
+				chromosomeInfo = payload.split(".")[1].split(":")[0]
+				fitness = payload.split(":")[1]
+				@logger.info("Chromosome[#{chromosomeInfo}]: #{fitness}")
 				@reporter.numCasesRun = @reporter.numCasesRun + 1
 
 				if(@organizer)
-					@population.push(Chromosome.new(chromosomeInfo[1].to_i(), BigDecimal.new(chromosomeInfo[2])))
+					@population.push(Chromosome.new(chromosomeInfo, BigDecimal.new(fitness)))
 					#
 					# Check for condition to stop and condition to stop and evolve
 					if(@population.size == @simpleGAConfig['Population Size']) then
@@ -79,8 +80,8 @@ module Mamba
 				end
 
 
-				# Post test case results 0.1.2
-				@topic_exchange.publish(testCaseID + "." + fitness.to_s('F'), :key => "results")
+				# Post test case results 0.1.2 (Generation.Chromosome:Fitness)
+				@topic_exchange.publish(testCaseID + ":" + fitness.to_s('F'), :key => "results")
 
 				# Acknowledge the test case is done
 				header.ack()	

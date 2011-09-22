@@ -13,6 +13,13 @@ module Mamba
 		# @param [String] The fittness of the chromsome 
 		# @param [Boolean] Intermediate child?
 		def initialize(id=0,fitness="0.0", intermed=false)
+
+			# For now set id based on intermediate child to elimiate type confusion
+			if(!id.kind_of?(String)) then
+				puts "Type Error!"
+				id = id.to_s()
+			end
+
 			@id = id
 			@intermediate = intermed
 

@@ -71,7 +71,6 @@ module Mamba
 
 				fileCol = db["fs.files"]
 				fileCol.find({"filename" => /trace\.xml$/}).each do |row|
-					puts "#{row["_id"]}: #{row['filename']}"
 					# Write the trace file
 					traceFile = grid.get(row["_id"])
 					localFile = File.open(row['filename'], "wb")
@@ -80,7 +79,7 @@ module Mamba
 
 					# Check if the trace caused a crash
 					if(crashed?(row['filename'])) then
-						puts "Crashed"
+#						puts "#{row["_id"]}: #{row['filename']}: Crashed"
 						# Get the file extension
 						testcase = row['filename'].gsub(/\.trace\.xml/, '')
 						newFilename = "%08d%s" % [normalizedTestCaseNumber, File.extname(testcase)]

@@ -29,7 +29,6 @@ module Mamba
 			# Check for distributed fuzzer setup
 			#
 			if(self.class.to_s.start_with?("Mamba::Algorithms::Distributed")) then
-				@logger.info("Puts in the distriburted function: #{mambaConfig[:server]}")
 				@reporter = Reporter.new(true)
 				@amqpServer = mambaConfig[:server]
 				initialize_storage(mambaConfig)
@@ -119,7 +118,7 @@ module Mamba
 
 		private 
 
-		# Initialize a logger                                                                                                                                                                  
+		# Initialize a logger
 		# @param [Type] Type of fuzzer, used to name the log file
 		# @return [Logger] A logger created from the log4r library
 		def init_logger(type) 

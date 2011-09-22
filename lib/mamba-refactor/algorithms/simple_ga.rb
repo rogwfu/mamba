@@ -70,6 +70,7 @@ module Mamba
 					@logger.info("Generation #{generationNumber} out of #{@simpleGAConfig['Maximum Generations']}")
 					@nextGenerationNumber = generationNumber + 1
 					@simpleGAConfig['Population Size'].times do |chromosomeID|
+						chromosomeID = chromosomeID.to_s()
 						traceFile = @testSetMappings[chromosomeID] + ".trace.xml"
 						runtime = @executor.valgrind(@logger, @testSetMappings[chromosomeID], @objectDisassembly.attributes.name, traceFile)  
 						@objectDisassembly.valgrind_coverage(traceFile)
@@ -130,14 +131,15 @@ module Mamba
 				2.times do
 					parents << File.open(@testSetMappings[@population.send(selectionMethod.to_sym()).id], "rb") 
 				end
-#				@logger.info("In open function: " + parents.inspect())
+				@logger.info("In open function: " + parents.inspect())
 
 				2.times do |iter| 
 					id = childID + iter
+					id = id.to_s()
 					children << "tests" + File::SEPARATOR + "#{@nextGenerationNumber}."  + "#{id}." + parents[iter].path.split(".")[-1] 
-					@temporaryMappings[childID + iter] = children[iter] 
+					@temporaryMappings[id] = children[iter] 
 				end
-#				@logger.info("In open children: " + children.inspect())
+				@logger.info("In open children: " + children.inspect())
 
 				return [parents, children]
 			end
@@ -222,7 +224,7 @@ module Mamba
 			# Copy the fittest chromosome of the current population to the next generation
 			def elitism()
 				@population.fittestChromosome
-				replaceChromsomeID = rand(@simpleGAConfig['Population Size'])
+				replaceChromsomeID = rand(@simpleGAConfig['Population Size']).to_s()
 #				@logger.info("Running elitism: #{@testSetMappings[@population.fittestChromosome.id]} to #{@temporaryMappings[replaceChromsomeID]}")
 				FileUtils.cp(@testSetMappings[@population.fittestChromosome.id], @temporaryMappings[replaceChromsomeID]) 
 			end
@@ -243,8 +245,8 @@ module Mamba
 							#
 							# Write the zipped file data
 							#
-							@testSetMappings[chromosomeNumber] = "tests" + File::SEPARATOR + "#{@nextGenerationNumber}." + "#{chromosomeNumber}#{File.extname(entry.name)}"
-							File.open("#{@testSetMappings[chromosomeNumber]}", "w+") do |newTestCase|
+							@testSetMappings[chromosomeNumber.to_s()] = "tests" + File::SEPARATOR + "#{@nextGenerationNumber}." + "#{chromosomeNumber}#{File.extname(entry.name)}"
+							File.open("#{@testSetMappings[chromosomeNumber.to_s()]}", "w+") do |newTestCase|
 								newTestCase.write(zipfile.read(entry.name))
 							end
 							yield(chromosomeNumber) if block_given?()

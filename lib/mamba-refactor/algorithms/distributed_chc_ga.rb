@@ -12,8 +12,9 @@ module Mamba
 					# @param []
 					# @param []
 					define_method(:results) do |header, payload|
-						chromosomeInfo = payload.split(".")
-						@logger.info("Chromosome[#{chromosomeInfo[1]}]: #{chromosomeInfo[2]}")
+						chromosomeInfo = payload.split(".")[1].split(":")[0]
+						fitness = payload.split(":")[1]
+						@logger.info("Chromosome[#{chromosomeInfo}]: #{fitness}")
 						@reporter.numCasesRun = @reporter.numCasesRun + 1
 					end
 				else
@@ -21,16 +22,16 @@ module Mamba
 					# @param []
 					# @param []
 					define_method(:results) do |header, payload|
-						chromosomeInfo = payload.split(".")
-						@logger.info("Chromosome[#{chromosomeInfo[1]}]: #{chromosomeInfo[2]}")
+						chromosomeInfo = payload.split(".")[1].split(":")[0]
+						fitness = payload.split(":")[1]
+						@logger.info("Chromosome[#{chromosomeInfo}]: #{fitness}")
 						@reporter.numCasesRun = @reporter.numCasesRun + 1
 
 						# Check for an intermediate child
-						if(chromosomeInfo[1].include?("c"))
-							chromosomeInfo[1].gsub!(/c/,"")
-							@population.push(Chromosome.new(chromosomeInfo[1].to_i(), BigDecimal.new(chromosomeInfo[2]), true))
+						if(chromosomeInfo.include?("c"))
+							@population.push(Chromosome.new(chromosomeInfo, BigDecimal.new(fitness), true))
 						else
-							@population.push(Chromosome.new(chromosomeInfo[1].to_i(), BigDecimal.new(chromosomeInfo[2])))
+							@population.push(Chromosome.new(chromosomeInfo, BigDecimal.new(fitness)))
 						end
 
 						# Check for condition to stop and condition to stop and evolve

@@ -133,14 +133,10 @@ module Mamba
 					# Sorted now, so copy over to the temporary mappings (renumber), copy files over, and good to go
 					@simpleGAConfig['Population Size'].times do |tim|
 						# Check for an intermediate child
-						if(@sorted_population[@sorted_population.size() - 1 - tim].intermediate?()) then
-							filename1 = "tests" + File::SEPARATOR + "#{@nextGenerationNumber - 1}.#{@sorted_population[@sorted_population.size() - 1 - tim].id}c." + @testSetMappings[0].split(".")[-1] 
-						else
-							filename1 = "tests" + File::SEPARATOR + "#{@nextGenerationNumber - 1}.#{@sorted_population[@sorted_population.size() - 1 - tim].id}." + @testSetMappings[0].split(".")[-1] 
-						end
+						filename1 = "tests" + File::SEPARATOR + "#{@nextGenerationNumber - 1}.#{@sorted_population[@sorted_population.size() - 1 - tim].id}." + @testSetMappings[0].split(".")[-1] 
 
 						filename2 = "tests" + File::SEPARATOR + "#{@nextGenerationNumber}.#{tim}." + @testSetMappings[0].split(".")[-1] 
-#						@logger.info("Copying: #{filename1} to #{filename2}")
+						@logger.info("Copying: #{filename1} to #{filename2}")
 						FileUtils.cp(filename1, filename2) 
 						@temporaryMappings[tim] = filename2 
 					end
@@ -171,10 +167,14 @@ module Mamba
 				# @param [Fixnum] The current child number being generated
 				# @param [String] The selection method for the parents
 				# @returns [Array, String] Opens File descriptors for parents and children  
-				def open_parents_and_children(childID, selectionMethod="roulette")
+				def open_parents_and_children(childID, selectionMethod="random")
 					parents = Array.new()
 
 					2.times do
+						id = @population.send(selectionMethod.to_sym()).id
+						@logger.info("ID is: #{id}")
+						@logger.info("Type is: #{id.class}")
+						@logger.info("#{@testSetMappings.inspect}")
 						parents << File.open(@testSetMappings[@population.send(selectionMethod.to_sym()).id], "rb") 
 					end
 
@@ -240,7 +240,7 @@ module Mamba
 					# Copy the fittest chromosome
 					filename = "tests" + File::SEPARATOR + "#{@nextGenerationNumber}.0." + @testSetMappings[0].split(".")[-1] 
 					FileUtils.cp(fittestChromosome, filename) 
-					@temporaryMappings[0] = filename 
+					@temporaryMappings["0"] = filename 
 
 					# Mutate a percentage of the new population (based on fittest chromosome)
 					mutate(fittestChromosome, numberToMutate)
@@ -248,6 +248,7 @@ module Mamba
 					# Seed the rest with random members of the initial population 
 					(numberToMutate + 1).upto(@simpleGAConfig['Population Size']-1) do |chromosomeID|
 #						@logger.info("Copying over chromosome number: #{chromosomeID}")
+						chromosomeID = chromosomeID.to_s()
 						initialChromosome = rand(@simpleGAConfig['Population Size'])
 						oldChromosomeFilename = "tests" + File::SEPARATOR + "0.#{initialChromosome}." + fittestChromosome.split(".")[-1]
 						newChromosomeFilename = "tests" + File::SEPARATOR + "#{@nextGenerationNumber}.#{chromosomeID}." + fittestChromosome.split(".")[-1]
@@ -266,6 +267,7 @@ module Mamba
 				# @param [Fixnum] The number of chromosomes to mutate (Base chromosome is the fittest chromosome)
 				def mutate(fittestChromosome, numberToMutate)
 					1.upto(numberToMutate) do |chromosomeID|
+						chromosomeID = chromosomeID.to_s()
 						randomMutator = RandomGenerator.new() 	
 #						@logger.info("Mutating Chromosome: #{chromosomeID}")
 						newChromosomeFilename = "tests" + File::SEPARATOR + "#{@nextGenerationNumber}.#{chromosomeID}." + fittestChromosome.split(".")[-1]
