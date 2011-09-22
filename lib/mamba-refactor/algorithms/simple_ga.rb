@@ -249,7 +249,7 @@ module Mamba
 							File.open("#{@testSetMappings[chromosomeNumber.to_s()]}", "w+") do |newTestCase|
 								newTestCase.write(zipfile.read(entry.name))
 							end
-							yield(chromosomeNumber) if block_given?()
+							yield(chromosomeNumber.to_s()) if block_given?()
 							chromosomeNumber += 1
 						end
 					end
