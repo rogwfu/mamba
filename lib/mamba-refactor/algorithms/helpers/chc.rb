@@ -67,7 +67,7 @@ module Mamba
 						# Check for decrementing the incest prevention
 						if(@temporaryMappings.size == 0) then
 							@simpleGAConfig['Incest Prevention'] = @simpleGAConfig['Incest Prevention'] * 0.50
-#							@logger.info("Decrementing incest prevention threshold to: #{@simpleGAConfig['Incest Prevention']}")
+							@logger.info("Decrementing incest prevention threshold to: #{@simpleGAConfig['Incest Prevention']}")
 						end
 					end
 
@@ -129,7 +129,27 @@ module Mamba
 
 				# Create a new generation from the old generation and the candidate children
 				def spawn_new_generation()
-#					@logger.info("Sorted population is: #{@sorted_population.inspect()}")
+					@logger.info("Sorted population is: #{@sorted_population.inspect()}")
+					
+					# Check for now children added to the next population
+					sortedSlice = @sorted_population.reverse.slice(0, @simpleGAConfig['Population Size'])
+					@logger.info("Sorted slice is: #{sortedSlice.inspect()}")
+					sortedSlice.delete_if do |chromosome|
+						!chromosome.intermediate
+					end
+					@logger.info("Sorted slice after cleanup is: #{sortedSlice.inspect()}")
+
+					# Check for any surviving children
+					if(sortedSlice.empty?()) then
+						@simpleGAConfig['Incest Prevention'] = @simpleGAConfig['Incest Prevention'] * 0.50
+						@logger.info("Decrementing incest prevention threshold to: #{@simpleGAConfig['Incest Prevention']}")
+						if(@simpleGAConfig['Incest Prevention'] < MINIMUM_INCEST_PREVENTION_THRESHOLD) then
+							@logger.info("Spawn new generation doing cataclysimic_mutation()")
+							cataclysimic_mutation()
+							return()
+						end
+					end
+					
 					# Sorted now, so copy over to the temporary mappings (renumber), copy files over, and good to go
 					@simpleGAConfig['Population Size'].times do |tim|
 						# Check for an intermediate child
@@ -281,5 +301,3 @@ module Mamba
 		end
 	end
 end
-
-
