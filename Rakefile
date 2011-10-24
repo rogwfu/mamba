@@ -63,3 +63,4 @@ task :default => :spec
 
 require 'yard'
 YARD::Rake::YardocTask.new
+
