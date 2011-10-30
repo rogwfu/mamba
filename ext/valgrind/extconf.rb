@@ -22,6 +22,7 @@ puts "===== Patching Valgrind ====="
 system("cp ../../valgrind-patches/*.patch trunk/")
 system("cd trunk ; #{tools["patch"]} -p0 < rufus.3.6.1.patch")
 system("cd trunk ; #{tools["patch"]} -p0 < signals.patch")
+system("cd trunk ; #{tools["patch"]} -p0 < callgrind.3.6.1.patch")
 
 puts "===== Building Valgrind ====="
 system("cd trunk ; ./autogen.sh ; ./configure --prefix=`pwd`/inst")
