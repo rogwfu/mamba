@@ -31,7 +31,7 @@ module Mamba
 			# Check for Operating System Support
 			#
 			if(!supported_os?()) then
-				say "Error: Unsupported Operating System (#{Config::CONFIG["host_os"]})", :red
+				say "Error: Unsupported Operating System (#{RbConfig::CONFIG["host_os"]})", :red
 				exit(1)
 			end
 
@@ -70,7 +70,7 @@ module Mamba
 			# Validate whether Mamba supports the running OS
 			# @return [Fixnum] nil if not supported, offset of string otherwise 
 			def supported_os?()
-				return(Config::CONFIG["host_os"] =~ /^darwin10\.\d+\.\d+$/)
+				return(RbConfig::CONFIG["host_os"] =~ /^darwin10\.\d+\.\d+$/)
 			end
 
 			# Validates parameters given to the mamba command line tool for illegal values
@@ -127,14 +127,14 @@ module Mamba
 			# @return [Hash] configuration settings
 			def generate_config()
 				uuid = "fz" + UUIDTools::UUID.timestamp_create.to_s().gsub("-", "")
-				config = {app: options[:app], executor: options[:executor], os: Config::CONFIG["host_os"], timeout: options[:timeout], type: options[:type], uuid: uuid}
+				config = {app: options[:app], executor: options[:executor], os: RbConfig::CONFIG["host_os"], timeout: options[:timeout], type: options[:type], uuid: uuid}
 
 				#
 				# Check for distributed Fuzzing
 				#
 				if(options[:distributed]) then
 					fuzzerType =  "Distributed" + options[:type]
-					config = {app: options[:app], executor: options[:executor], os: Config::CONFIG["host_os"], timeout: options[:timeout], type: fuzzerType, uuid: uuid, organizer: true,  port: options[:port], server: options[:server]}
+					config = {app: options[:app], executor: options[:executor], os: RbConfig::CONFIG["host_os"], timeout: options[:timeout], type: fuzzerType, uuid: uuid, organizer: true,  port: options[:port], server: options[:server]}
 				end
 
 				return(config)

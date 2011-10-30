@@ -18,13 +18,13 @@ end
 # http://groups.google.com/group/rabbitmq-discuss/browse_thread/thread/eac656ba68758021?fwc=1
 # Use erlang: otp_src_R14B
 rabbitmqURL = ""
-case Config::CONFIG["host_os"]
+case RbConfig::CONFIG["host_os"]
 when /^darwin10\.\d+(\.\d+)?$/
 #	rabbitmqURL = "http://www.rabbitmq.com/releases/rabbitmq-server/v2.3.1/rabbitmq-server-2.3.1.tar.gz"
 #	rabbitmqURL = "http://www.rabbitmq.com/releases/rabbitmq-server/v1.7.2/rabbitmq-server-1.7.2.tar.gz"
 	rabbitmqURL = "http://www.rabbitmq.com/releases/rabbitmq-server/v2.0.0/rabbitmq-server-2.0.0.tar.gz"
 else
-	raise "Error: Unsupported Operating System (#{Config::CONFIG["host_os"]})"
+	raise "Error: Unsupported Operating System (#{RbConfig::CONFIG["host_os"]})"
 end
 
 # Download, Extract, and Make rabbitmq (if needed)
