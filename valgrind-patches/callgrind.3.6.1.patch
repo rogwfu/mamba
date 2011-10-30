@@ -3007,7 +3007,7 @@ Index: callgrind/main.c
 +	  {
 +		  VG_(printf_xml)("\t\t<callee>\n");
 +		  VG_(printf_xml)("\t\t\t<fn>%s</fn>\n", curNode->functionNode->name);
-+		  VG_(printf_xml)("\t\t\t<offset>%d</offset>\n", 0);//curNode->functioNode->);
++		  VG_(printf_xml)("\t\t\t<offset>%#lx</offset>\n", curNode->offset);
 +		  VG_(printf_xml)("\t\t\t<numberOfCalls>%d</numberOfCalls>\n", curNode->numberOfCalls);
 +		  VG_(printf_xml)("\t\t</callee>\n");
 +	  }
@@ -3749,12 +3749,12 @@ Index: callgrind/threads.c
      CLG_(push_cxt)(0);
 +
 +	/*
-+	 * Determine if the signal was to stop tracing (SIGKILL)
++	 * Determine if the signal was to stop tracing (SIGHUP)
 +	 */
 +	switch(sigNum) {
-+		case 9:
++		case 1:
 +			//dump the stats
-+//			VG_(message)(Vg_UserMsg, "Got a SIGKILL\n");
++//			VG_(message)(Vg_UserMsg, "Got a SIGHUP\n");
 +			dump_xml_trace_info();
 +			VG_(exit)(0);
 +			break;
