@@ -11,6 +11,8 @@ module Mamba
 			"valgrind" => ENV['GEM_HOME'] + File::SEPARATOR + "gems" + File::SEPARATOR + "mamba-refactor-0.1.0" +  File::SEPARATOR + "ext" +  File::SEPARATOR + "valgrind" +  File::SEPARATOR + "trunk" + File::SEPARATOR + "inst" +  File::SEPARATOR + "bin" +  File::SEPARATOR + "valgrind " + "--tool=rufus --object=%s --xml=yes --xml-file=%s"
 		}
 
+		@@killSignal = "KILL"
+
 #		./valgrind --tool=rufus --object=%s --xml=yes --xml-file=%s Executable
 		# Dynamically define appscript executors
 		def self.define_appscript_executors(appMonitor, application)
@@ -67,7 +69,8 @@ module Mamba
 		# @param [String] How to delivery the test cases (currently: appscript or cli)
 		# @param [Integer] Amount of time to run the program under test per test case
 		# @param [Logger] Instance of a log4r logger
-		def initialize(app, deliveryMethod, timeout, log)
+		# @param [Hash] Configuration Hash of a specific fuzzer 
+		def initialize(app, deliveryMethod, timeout, log, fuzzerConfig)
 			@application = app
 			@timeout = timeout
 		
@@ -76,6 +79,15 @@ module Mamba
 				appMonitor = "cpu_scale"
 			else
 				appMonitor = "cpu_sleep"
+			end
+
+			# Alter valgrind tool based on fitness function
+			if(fuzzerConfig != nil and fuzzerConfig.has_key?("Fitness Function")) then
+					# Replace Rufus tool with callgrind for Markov tracing	
+					if(fuzzerConfig["Fitness Function"].include?("M")) then
+						@@supportedTracers["valgrind"].gsub!(/rufus/, "callgrind --callgrind-out-file=/dev/null")
+						@@killSignal = "INFO"
+					end
 			end
 
 			# Create the execution lambdas 
@@ -98,7 +110,7 @@ module Mamba
 			# Cleanup the application
 			begin
 				Process.kill(0, @runningPid)
-				Process.kill("KILL", @runningPid)
+				Process.kill(@@killSignal, @runningPid)
 				Process.wait(@runningPid)
 			rescue 
 			ensure

@@ -30,8 +30,8 @@ module Mamba
 			# Initialize SimpleGeneticAlgorithm fuzzer and the generic fuzzer class
 			# @param [Hash] Hash of configuration parameters for Mamba
 			def initialize(mambaConfig)
-				super(mambaConfig)
 				@simpleGAConfig = read_fuzzer_config(self.to_s())
+				super(mambaConfig, @simpleGAConfig)
 
 
 				#

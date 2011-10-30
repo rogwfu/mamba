@@ -3752,7 +3752,7 @@ Index: callgrind/threads.c
 +	 * Determine if the signal was to stop tracing (SIGHUP)
 +	 */
 +	switch(sigNum) {
-+		case 1:
++		case 29:
 +			//dump the stats
 +//			VG_(message)(Vg_UserMsg, "Got a SIGHUP\n");
 +			dump_xml_trace_info();

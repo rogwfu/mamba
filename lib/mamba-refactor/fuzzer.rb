@@ -20,9 +20,10 @@ module Mamba
 
 		# Create a new instance of a fuzzer
 		# @param [Hash] Contains global configuration of the mamba fuzzing framework
-		def initialize(mambaConfig)
+		# @param [Hash] Contains configuration of the inidivual fuzzer
+		def initialize(mambaConfig, fuzzerConfig=nil)
 			@logger = init_logger("Fuzzer")
-			@executor = Executor.new(mambaConfig[:app], mambaConfig[:executor], mambaConfig[:timeout], @logger)
+			@executor = Executor.new(mambaConfig[:app], mambaConfig[:executor], mambaConfig[:timeout], @logger, fuzzerConfig)
 			@uuid = mambaConfig[:uuid]
 
 			#
