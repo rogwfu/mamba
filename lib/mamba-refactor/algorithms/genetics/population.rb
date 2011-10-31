@@ -134,8 +134,10 @@ module Mamba
 			end
 
 			# Note: Number conversion here BigDecimal => Float may cause issues
+			prand = Random.new()
 			begin
-				randVal = rand(@fitness) + rand()
+				#randVal = prand.rand(@fitness.to_f()) + prand.rand(@fitness.to_f())
+				randVal = prand.rand(@fitness.to_f())
 			end until randVal <= @fitness
 			return(BigDecimal.new(randVal.to_s()))
 		end
