@@ -31,7 +31,7 @@ module Mamba
 					end
 				else
 					@downloader = lambda do |filename, href|
-						system("wget -O #{filename} --timeout=120 \"#{href}\"")
+						system("wget -O #{filename} -U \"Mozilla/5.0 (X11; U; Linux i686; pl-PL; rv:1.9.0.2) Gecko/20121223 Ubuntu/9.25 (jaunty) Firefox/3.8\"--timeout=120 \"#{href}\"")
 					end	
 				end
 
@@ -73,7 +73,11 @@ module Mamba
 						end
 
 						# Pull out the download link
-						link = li.search("a[@class='l']")
+#						link = li.search("a[@class='l']")
+                        link = (li/"a")
+                        if(link.nil?) then
+                            next
+                        end
 
 						# Debugging
 						exemplarName = "#{docsCollected}.#{fileSuffix}"
