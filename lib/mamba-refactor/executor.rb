@@ -8,7 +8,7 @@ module Mamba
 		@@supportedTracers = 
 			{
 			"run"  => "%s%s",  # Hack for now to simplify code
-			"valgrind" => ENV['GEM_HOME'] + File::SEPARATOR + "gems" + File::SEPARATOR + "mamba-refactor-0.1.0" +  File::SEPARATOR + "ext" +  File::SEPARATOR + "valgrind" +  File::SEPARATOR + "trunk" + File::SEPARATOR + "inst" +  File::SEPARATOR + "bin" +  File::SEPARATOR + "valgrind " + "--tool=rufus --object=%s --xml=yes --xml-file=%s"
+			"valgrind" => ENV['GEM_HOME'] + File::SEPARATOR + "gems" + File::SEPARATOR + "mamba-refactor-0.1.0" +  File::SEPARATOR + "ext" +  File::SEPARATOR + "valgrind" +  File::SEPARATOR + "trunk" + File::SEPARATOR + "inst" +  File::SEPARATOR + "bin" +  File::SEPARATOR + "valgrind " + "--tool=rufus --object=\"%s\" --xml=yes --xml-file=%s"
 		}
 
 		@@killSignal = "KILL"
@@ -24,7 +24,7 @@ module Mamba
 				# @returns [String] The amount of time the test case ran  
 				define_method(tracer.to_sym()) do |log, newTestCase, objectName="", traceFile=""|
 					log.info("Running Test Case: #{newTestCase}")
-					runner = "#{@@supportedTracers[tracer]} #{application}" % [objectName, traceFile]
+					runner = "#{@@supportedTracers[tracer]} \"#{application}\"" % [objectName, traceFile]
 					@runningPid = Process.spawn(runner, [:out, :err]=>["logs/application.log", File::CREAT|File::WRONLY|File::APPEND]) 
 					File.new("app.pid." + @runningPid.to_s(), "w+").close()
 					appscriptPid = Process.spawn("opener.rb #{@runningPid} #{Dir.pwd() + File::SEPARATOR + newTestCase}")
@@ -54,7 +54,7 @@ module Mamba
 				# @returns [String] The amount of time the test case ran  
 				define_method(tracer.to_sym()) do |log, newTestCase, objectName="", traceFile=""|
 					log.info("Running Test Case: #{newTestCase}")
-					runner = "#{@@supportedTracers[tracer]} #{application} #{deliveryMethod} #{newTestCase}" % [objectName, traceFile]
+					runner = "#{@@supportedTracers[tracer]} \"#{application}\" #{deliveryMethod} #{newTestCase}" % [objectName, traceFile]
 					@runningPid = Process.spawn(runner, [:out, :err] => ["logs/application.log", File::CREAT|File::WRONLY|File::APPEND]) 
 					File.new("app.pid." + @runningPid.to_s(), "w+").close()
 					runtime = self.send(appMonitor.to_sym)
