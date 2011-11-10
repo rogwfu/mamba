@@ -28,7 +28,7 @@ module Mamba
 
 				# Find all shared libraries linked with the object
 				output = ""
-				ret = IO.popen("#{@otool} -L #{object}", 'r') do |f|
+				ret = IO.popen("#{@otool} -L \"#{object}\"", 'r') do |f|
 					output = f.read()
 				end
 
