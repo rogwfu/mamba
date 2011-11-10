@@ -34,7 +34,7 @@ class Tools < Thor
 		idaAnalysisScript = find_autoanalysis_script()
 		say "Info: Disassembling and serializing #{options[:object]}...", :blue
 		# Need to whitelist options[:object] (this is ugly code)
-		system("#{ida} -A  -S\"#{idaAnalysisScript}\" -o#{destination} #{options[:object]}")
+		system("#{ida} -A  -S\"#{idaAnalysisScript}\" -o#{destination} \"#{options[:object]}\"")
 		say "Info: Disassembling and serialization complete.", :blue
 	end
 
