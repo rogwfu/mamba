@@ -4,6 +4,7 @@ module Mamba
 		class OTool 
 			# Create an instance of the coverage class
 			# @param [String] Path of the object file to interrogate
+			# @param [Boolean] Enable 64 bit architecture support
 			# @returns nil if otool is not found
 			def initialize(objectFile)
 				@otool = find_executable0('otool')
@@ -18,6 +19,13 @@ module Mamba
 				executablePathArr = objectFile.split(File::SEPARATOR)
 				executablePathArr.pop()
 				@executablePath = executablePathArr.join(File::SEPARATOR)
+
+                # Setup architecture preference
+                if(architecture) then
+                    @architecture = "x86_64"
+                else
+                    @architecture = "i386"
+                end
 			end
 
 			# Reads the shared libraries from an objects macho header
@@ -28,7 +36,7 @@ module Mamba
 
 				# Find all shared libraries linked with the object
 				output = ""
-				ret = IO.popen("#{@otool} -L \"#{object}\"", 'r') do |f|
+				ret = IO.popen("#{@otool} -arch #{@architecture} -L \"#{object}\"", 'r') do |f|
 					output = f.read()
 				end
 
