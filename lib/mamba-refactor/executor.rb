@@ -9,11 +9,14 @@ module Mamba
 			{
 			"run"  => "%s%s",  # Hack for now to simplify code
 			"valgrind" => ENV['GEM_HOME'] + File::SEPARATOR + "gems" + File::SEPARATOR + "mamba-refactor-0.1.0" +  File::SEPARATOR + "ext" +  File::SEPARATOR + "valgrind" +  File::SEPARATOR + "trunk" + File::SEPARATOR + "inst" +  File::SEPARATOR + "bin" +  File::SEPARATOR + "valgrind " + "--tool=rufus --object=\"%s\" --xml=yes --xml-file=%s"
+                        "lldb" => "lldb-func-tracer.py -s %s -x %s -- " 
 		}
+                ./lldb-func-tracer.py -s CorePDF -- /Applications/Preview.app/Contents/MacOS/Preview
 
 		@@killSignal = "KILL"
 
-#		./valgrind --tool=rufus --object=%s --xml=yes --xml-file=%s Executable
+                # ./valgrind --tool=rufus --object=%s --xml=yes --xml-file=%s Executable
+                # ./lldb-func-tracer.py -s CorePDF -- /Applications/Preview.app/Contents/MacOS/Preview
 		# Dynamically define appscript executors
 		def self.define_appscript_executors(appMonitor, application)
 			@@supportedTracers.each do |tracer, options|
