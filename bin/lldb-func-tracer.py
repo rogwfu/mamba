@@ -10,24 +10,28 @@ import lldbutil
 import os
 import optparse
 import signal
+import numpy as np
 from lxml import etree as ET
 
 
 # Global variable for the target being debugged
 target = None
+xmlTrace = None
 
 # Signal handler to print statistics
 # Format: <hit><funcname>auto_zone_start_monitor</funcname><offset>0x1080</offset></hit>
 # Debugging: print breakpointLocation
 def printBreakStats(SIG, FRM):
     global target
+    global xmlTrace
+
     root = ET.Element("fuzz.io")
     for breakpoint in target.breakpoint_iter():
         for breakpointLocation in breakpoint:
             # Hack since I can't find a GetHitCount() for a SBBreakpointLocation
             breakPointLocationInfo = str(breakpointLocation).split(",")
             blFuncName = breakPointLocationInfo[0].split("=")[1] 
-            blLoadAddress = breakPointLocationInfo[1].split("=")[1] 
+            blLoadAddress = hex(breakpointLocation.GetAddress().GetFileAddress())
             blHitCount = breakPointLocationInfo[3].split("=")[1]
             blHitCount = int(blHitCount)
             if(blHitCount > 0):
@@ -38,7 +42,7 @@ def printBreakStats(SIG, FRM):
               offset.text = blLoadAddress
               count = ET.SubElement(hit, "count")
               count.text = str(blHitCount) 
-    traceFile = open("./trace.xml", "w")
+    traceFile = open("trace.xml", "w")
     ET.ElementTree(root).write(traceFile, pretty_print=True, xml_declaration=True) 
     exit(1)
 
@@ -66,13 +70,14 @@ def run_commands(command_interpreter, commands):
 def main(argv):
     description='''Records hit traces for all functions of a specific shared library'''
     epilog='''Examples:
-        % ./lldb-test.py -s sharedlibrary -- /Applications/Preview.app/Contents/MacOS/Preview
+        % ./lldb-test.py -x lldbtrace.xml -s sharedlibrary -- /Applications/Preview.app/Contents/MacOS/Preview
             '''
     parser = optparse.OptionParser(description=description, prog='lldb-test',usage='usage: lldb-test [options] program [arg1 arg2]', epilog=epilog)
     optparse.OptionParser.format_epilog = lambda self, formatter: self.epilog
     parser.add_option('-e', '--environment', action='append', type='string', metavar='ENV', dest='env_vars', help='Environment variables to set in the inferior process when launching a process.')
     parser.add_option('-s', '--shlib', type='string', dest='shlibs', metavar='SHLIB', help='Specify the shared library to trace functions')
     parser.add_option('-t', '--event-timeout', type='int', dest='event_timeout', metavar='SEC', help='Specify the timeout in seconds to wait for process state change events.', default=lldb.UINT32_MAX)
+    parser.add_option('-x', '--xmlfile', type='string', dest='xmlfile', metavar='XML', help='Specify an XML file to write lldb traces')
     try:
         (options, args) = parser.parse_args(argv)
     except:
@@ -87,6 +92,10 @@ def main(argv):
 
     # Setup a target to debug
     global target
+    global xmlTrace
+    xmlTrace = options.xmlfile
+    print xmlTrace
+    print exe
     target = debugger.CreateTargetWithFileAndArch(exe, lldb.LLDB_ARCH_DEFAULT)
 
     launch_info = None
@@ -114,19 +123,19 @@ def main(argv):
                 if listener.WaitForEvent(options.event_timeout, event):
                         state = lldb.SBProcess.GetStateFromEvent (event)
                         if state == lldb.eStateStopped:
-
-                          thread = lldbutil.get_stopped_thread(process, lldb.eStopReasonBreakpoint)
-                          if thread == None:
-                              print "Error: No Stopped Thread"
-                              # Terminate the Debugger
-                              lldb.SBDebugger.Terminate()
-                          else:
-#                              print "Breakpoint"
-                              process.Continue()
+                            thread = lldbutil.get_stopped_thread(process, lldb.eStopReasonBreakpoint)
+                            if thread == None:
+                                print "Error: No Stopped Thread"
+                                # Terminate the Debugger
+#                               lldb.SBDebugger.Terminate()
+                            else:
+#                               print "Breakpoint"
+                                process.Continue()
                         elif state == lldb.eStopReasonSignal:
                             print "Got a signal"
                         elif state == lldb.eStateRunning:
-                            print "Running"
+                            #print "Running"
+                            a = 1
                         elif state == lldb.eStateExited:
                             exit_desc = process.GetExitDescription()
                             if exit_desc:

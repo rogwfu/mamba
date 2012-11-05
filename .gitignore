@@ -52,3 +52,6 @@ Gemfile.lock
 
 # For the tmp directory
 tmp
+
+# For python 
+*.pyc
