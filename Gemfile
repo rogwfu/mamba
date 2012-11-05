@@ -25,4 +25,5 @@ group :development do
   gem "plympton-refactor", "~> 1.0.0"
   gem "amatch", ">=0.2.6"
   gem "nokogiri", "~> 1.5.0"
+  gem "rake-compiler", "0.8.1"
 end
