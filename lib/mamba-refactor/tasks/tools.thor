@@ -1,8 +1,8 @@
 require 'mamba-refactor'
 
 class Tools < Thor
-	IDAPro   = "/Applications/ida/idaq.app/Contents/MacOS/idaq"
-	IDAPro64 = "/Applications/ida/idaq.app/Contents/MacOS/idaq64"
+	IDAPro   = "/Applications/IDAPro6.3/idaq.app/Contents/MacOS/idaq"
+	IDAPro64 = "/Applications/IDAPro6.3/idaq64.app/Contents/MacOS/idaq64"
 
 	namespace :tools
 	include Thor::Actions
