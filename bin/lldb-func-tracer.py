@@ -13,7 +13,6 @@ import signal
 import numpy as np
 from lxml import etree as ET
 
-
 # Global variable for the target being debugged
 target = None
 xmlTrace = None
@@ -47,15 +46,13 @@ def printBreakStats(SIG, FRM):
     exit(1)
 
 
-# Catch all signals
-#for i in [x for x in dir(signal) if x.startswith("SIG")]:
+# Catch SIGTERM signal to initiate printing stats 
 try:
-    #signum = getattr(signal,i)
-    signal.signal(signal.SIGINFO, printBreakStats)
+    signal.signal(signal.SIGTERM, printBreakStats)
 except RuntimeError,m:
-    print "Skipping %s"%i
+    print "Got an execption setting the SIGSTOP handler"
 
-# Look at: /Users/rseagle/Downloads/lldb/examples/python/process_events.py
+# Run commands using the lldb command line
 def run_commands(command_interpreter, commands):
     return_obj = lldb.SBCommandReturnObject()
     for command in commands:
@@ -94,24 +91,32 @@ def main(argv):
     global target
     global xmlTrace
     xmlTrace = options.xmlfile
-    print xmlTrace
-    print exe
-    target = debugger.CreateTargetWithFileAndArch(exe, lldb.LLDB_ARCH_DEFAULT)
-
+#    print xmlTrace
+#    print exe
+    #target = debugger.CreateTargetWithFileAndArch(exe, lldb.LLDB_ARCH_DEFAULT)
+    ret = run_commands(command_interpreter, ['target create ' + exe])
     launch_info = None
     launch_info = lldb.SBLaunchInfo(args)
     if options.env_vars:
       print options.env_vars
       launch_info.SetEnvironmentEntries(options.env_vars, True)
 
+    # Grab the target from the debugger
+    target = debugger.GetTargetAtIndex(0)
     if target:
         error = lldb.SBError()
         # Set all the breakpoints 
-        print options.shlibs
         ret = run_commands(command_interpreter, ['breakpoint set --func-regex=. --shlib=' + options.shlibs])
         # Launch the process. Since we specified synchronous mode, we won't return
         # from this function until we hit the breakpoint at main
-        process = target.Launch(launch_info, error) 
+
+        # Set the running arguments
+        ret = run_commands(command_interpreter, ['settings set target.run-args ' + ' '.join(args)])
+
+        # Run the executable
+        ret = run_commands(command_interpreter, ['run'])
+        #process = target.Launch(launch_info, error) 
+        process = target.GetProcess()
         if process and process.GetProcessID() != lldb.LLDB_INVALID_PROCESS_ID:
             pid = process.GetProcessID()
             listener = lldb.SBListener("event_listener")
@@ -123,19 +128,20 @@ def main(argv):
                 if listener.WaitForEvent(options.event_timeout, event):
                         state = lldb.SBProcess.GetStateFromEvent (event)
                         if state == lldb.eStateStopped:
+                            #print "State is stopped"
                             thread = lldbutil.get_stopped_thread(process, lldb.eStopReasonBreakpoint)
                             if thread == None:
-                                print "Error: No Stopped Thread"
-                                # Terminate the Debugger
-#                               lldb.SBDebugger.Terminate()
+#                                print "Error: No Stopped Thread"
+                                exit(1)
                             else:
-#                               print "Breakpoint"
+#                                print "Breakpoint"
                                 process.Continue()
                         elif state == lldb.eStopReasonSignal:
-                            print "Got a signal"
+                            #print "Got a signal"
+                            next
                         elif state == lldb.eStateRunning:
                             #print "Running"
-                            a = 1
+                            next
                         elif state == lldb.eStateExited:
                             exit_desc = process.GetExitDescription()
                             if exit_desc:
@@ -145,7 +151,7 @@ def main(argv):
                         elif state == lldb.eStateCrashed:
                             process.Continue()
                         elif state == lldb.eStateUnloaded:
-                            print "process %u unloaded, this shouldn't happen" % (pid)
+#                            print "process %u unloaded, this shouldn't happen" % (pid)
                             done = True
                         elif state == lldb.eStateConnected:
                             print "process connected"
@@ -161,5 +167,6 @@ def main(argv):
 
         # Terminate the Debugger
         lldb.SBDebugger.Terminate()
+
 if __name__ == '__main__':
     main(sys.argv[1:])
