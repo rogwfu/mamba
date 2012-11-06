@@ -13,7 +13,7 @@ module Mamba
                         "lldb" => "lldb-func-tracer.py -s %s -x %s -- " 
 		}
 
-		@@killSignal = "KILL"
+		@@killSignal = "TERM"
 
                 # ./valgrind --tool=rufus --object=%s --xml=yes --xml-file=%s Executable
                 # ./lldb-func-tracer.py -s CorePDF -- /Applications/Preview.app/Contents/MacOS/Preview

@@ -65,8 +65,10 @@ module Mamba
 
 				@reporter.currentTestCase = remoteFD.filename 
 
-				runtime = @executor.valgrind(@logger, testCaseFilename, @objectDisassembly.attributes.name, traceFile)  
-				@objectDisassembly.valgrind_coverage(traceFile)
+				#runtime = @executor.valgrind(@logger, testCaseFilename, @objectDisassembly.attributes.name, traceFile)  
+				runtime = @executor.lldb(@logger, testCaseFilename, @objectDisassembly.attributes.name, traceFile)  
+				#@objectDisassembly.valgrind_coverage(traceFile)
+				@objectDisassembly.lldb_coverage(traceFile)
 				fitness = @objectDisassembly.evaluate(runtime)
 				@logger.info("Member #{testCaseID} Fitness: #{fitness.to_s('F')}")
 

@@ -41,7 +41,7 @@ def printBreakStats(SIG, FRM):
               offset.text = blLoadAddress
               count = ET.SubElement(hit, "count")
               count.text = str(blHitCount) 
-    traceFile = open("trace.xml", "w")
+    traceFile = open(xmlTrace, "w")
     ET.ElementTree(root).write(traceFile, pretty_print=True, xml_declaration=True) 
     exit(1)
 
