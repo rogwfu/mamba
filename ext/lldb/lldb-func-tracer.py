@@ -144,6 +144,7 @@ def main(argv):
                             next
                         elif state == lldb.eStateExited:
                             exit_desc = process.GetExitDescription()
+                            printBreakStats(None, None)
                             if exit_desc:
                                 print "process %u exited with status %u: %s" % (pid, process.GetExitStatus (), exit_desc)
                             else:
