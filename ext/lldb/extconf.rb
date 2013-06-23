@@ -14,7 +14,7 @@ end
 
 # Configure the correct url
 case RbConfig::CONFIG["host_os"]
-when /^darwin(10|11)\.\d+(\.\d+)?$/
+when /^darwin(10|11|12)\.\d+(\.\d+)?$/
 else
 	raise "Error: Unsupported Operating System (#{RbConfig::CONFIG["host_os"]})"
 end

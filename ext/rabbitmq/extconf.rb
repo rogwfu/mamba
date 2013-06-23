@@ -19,7 +19,7 @@ end
 # Use erlang: otp_src_R14B
 rabbitmqURL = ""
 case RbConfig::CONFIG["host_os"]
-when /^darwin(10|11)\.\d+(\.\d+)?$/
+when /^darwin(10|11|12)\.\d+(\.\d+)?$/
 #	rabbitmqURL = "http://www.rabbitmq.com/releases/rabbitmq-server/v2.3.1/rabbitmq-server-2.3.1.tar.gz"
 #	rabbitmqURL = "http://www.rabbitmq.com/releases/rabbitmq-server/v1.7.2/rabbitmq-server-1.7.2.tar.gz"
 	rabbitmqURL = "http://www.rabbitmq.com/releases/rabbitmq-server/v2.0.0/rabbitmq-server-2.0.0.tar.gz"

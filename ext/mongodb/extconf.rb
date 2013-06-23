@@ -18,7 +18,7 @@ end
 #
 mongodURL = ""
 case RbConfig::CONFIG["host_os"]
-when /^darwin(10|11)\.\d+(\.\d+)?$/
+when /^darwin(10|11|12)\.\d+(\.\d+)?$/
 #	mongodURL = "http://fastdl.mongodb.org/osx/mongodb-osx-x86_64-1.8.2-rc3.tgz"
         mongodURL = "http://fastdl.mongodb.org/osx/mongodb-osx-x86_64-2.2.1.tgz"
 else
