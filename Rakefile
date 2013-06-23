@@ -5,10 +5,10 @@ require 'rake/extensiontask'
 require 'jeweler'
 Jeweler::Tasks.new do |gem|
   # gem is a Gem::Specification... see http://docs.rubygems.org/read/chapter/20 for more options
-  gem.name = "mamba-refactor"
-  gem.homepage = "http://github.com/rogwfu/mamba-refactor"
+  gem.name = "mamba"
+  gem.homepage = "http://github.com/rogwfu/mamba"
   gem.license = "MIT"
-  gem.summary = %Q{Mamba Fuzzer Refactor}
+  gem.summary = %Q{Mamba Fuzzer}
   gem.description = %Q{File format fuzzing framework including genetic algorithms and a distributed fuzzing environment.  The refactor improves by leveraging thor.}
   gem.email = "roger.seagle@gmail.com"
   gem.authors = ["Roger Seagle, Jr."]
