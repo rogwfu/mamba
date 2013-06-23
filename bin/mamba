@@ -70,7 +70,7 @@ module Mamba
 			# Validate whether Mamba supports the running OS
 			# @return [Fixnum] nil if not supported, offset of string otherwise 
 			def supported_os?()
-				return(RbConfig::CONFIG["host_os"] =~ /^darwin(10|11)\.\d+\.\d+$/)
+				return(RbConfig::CONFIG["host_os"] =~ /^darwin(10|11|12)\.\d+\.\d+$/)
 			end
 
 			# Validates parameters given to the mamba command line tool for illegal values
