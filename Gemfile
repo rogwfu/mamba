@@ -24,4 +24,5 @@ group :development do
   gem "amatch", "~> 0.3"
   gem "nokogiri", "~> 1.6"
   gem "rake-compiler", "~> 0.9"
+  gem "iconv", "~> 1.0"
 end
