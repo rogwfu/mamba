@@ -21,14 +21,13 @@ Jeweler::Tasks.new do |gem|
   gem.add_dependency("rubyzip", "=0.9.4")
   gem.add_dependency("log4r", "=1.1.9")
   gem.add_dependency("directory_watcher", "=1.4.0")
-  gem.add_dependency("rb-appscript", "=0.6.1")
   gem.add_dependency("bson_ext", "=1.4.0")
   gem.add_dependency("mongo", "=1.3.1")
   gem.add_dependency("amqp", "=0.7.1")
   gem.add_dependency("hpricot", "=0.8.4")
   gem.add_dependency("plympton", "~> 1.1.0")
   gem.add_dependency("amatch", "=0.2.6")
-  gem.add_dependency('nokogiri', '= 1.5.0')
+  gem.add_dependency('nokogiri', '~> 1.6.0')
 
   # Extensions
   gem.extensions          = FileList['ext/**/extconf.rb']
