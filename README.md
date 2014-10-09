@@ -1,8 +1,13 @@
-= mamba-refactor
+# mamba
 
 Description goes here.
 
-== Contributing to mamba-refactor
+## Status
+[![Build Status](https://travis-ci.org/rogwfu/mamba.png)](https://travis-ci.org/rogwfu/mamba)
+[![Coverage Status](https://coveralls.io/repos/rogwfu/mamba/badge.png)](https://coveralls.io/r/rogwfu/mamba)
+[![Dependency Status](https://www.versioneye.com/user/projects/543603aab2a9c5dd3d000092/badge.svg?style=flat)](https://www.versioneye.com/user/projects/543603aab2a9c5dd3d000092)
+
+## Contributing to mamba-refactor
  
 * Check out the latest master to make sure the feature hasn't been implemented or the bug hasn't been fixed yet
 * Check out the issue tracker to make sure someone already hasn't requested it and/or contributed it
@@ -12,14 +17,14 @@ Description goes here.
 * Make sure to add tests for it. This is important so I don't break it in a future version unintentionally.
 * Please try not to mess with the Rakefile, version, or history. If you want to have your own version, or is otherwise necessary, that is fine, but please isolate to its own commit so I can cherry-pick around it.
 
-== Dependencies
+## Dependencies
 * bundle install
 * Install Erlang:
 ** Option 1: brew install erlang
 ** Option 2: wget -O erlang.tar.gz "http://www.erlang.org/download/otp_src_R16B01.tar.gz" ; tar xvzf erlang.tar.gz ; cd otp_src_R16B01 ; ./configure ; make ; sudo make install 
  
-== Copyright
+## Copyright
 
-Copyright (c) 2011 rogwfu. See LICENSE.txt for
+Copyright (c) 2011 Roger Seagle. See LICENSE.txt for
 further details.
 
