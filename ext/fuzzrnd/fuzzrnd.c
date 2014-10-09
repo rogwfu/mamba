@@ -60,7 +60,8 @@ VALUE FuzzRnd_data(VALUE self, VALUE length)
 
   rb_str_resize(data, len);
 
-#if defined(RUBY_1_9_x) || defined(RUBY_2_0_x)
+#if defined(RUBY_1_9_x) || defined(RUBY_2_0_x) || defined(RUBY_2_1_x)
+
   VALUE str_data = StringValue(data);
   p = RSTRING_PTR(str_data);
 #elif defined(RUBY_1_8_x)
@@ -116,7 +117,7 @@ VALUE FuzzRnd_seed(VALUE self, VALUE data) {
 
   REQUIRE_TYPE(data, T_STRING);
 
-#if defined(RUBY_1_9_x) || defined(RUBY_2_0_x)
+#if defined(RUBY_1_9_x) || defined(RUBY_2_0_x) || defined(RUBY_2_1_x)
   VALUE str = StringValue(data);
   key = RSTRING_PTR(str);
   key_len = RSTRING_LEN(str);;
