@@ -1,5 +1,5 @@
 require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
-require 'mamba-refactor/fuzzrnd'
+require 'mamba/fuzzrnd'
 
 describe "RandomGenerator" do
 

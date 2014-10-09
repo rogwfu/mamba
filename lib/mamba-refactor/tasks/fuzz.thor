@@ -1,5 +1,5 @@
 require 'rubygems'
-require 'mamba-refactor'
+require 'mamba'
 require 'daemons'
 require 'yaml'
 require 'zip/zip'

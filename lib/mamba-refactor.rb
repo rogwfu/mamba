@@ -1,29 +1,29 @@
 # Third party libraries
-require 'plympton-refactor'
+require 'plympton'
 
 # Base Functionality
-require 'mamba-refactor/fuzzer'
+require 'mamba/fuzzer'
 
 # Tools
-require 'mamba-refactor/tools/coverage'
-require 'mamba-refactor/tools/downloader'
-require 'mamba-refactor/tools/otool'
+require 'mamba/tools/coverage'
+require 'mamba/tools/downloader'
+require 'mamba/tools/otool'
 
 # Helpers
-require 'mamba-refactor/algorithms/helpers/byte_mutation'
-require 'mamba-refactor/algorithms/helpers/mangle_mutation'
-require 'mamba-refactor/algorithms/helpers/chc'
+require 'mamba/algorithms/helpers/byte_mutation'
+require 'mamba/algorithms/helpers/mangle_mutation'
+require 'mamba/algorithms/helpers/chc'
 
 # Centralized Algorithms
-require 'mamba-refactor/algorithms/mangle'
-require 'mamba-refactor/algorithms/simple_ga'
-require 'mamba-refactor/algorithms/byte_ga'
-require 'mamba-refactor/algorithms/mangle_ga'
-require 'mamba-refactor/algorithms/chc_ga'
+require 'mamba/algorithms/mangle'
+require 'mamba/algorithms/simple_ga'
+require 'mamba/algorithms/byte_ga'
+require 'mamba/algorithms/mangle_ga'
+require 'mamba/algorithms/chc_ga'
 
 # Distributed Algorithms
-require 'mamba-refactor/algorithms/distributed_mangle'
-require 'mamba-refactor/algorithms/distributed_simple_ga'
-require 'mamba-refactor/algorithms/distributed_byte_ga'
-require 'mamba-refactor/algorithms/distributed_mangle_ga'
-require 'mamba-refactor/algorithms/distributed_chc_ga'
+require 'mamba/algorithms/distributed_mangle'
+require 'mamba/algorithms/distributed_simple_ga'
+require 'mamba/algorithms/distributed_byte_ga'
+require 'mamba/algorithms/distributed_mangle_ga'
+require 'mamba/algorithms/distributed_chc_ga'

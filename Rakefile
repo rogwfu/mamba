@@ -35,7 +35,7 @@ end
 Jeweler::RubygemsDotOrgTasks.new
 
 Rake::ExtensionTask.new('fuzzrnd') do |ext|
-  ext.lib_dir = File.join 'lib', 'mamba-refactor'
+  ext.lib_dir = File.join 'lib', 'mamba'
 end
 
 require 'rspec/core'

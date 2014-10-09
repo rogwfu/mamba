@@ -1,4 +1,4 @@
-require 'mamba-refactor'
+require 'mamba'
 
 class Tools < Thor
 	IDAPro   = "/Applications/IDAPro6.3/idaq.app/Contents/MacOS/idaq"

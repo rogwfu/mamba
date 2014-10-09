@@ -7,7 +7,7 @@ Description goes here.
 [![Coverage Status](https://coveralls.io/repos/rogwfu/mamba/badge.png)](https://coveralls.io/r/rogwfu/mamba)
 [![Dependency Status](https://www.versioneye.com/user/projects/543603aab2a9c5dd3d000092/badge.svg?style=flat)](https://www.versioneye.com/user/projects/543603aab2a9c5dd3d000092)
 
-## Contributing to mamba-refactor
+## Contributing to mamba
  
 * Check out the latest master to make sure the feature hasn't been implemented or the bug hasn't been fixed yet
 * Check out the issue tracker to make sure someone already hasn't requested it and/or contributed it

@@ -1,5 +1,5 @@
 require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
-require 'mamba-refactor/algorithms/genetics/chromosome'
+require 'mamba/algorithms/genetics/chromosome'
 
 describe "PopulationMember" do
 	before :each do

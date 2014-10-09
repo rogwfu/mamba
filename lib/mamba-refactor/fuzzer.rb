@@ -1,10 +1,10 @@
 #
 # Include Base Functionality Classes
 #
-require 'mamba-refactor/reporter'
-require 'mamba-refactor/executor'
-require 'mamba-refactor/storage'
-require 'mamba-refactor/random-generator'
+require 'mamba/reporter'
+require 'mamba/executor'
+require 'mamba/storage'
+require 'mamba/random-generator'
 require 'log4r'
 require 'uuidtools'
 

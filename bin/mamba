@@ -1,5 +1,5 @@
 #!/usr/bin/env ruby
-require 'mamba-refactor'
+require 'mamba'
 require 'thor'
 require 'uuidtools'
 require 'yaml'
@@ -49,7 +49,7 @@ module Mamba
 			# Copy the Thor Tasks
 			#
 			Mamba::CLI.source_root(File.dirname(__FILE__))
-			directory "../lib/mamba-refactor/tasks", "#{name}/tasks"
+			directory "../lib/mamba/tasks", "#{name}/tasks"
 
 			#
 			# Create the Mamba Configuration File

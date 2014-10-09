@@ -9,7 +9,7 @@ module Mamba
 		@@supportedTracers = 
 			{
 			"run"  => "%s%s",  # Hack for now to simplify code
-			"valgrind" => ENV['GEM_HOME'] + File::SEPARATOR + "gems" + File::SEPARATOR + "mamba-refactor-0.1.0" +  File::SEPARATOR + "ext" +  File::SEPARATOR + "valgrind" +  File::SEPARATOR + "trunk" + File::SEPARATOR + "inst" +  File::SEPARATOR + "bin" +  File::SEPARATOR + "valgrind " + "--tool=rufus --object=\"%s\" --xml=yes --xml-file=%s",
+			"valgrind" => ENV['GEM_HOME'] + File::SEPARATOR + "gems" + File::SEPARATOR + "mamba-0.1.0" +  File::SEPARATOR + "ext" +  File::SEPARATOR + "valgrind" +  File::SEPARATOR + "trunk" + File::SEPARATOR + "inst" +  File::SEPARATOR + "bin" +  File::SEPARATOR + "valgrind " + "--tool=rufus --object=\"%s\" --xml=yes --xml-file=%s",
                         "lldb" => "lldb-func-tracer.py -s %s -x %s -- " 
 		}
 

@@ -1,6 +1,6 @@
 require 'zip/zip'
-require 'mamba-refactor/algorithms/genetics/population'
-require 'mamba-refactor/algorithms/genetics/chromosome'
+require 'mamba/algorithms/genetics/population'
+require 'mamba/algorithms/genetics/chromosome'
 
 module Mamba
 	module Algorithms

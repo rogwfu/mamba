@@ -12,7 +12,7 @@ module Mamba
 		# @todo Switch on mongodb os information
 		def dstart() 
 			say "Mamba Fuzzing Framework: Starting Mongodb database", :blue
-			mongoPath = [ENV['GEM_HOME'], "gems", "mamba-refactor-" + @@version, "ext", "mongodb", "mongodb-osx-x86_64-1.8.2-rc3", "bin"].join(File::SEPARATOR)
+			mongoPath = [ENV['GEM_HOME'], "gems", "mamba-" + @@version, "ext", "mongodb", "mongodb-osx-x86_64-1.8.2-rc3", "bin"].join(File::SEPARATOR)
 			mongod = find_executable0("mongod", mongoPath + File::PATH_SEPARATOR + ENV['PATH'])
 			storageDir = Dir.pwd + File::SEPARATOR + "databases" + File::SEPARATOR
 			logFile = storageDir + "mongodb.log"
@@ -39,7 +39,7 @@ module Mamba
 		# Start the rabbitmq queueing system for distributed jobs
 		def qstart() 
 			say "Mamba Fuzzing Framework: Starting rabbitmq queues", :blue
-			rabbitmqPath = [ENV['GEM_HOME'], "gems", "mamba-refactor-" + @@version, "ext", "rabbitmq", "rabbitmq-server-2.0.0", "scripts"].join(File::SEPARATOR)
+			rabbitmqPath = [ENV['GEM_HOME'], "gems", "mamba-" + @@version, "ext", "rabbitmq", "rabbitmq-server-2.0.0", "scripts"].join(File::SEPARATOR)
 			rabbitmq = find_executable0("rabbitmq-server", rabbitmqPath + File::PATH_SEPARATOR + ENV['PATH'])
 			queueBaseDir = Dir.pwd + File::SEPARATOR + "queues"
 			queueLogDir = Dir.pwd + File::SEPARATOR + "logs" + File::SEPARATOR + "rabbitmq"
@@ -51,7 +51,7 @@ module Mamba
 		# Reset the rabbitmq queueing system for distributed jobs (empty the queues)
 		def qreset() 
 			say "Mamba Fuzzing Framework: Resetting rabbitmq queues", :blue
-			rabbitmqPath = [ENV['GEM_HOME'], "gems", "mamba-refactor-" + @@version, "ext", "rabbitmq", "rabbitmq-server-2.0.0", "scripts"].join(File::SEPARATOR)
+			rabbitmqPath = [ENV['GEM_HOME'], "gems", "mamba-" + @@version, "ext", "rabbitmq", "rabbitmq-server-2.0.0", "scripts"].join(File::SEPARATOR)
 			rabbitmqctl = find_executable0("rabbitmqctl", rabbitmqPath + File::PATH_SEPARATOR + ENV['PATH'])
 			hostname = Socket::gethostname.split('.')[0] 
 			system("#{rabbitmqctl} -n fuzzer@#{hostname} force_reset")
@@ -61,7 +61,7 @@ module Mamba
 		# Query the status of rabbitmq queueing system 
 		def qstatus() 
 			say "Mamba Fuzzing Framework: Resetting rabbitmq queues", :blue
-			rabbitmqPath = [ENV['GEM_HOME'], "gems", "mamba-refactor-" + @@version, "ext", "rabbitmq", "rabbitmq-server-2.0.0", "scripts"].join(File::SEPARATOR)
+			rabbitmqPath = [ENV['GEM_HOME'], "gems", "mamba-" + @@version, "ext", "rabbitmq", "rabbitmq-server-2.0.0", "scripts"].join(File::SEPARATOR)
 			rabbitmqctl = find_executable0("rabbitmqctl", rabbitmqPath + File::PATH_SEPARATOR + ENV['PATH'])
 			hostname = Socket::gethostname.split('.')[0] 
 			system("#{rabbitmqctl} -n fuzzer@#{hostname} status")
@@ -71,7 +71,7 @@ module Mamba
 		# Stop the rabbitmq queueing system for distributed jobs
 		def qstop() 
 			say "Mamba Fuzzing Framework: Stopping rabbitmq queues", :blue
-			rabbitmqPath = [ENV['GEM_HOME'], "gems", "mamba-refactor-" + @@version, "ext", "rabbitmq", "rabbitmq-server-2.0.0", "scripts"].join(File::SEPARATOR)
+			rabbitmqPath = [ENV['GEM_HOME'], "gems", "mamba-" + @@version, "ext", "rabbitmq", "rabbitmq-server-2.0.0", "scripts"].join(File::SEPARATOR)
 			rabbitmqctl = find_executable0("rabbitmqctl", rabbitmqPath + File::PATH_SEPARATOR + ENV['PATH'])
 			hostname = Socket::gethostname.split('.')[0] 
 			system("#{rabbitmqctl} -n fuzzer@#{hostname} stop")
