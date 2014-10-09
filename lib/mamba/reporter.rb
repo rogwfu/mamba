@@ -117,7 +117,7 @@ module Mamba
 		# @return [String] Directoy to watch for crash logs
 		def os_crash_dir()
 			case RbConfig::CONFIG["host_os"]
-			when /^darwin(10|11|12|14)\.\d+\.\d+$/
+			when /^darwin(10|11|12|13|14)\.\d+\.\d+$/
 				return("/Users/#{ENV['USER']}/Library/Logs/DiagnosticReports")
 			else
 				raise "Error: Unsupported Operating System (#{RbConfig::CONFIG["host_os"]})"

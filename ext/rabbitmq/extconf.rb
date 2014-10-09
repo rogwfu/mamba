@@ -19,7 +19,7 @@ end
 # Use erlang: otp_src_R14B
 rabbitmqURL = ""
 case RbConfig::CONFIG["host_os"]
-when /^darwin(10|11|12|14)\.\d+(\.\d+)?$/
+when /^darwin(10|11|12|13|14)\.\d+(\.\d+)?$/
 	rabbitmqURL = "http://www.rabbitmq.com/releases/rabbitmq-server/v3.3.5/rabbitmq-server-3.3.5.tar.gz"
 else
 	raise "Error: Unsupported Operating System (#{RbConfig::CONFIG["host_os"]})"
