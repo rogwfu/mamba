@@ -18,9 +18,8 @@ end
 #
 mongodURL = ""
 case RbConfig::CONFIG["host_os"]
-when /^darwin(10|11|12)\.\d+(\.\d+)?$/
-#	mongodURL = "http://fastdl.mongodb.org/osx/mongodb-osx-x86_64-1.8.2-rc3.tgz"
-        mongodURL = "http://fastdl.mongodb.org/osx/mongodb-osx-x86_64-2.2.1.tgz"
+when /^darwin(10|11|12|14)\.\d+(\.\d+)?$/
+	mongodURL = "https://fastdl.mongodb.org/src/mongodb-src-r2.6.4.tar.gz"
 else
 	raise "Error: Unsupported Operating System (#{RbConfig::CONFIG["host_os"]})"
 end
