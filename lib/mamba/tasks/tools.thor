@@ -41,10 +41,10 @@ class Tools < Thor
 	# Wrapper around otool to iterrogate an object for all shared objects linked against it 
 	desc "otool", "Runs otool recursively over an object to display linked objects"
 	method_option	:object, :type => :string, :default => "", :aliases => "-o", :desc => "Executable or shared library to examine with otool"
-	method_option	:architecture, :type => :boolean, :default => false, :aliases => "-a", :desc => "Turn 64 bit support on"
+	method_option	:architecture, :type => :boolean, :default => false, :aliases => "-a", :desc => "Turn 32 bit support on"
 	def otool()
 		validate_existence(options[:object])
-		otool = Kernel.const_get("Mamba").const_get("Tools"). const_get("OTool").new(options[:object], options[:architecture])
+		otool = Kernel.const_get("Mamba").const_get("Tools").const_get("OTool").new(options[:object], options[:architecture])
 
 		# Check initialization
 		if(otool == nil) then

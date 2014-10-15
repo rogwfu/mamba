@@ -22,9 +22,9 @@ module Mamba
 
                 # Setup architecture preference
                 if(architecture) then
-                    @architecture = "x86_64"
-                else
                     @architecture = "i386"
+                else
+                    @architecture = "x86_64"
                 end
 
 				# Stash all rpath commands for latter reference 
@@ -48,7 +48,7 @@ module Mamba
 
 				loadCommands = output.split("\n")
 				loadCommands.each_index do |idx|
-					if(loadCommands[idx].include?("cmd LC_RPATH")) then
+					if(loadCommands[idx].include?("cmd LC_RPATH") || loadCommands[idx].include?("cmd LC_LOAD_DYLIB")) then
 						rpath = loadCommands[idx+2]
 						rpath.gsub!(/^\s+path\s*/, "")
 						rpath.gsub!(/\s+\(.*?\)\s*/, "")
