@@ -1,8 +1,8 @@
 require 'mamba'
 
 class Tools < Thor
-	IDAPro   = "/Applications/IDAPro6.3/idaq.app/Contents/MacOS/idaq"
-	IDAPro64 = "/Applications/IDAPro6.3/idaq64.app/Contents/MacOS/idaq64"
+	IDAPro   = Shellwords.shellescape(ENV['IDA']) 
+	IDAPro64 = Shellwords.shellescape(ENV['IDA64'])
 
 	namespace :tools
 	include Thor::Actions
@@ -30,10 +30,11 @@ class Tools < Thor
 	def disassemble()
 		ida = validate_ida()
 		validate_existence(options[:object])
-		destination = options[:object].split(File::SEPARATOR)[-1]
+		destination = "disassemblies" + File::SEPARATOR + options[:object].split(File::SEPARATOR)[-1]
 		idaAnalysisScript = find_autoanalysis_script()
 		say "Info: Disassembling and serializing #{options[:object]}...", :blue
 		# Need to whitelist options[:object] (this is ugly code)
+		say "#{ida} -A  -S\"#{idaAnalysisScript}\" -o#{destination} \"#{options[:object]}\""
 		system("#{ida} -A  -S\"#{idaAnalysisScript}\" -o#{destination} \"#{options[:object]}\"")
 		say "Info: Disassembling and serialization complete.", :blue
 	end
@@ -102,10 +103,10 @@ class Tools < Thor
 		# Make sure the requested file exists
 		# @param [String] The filename to check for existence
 		def validate_existence(filename)
-			if(!File.exists?(filename)) then
-                say "Error: File (#{filename}) does not exist", :red
-				exit(1)
-			end
+#			if(!File.exists?("#{filename}")) then
+#                say "Error: File (#{filename}) does not exist", :red
+#				exit(1)
+#			end
 		end
 
 		# Make sure IDA Pro is installed for this tool to work 
