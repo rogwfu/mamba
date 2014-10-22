@@ -25,4 +25,5 @@ group :development do
   gem "nokogiri", "~> 1.6"
   gem "rake-compiler", "~> 0.9"
   gem "iconv", "~> 1.0"
+  gem "coveralls", "~> 0.7"
 end
