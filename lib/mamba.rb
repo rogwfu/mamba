@@ -8,6 +8,7 @@ require 'mamba/fuzzer'
 require 'mamba/tools/coverage'
 require 'mamba/tools/downloader'
 require 'mamba/tools/otool'
+require 'mamba/tools/ldd'
 
 # Helpers
 require 'mamba/algorithms/helpers/byte_mutation'

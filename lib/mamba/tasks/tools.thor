@@ -40,22 +40,29 @@ class Tools < Thor
 	end
 
 	# Wrapper around otool to iterrogate an object for all shared objects linked against it 
-	desc "otool", "Runs otool recursively over an object to display linked objects"
+	desc "libs", "Runs otool recursively over an object to display linked objects"
 	method_option	:object, :type => :string, :default => "", :aliases => "-o", :desc => "Executable or shared library to examine with otool"
 	method_option	:architecture, :type => :boolean, :default => false, :aliases => "-a", :desc => "Turn 32 bit support on"
-	def otool()
+	def libs()
 		validate_existence(options[:object])
-		otool = Kernel.const_get("Mamba").const_get("Tools").const_get("OTool").new(options[:object], options[:architecture])
 
-		# Check initialization
-		if(otool == nil) then
-			say "Error: otool not found in current path (#{ENV['PATH']})", :red
-			exit(1)
+		cmd = nil
+
+		# Instantiate the correct class
+		case RbConfig::CONFIG["host_os"]
+		when /^darwin(10|11|12|13|14)\.\d+(\.\d+)?$/
+		  cmd = Kernel.const_get("Mamba").const_get("Tools").const_get("OTool").new(options[:object], options[:architecture])
+		when /^linux-gnu$/
+		  cmd = Kernel.const_get("Mamba").const_get("Tools").const_get("LDD").new(options[:object], options[:architecture])
+		else
+		  say "Error: Unsupported Operating System (#{RbConfig::CONFIG["host_os"]})", :red
+		  exit(1)
 		end
-		
+
 		# Find all the shared libraries
-		sharedLibraries = otool.gather_shared_libraries()
-		sharedLibraries.each do |sharedObject| 
+		cmd.gather_shared_libraries()
+		puts cmd.libraries
+		cmd.libraries do |sharedObject| 
 			say "#{sharedObject}", :blue
 		end
 	end
