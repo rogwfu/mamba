@@ -1,6 +1,5 @@
 module Mamba
   module Tools
-	# Class to work with otool 
 	class LDD 
 	  attr_reader :libraries
 	  attr_reader :obj
@@ -38,14 +37,11 @@ module Mamba
 		cmdOutput.each do |line|
 		  case line
 		  when /:/
-#			puts line.split(":")[0].chomp() 
 			lib = line.split(":")[0].strip() 
 			if not lib.include?("Version information") then
 			  @libraries << lib
 			end
 		  when /=>/
-#			puts "Line: #{line}"
-#			puts line.split("=>")[1].split("(")[0].strip() 
 			lib = line.split("=>")[1].split("(")[0].strip() 
 			if not lib.empty? then
 			  @libraries << lib
@@ -55,7 +51,6 @@ module Mamba
 
 		  # All keep unique entries
 		  @libraries.uniq!
-
 		end
 	  end
 	end

@@ -40,10 +40,10 @@ class Tools < Thor
 	end
 
 	# Wrapper around otool to iterrogate an object for all shared objects linked against it 
-	desc "libs", "Runs otool recursively over an object to display linked objects"
+	desc "deps", "List dynamic dependencies for an executable or object"
 	method_option	:object, :type => :string, :default => "", :aliases => "-o", :desc => "Executable or shared library to examine with otool"
 	method_option	:architecture, :type => :boolean, :default => false, :aliases => "-a", :desc => "Turn 32 bit support on"
-	def libs()
+	def deps()
 		validate_existence(options[:object])
 
 		cmd = nil
