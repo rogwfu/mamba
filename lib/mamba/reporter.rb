@@ -119,6 +119,8 @@ module Mamba
 			case RbConfig::CONFIG["host_os"]
 			when /^darwin(10|11|12|13|14)\.\d+\.\d+$/
 				return("/Users/#{ENV['USER']}/Library/Logs/DiagnosticReports")
+			when /^linux-gnu$/
+				return("/var/crash")
 			else
 				raise "Error: Unsupported Operating System (#{RbConfig::CONFIG["host_os"]})"
 			end
