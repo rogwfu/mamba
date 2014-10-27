@@ -44,7 +44,7 @@ module Mamba
 			end
 
 			# Install the real time reporter signal handler
-			Kernel.trap("INFO") do
+			Kernel.trap("USR1") do
 				print_report(@reporter_logger)	
 			end
 

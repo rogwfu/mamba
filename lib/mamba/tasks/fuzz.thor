@@ -149,9 +149,9 @@ class Fuzz < Thor
 		say "Mamba Fuzzing Framework reporting to log file....", :blue
 		pidFiles = Daemons::PidFile.find_files(FileUtils.pwd(), "MambaFuzzingFramework")
 		if(pidFiles.length == 1) then
-			# Send the reporting signal (SIGINFO) to the fuzzer 
+			# Send the reporting signal (SIGUSR1) to the fuzzer 
 			begin
-				Process.kill('SIGINFO', File.open(pidFiles[0]).readline().chomp().to_i())
+				Process.kill('SIGUSR1', File.open(pidFiles[0]).readline().chomp().to_i())
 			rescue 
 				say "Error: Mamba Fuzzing Framework not running!", :red
 			end
