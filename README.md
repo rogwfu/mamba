@@ -38,11 +38,41 @@ apt-get install clang-3.4 clang-3.4-doc libclang-common-3.4-dev libclang-3.4-dev
 * Please try not to mess with the Rakefile, version, or history. If you want to have your own version, or is otherwise necessary, that is fine, but please isolate to its own commit so I can cherry-pick around it.
 
 ## Dependencies
+
+### Ubuntu
+* Install lldb
+```bash
+wget -O - http://llvm.org/apt/llvm-snapshot.gpg.key | apt-key add -
+echo "deb http://llvm.org/apt/trusty/ llvm-toolchain-trusty-3.4 main" >> /etc/apt/llvm.list
+echo "deb-src http://llvm.org/apt/trusty/ llvm-toolchain-trusty-3.4 main" >> /etc/apt/llvm.list
+apt-get update
+apt-get -y install clang-3.4 clang-3.4-doc libclang-common-3.4-dev libclang-3.4-dev libclang1-3.4 libclang1-3.4-dbg libllvm-3.4-ocaml-dev libllvm3.4 libllvm3.4-dbg lldb-3.4 llvm-3.4 llvm-3.4-dev llvm-3.4-doc llvm-3.4-examples llvm-3.4-runtime clang-modernize-3.4 clang-format-3.4 python-clang-3.4 lldb-3.4-dev
+ln -s /usr/bin/lldb-3.4 /usr/local/bin/lldb
+```
+
+* Install mongodb
+```bash
+apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 7F0CEB10
+echo 'deb http://downloads-distro.mongodb.org/repo/ubuntu-upstart dist 10gen' | tee /etc/apt/sources.list.d/mongodb.list
+apt-get update
+apt-get install -y mongodb-org
+```
+
+* Install rabbitmq
+```bash
+wget -O - http://www.rabbitmq.com/rabbitmq-signing-key-public.asc | apt-key add -
+echo 'deb http://www.rabbitmq.com/debian/ testing main' | tee /etc/apt/sources.list.d/rabbitmq.list
+apt-get update
+apt-get install -y rabbitmq-server
+service rabbitmq-server stop
+```
+### Mac OS X
 * bundle install
 * Install Erlang:
 ** Option 1: brew install erlang
 ** Option 2: wget -O erlang.tar.gz "http://www.erlang.org/download/otp_src_R16B01.tar.gz" ; tar xvzf erlang.tar.gz ; cd otp_src_R16B01 ; ./configure ; make ; sudo make install 
- 
+
+*
 ## Copyright
 
 Copyright (c) 2011 Roger Seagle. See LICENSE.txt for
