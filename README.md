@@ -2,6 +2,11 @@
 
 Description goes here.
 
+## Status
+[![Build Status](https://travis-ci.org/rogwfu/mamba.png)](https://travis-ci.org/rogwfu/mamba)
+[![Coverage Status](https://coveralls.io/repos/rogwfu/mamba/badge.png)](https://coveralls.io/r/rogwfu/mamba)
+[![Dependency Status](https://www.versioneye.com/user/projects/543603aab2a9c5dd3d000092/badge.svg?style=flat)](https://www.versioneye.com/user/projects/543603aab2a9c5dd3d000092)
+
 ## Prerequisites
 
 ### Mac OS X (Homebrew)
@@ -15,17 +20,47 @@ brew install rabbitmq
 
 ### Ubuntu 14.04
 
+* Install llvm archive signature
 ```
 wget -O - http://llvm.org/apt/llvm-snapshot.gpg.key|sudo apt-key add -
 ```
+* Install llvm package repositories 
 ```
-apt-get install clang-3.4 clang-3.4-doc libclang-common-3.4-dev libclang-3.4-dev libclang1-3.4 libclang1-3.4-dbg libllvm-3.4-ocaml-dev libllvm3.4 libllvm3.4-dbg lldb-3.4 llvm-3.4 llvm-3.4-dev llvm-3.4-doc llvm-3.4-examples llvm-3.4-runtime clang-modernize-3.4 clang-format-3.4 lldb-3.4-dev
+echo "deb http://llvm.org/apt/trusty/ llvm-toolchain-trusty main" > /etc/apt/sources.list.d/llvm.list
+echo "deb-src http://llvm.org/apt/trusty/ llvm-toolchain-trusty main" >> /etc/apt/sources.list.d/llvm.list
+echo "# 3.4" >> /etc/apt/sources.list.d/llvm.list
+echo "deb http://llvm.org/apt/trusty/ llvm-toolchain-trusty-3.4 main" >> /etc/apt/sources.list.d/llvm.list
+echo "deb-src http://llvm.org/apt/trusty/ llvm-toolchain-trusty-3.4 main" >> /etc/apt/sources.list.d/llvm.list
+echo "# 3.5" >> /etc/apt/sources.list.d/llvm.list
+echo "deb http://llvm.org/apt/trusty/ llvm-toolchain-trusty-3.5 main" >> /etc/apt/sources.list.d/llvm.list
+echo "deb-src http://llvm.org/apt/trusty/ llvm-toolchain-trusty-3.5 main" >> /etc/apt/sources.list.d/llvm.list
+sudo apt-get update
 ```
 
-## Status
-[![Build Status](https://travis-ci.org/rogwfu/mamba.png)](https://travis-ci.org/rogwfu/mamba)
-[![Coverage Status](https://coveralls.io/repos/rogwfu/mamba/badge.png)](https://coveralls.io/r/rogwfu/mamba)
-[![Dependency Status](https://www.versioneye.com/user/projects/543603aab2a9c5dd3d000092/badge.svg?style=flat)](https://www.versioneye.com/user/projects/543603aab2a9c5dd3d000092)
+* Install llvm 3.4
+```
+sudo apt-get -y install clang-3.4 clang-3.4-doc libclang-common-3.4-dev libclang-3.4-dev libclang1-3.4 libclang1-3.4-dbg libllvm-3.4-ocaml-dev libllvm3.4 libllvm3.4-dbg lldb-3.4 llvm-3.4 llvm-3.4-dev llvm-3.4-doc llvm-3.4-examples llvm-3.4-runtime clang-modernize-3.4 clang-format-3.4 lldb-3.4-dev
+```
+
+* Fix python lldb
+```
+sudo ln -sf /usr/lib/llvm-3.4/lib/liblldb.so.1  /usr/lib/python2.7/dist-packages/lldb/_lldb.so
+```
+
+* Install python dependencies
+```
+sudo apt-get -y install python-pip
+sudo apt-get -y install python-dev
+sudo apt-get -y install libevent-dev
+sudo apt-get -y install libxml2-dev libxslt-dev python-dev
+sudo pip install uwsgi
+sudo pip install numpy
+sudo pip install lxml
+```
+
+# Notes
+export PATH="$PATH:$HOME/.mamba"
+
 
 ## Contributing to mamba
  
