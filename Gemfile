@@ -26,4 +26,5 @@ group :development do
   gem "rake-compiler", "~> 0.9"
   gem "iconv", "~> 1.0"
   gem "coveralls", "~> 0.7"
+  gem "posix-spawn", "~> 0.3"
 end

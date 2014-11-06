@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # Notes:
 # (lldb) image list CorePDF
 # [  0] B5B5215F-38C0-364D-BDA4-35D674FFCEC4 0x00007fff81cf0000 /System/Library/PrivateFrameworks/CorePDF.framework/Versions/A/CorePDF 
@@ -13,9 +12,11 @@ import signal
 import numpy as np
 from lxml import etree as ET
 
-# Global variable for the target being debugged
+# Global Variables necessary for signal handling 
 target = None
 xmlTrace = None
+process = None
+debugger = None
 
 # Signal handler to print statistics
 # Format: <hit><funcname>auto_zone_start_monitor</funcname><offset>0x1080</offset></hit>
@@ -23,6 +24,8 @@ xmlTrace = None
 def printBreakStats(SIG, FRM):
     global target
     global xmlTrace
+    global process
+    global debugger 
 
     root = ET.Element("fuzz.io")
     for breakpoint in target.breakpoint_iter():
@@ -44,24 +47,20 @@ def printBreakStats(SIG, FRM):
     traceFile = open(xmlTrace, "w")
     ET.ElementTree(root).write(traceFile, pretty_print=True, xml_declaration=True) 
 
+    # kill the process
+    process.Kill() 
+
+    # Terminate the Debugger
+    debugger.Terminate()
+
+    # Exit the program
+    sys.exit(0)
 
 # Catch SIGTERM signal to initiate printing stats 
 try:
-    signal.signal(signal.SIGTERM, printBreakStats)
+    signal.signal(signal.SIGUSR1, printBreakStats)
 except RuntimeError,m:
     print "Got an execption setting the SIGSTOP handler"
-
-# Run commands using the lldb command line
-def run_commands(command_interpreter, commands, options):
-    return_obj = lldb.SBCommandReturnObject()
-    for command in commands:
-        command_interpreter.HandleCommand( command, return_obj )
-        if return_obj.Succeeded():
-            return return_obj.GetOutput()
-        else:
-            print return_obj
-            if options.stop_on_error:
-                break
 
 def main(argv):
     description='''Records hit traces for all functions of a specific shared library'''
@@ -79,12 +78,20 @@ def main(argv):
     except:
         return
 
+    global process 
+    global xmlTrace
+    global target
+    global debugger 
+
     # Set the executable
     exe = args.pop(0)
 
     # Create a new debugger instance
     debugger = lldb.SBDebugger.Create()
-    command_interpreter = debugger.GetCommandInterpreter()
+    
+    # When we step or continue, don't return from the function until the process 
+    # stops. We do this by setting the async mode to false.
+#    debugger.SetAsync (False)
 
     launch_info = None
     launch_info = lldb.SBLaunchInfo(args)
@@ -92,8 +99,6 @@ def main(argv):
         launch_info.SetEnvironmentEntries(options.env_vars, True)
 
     # Setup a target to debug
-    global target
-    global xmlTrace
     xmlTrace = options.xmlfile
     target = debugger.CreateTargetWithFileAndArch(exe, lldb.LLDB_ARCH_DEFAULT)
     if target:
@@ -138,6 +143,7 @@ def main(argv):
                             process.Continue()
                         elif state == lldb.eStateUnloaded:
                             done = True
+                            printBreakStats(None, None)
                         elif state == lldb.eStateConnected:
                             print "process connected"
                         elif state == lldb.eStateAttaching:
@@ -147,11 +153,13 @@ def main(argv):
                         else:
                             print "Stopped"
                             done = True
+                            printBreakStats(None, None)
             # kill the process
             process.Kill() 
 
         # Terminate the Debugger
-        lldb.SBDebugger.Terminate()
+        #lldb.SBDebugger.Terminate()
+        debugger.Terminate()
 
 if __name__ == '__main__':
     main(sys.argv[1:])
