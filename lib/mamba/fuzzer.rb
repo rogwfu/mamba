@@ -25,6 +25,7 @@ module Mamba
 			@logger = init_logger("Fuzzer")
 			@executor = Executor.new(mambaConfig[:app], mambaConfig[:executor], mambaConfig[:timeout], @logger, fuzzerConfig)
 			@uuid = mambaConfig[:uuid]
+			@timeout = mambaConfig[:timeout]
 
 			#
 			# Check for distributed fuzzer setup

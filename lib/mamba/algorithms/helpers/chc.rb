@@ -116,7 +116,7 @@ module Mamba
 					@temporaryMappings.each do |key, value|
 						traceFile = value + ".trace.xml"
 						#runtime = @executor.valgrind(@logger, value, @objectDisassembly.attributes.name, traceFile)  
-						runtime = @executor.lldb(@logger, value, @objectDisassembly.attributes.name, traceFile)  
+						runtime = @executor.lldb(@logger, value, @timeout, @objectDisassembly.attributes.name, traceFile)  
 						#@objectDisassembly.valgrind_coverage(traceFile)
 						@objectDisassembly.lldb_coverage(traceFile)
 						fitness = @objectDisassembly.evaluate(runtime)

@@ -72,9 +72,7 @@ module Mamba
 					@simpleGAConfig['Population Size'].times do |chromosomeID|
 						chromosomeID = chromosomeID.to_s()
 						traceFile = @testSetMappings[chromosomeID] + ".trace.xml"
-#						runtime = @executor.valgrind(@logger, @testSetMappings[chromosomeID], @objectDisassembly.attributes.name, traceFile)  
-						runtime = @executor.lldb(@logger, @testSetMappings[chromosomeID], @objectDisassembly.attributes.name, traceFile)  
-						#@objectDisassembly.valgrind_coverage(traceFile)
+						runtime = @executor.lldb(@logger, @testSetMappings[chromosomeID], @timeout, @objectDisassembly.attributes.name, traceFile)  
 						@objectDisassembly.lldb_coverage(traceFile)
 						fitness = @objectDisassembly.evaluate(runtime)
 						@logger.info("Member #{chromosomeID} Fitness: #{fitness.to_s('F')}")

@@ -66,7 +66,7 @@ module Mamba
 				@reporter.currentTestCase = remoteFD.filename 
 
 				#runtime = @executor.valgrind(@logger, testCaseFilename, @objectDisassembly.attributes.name, traceFile)  
-				runtime = @executor.lldb(@logger, testCaseFilename, @objectDisassembly.attributes.name, traceFile)  
+				runtime = @executor.lldb(@logger, testCaseFilename, @timeout, @objectDisassembly.attributes.name, traceFile)  
 				#@objectDisassembly.valgrind_coverage(traceFile)
 				@objectDisassembly.lldb_coverage(traceFile)
 				fitness = @objectDisassembly.evaluate(runtime)
