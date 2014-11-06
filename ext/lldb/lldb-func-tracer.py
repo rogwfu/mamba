@@ -8,7 +8,7 @@ import lldb
 import lldbutil 
 import os
 import optparse
-import signal
+from datetime import datetime, timedelta
 import numpy as np
 from lxml import etree as ET
 
@@ -21,13 +21,12 @@ debugger = None
 # Signal handler to print statistics
 # Format: <hit><funcname>auto_zone_start_monitor</funcname><offset>0x1080</offset></hit>
 # Debugging: print breakpointLocation
-def printBreakStats(SIG, FRM):
+def printBreakStats():
     global target
     global xmlTrace
     global process
     global debugger 
 
-    print "Inside the printBreakStats Function"
     root = ET.Element("fuzz.io")
     for breakpoint in target.breakpoint_iter():
         for breakpointLocation in breakpoint:
@@ -45,8 +44,10 @@ def printBreakStats(SIG, FRM):
                 offset.text = blLoadAddress
                 count = ET.SubElement(hit, "count")
                 count.text = str(blHitCount) 
+
     traceFile = open(xmlTrace, "w")
     ET.ElementTree(root).write(traceFile, pretty_print=True, xml_declaration=True) 
+    traceFile.close()
 
     # kill the process
     process.Kill() 
@@ -55,13 +56,7 @@ def printBreakStats(SIG, FRM):
     debugger.Terminate()
 
     # Exit the program
-    sys.exit(0)
-
-# Catch SIGTERM signal to initiate printing stats 
-try:
-    signal.signal(signal.SIGUSR1, printBreakStats)
-except RuntimeError,m:
-    print "Got an execption setting the SIGSTOP handler"
+    sys.exit()
 
 def main(argv):
     description='''Records hit traces for all functions of a specific shared library'''
@@ -74,6 +69,7 @@ def main(argv):
     parser.add_option('-s', '--shlib', type='string', dest='shlibs', metavar='SHLIB', help='Specify the shared library to trace functions')
     parser.add_option('-t', '--event-timeout', type='int', dest='event_timeout', metavar='SEC', help='Specify the timeout in seconds to wait for process state change events.', default=lldb.UINT32_MAX)
     parser.add_option('-x', '--xmlfile', type='string', dest='xmlfile', metavar='XML', help='Specify an XML file to write lldb traces')
+    parser.add_option('-w', '--waittime', type='int', dest='waittime', metavar='WAIT', help='Specify a wait time for the program under test')
     try:
         (options, args) = parser.parse_args(argv)
     except:
@@ -107,6 +103,11 @@ def main(argv):
         lib_breakpoints = target.BreakpointCreateByRegex(".", options.shlibs)	
 
         process = target.Launch(launch_info, error) 
+
+        # Create the timer to monitor execution
+        period = timedelta(seconds=options.waittime)
+        expireTime = datetime.now() + period
+
         if process and process.GetProcessID() != lldb.LLDB_INVALID_PROCESS_ID:
             state = process.GetState ()
             pid = process.GetProcessID()
@@ -116,16 +117,15 @@ def main(argv):
             process.GetBroadcaster().AddListener(listener, lldb.SBProcess.eBroadcastBitStateChanged)
             stop_idx = 0
             done = False
-            while not done:
+            while not done and (datetime.now() < expireTime):
                 event = lldb.SBEvent()
                 if listener.WaitForEvent(options.event_timeout, event):
                         state = lldb.SBProcess.GetStateFromEvent (event)
                         if state == lldb.eStateStopped:
                             thread = lldbutil.get_stopped_thread(process, lldb.eStopReasonBreakpoint)
                             if thread == None:
-                                print "Error: No Stopped Thread"
-                                done = True
-                                printBreakStats(None, None)
+                                print "No Stopped Thread"
+                                process.Continue()
                             else:
                                 process.Continue()
                         elif state == lldb.eStopReasonSignal:
@@ -135,7 +135,6 @@ def main(argv):
                         elif state == lldb.eStateExited:
                             done = True
                             exit_desc = process.GetExitDescription()
-                            printBreakStats(None, None)
                             if exit_desc:
                                 print "process %u exited with status %u: %s" % (pid, process.GetExitStatus (), exit_desc)
                             else:
@@ -144,7 +143,6 @@ def main(argv):
                             process.Continue()
                         elif state == lldb.eStateUnloaded:
                             done = True
-                            printBreakStats(None, None)
                         elif state == lldb.eStateConnected:
                             print "process connected"
                         elif state == lldb.eStateAttaching:
@@ -154,13 +152,15 @@ def main(argv):
                         else:
                             print "Stopped"
                             done = True
-                            printBreakStats(None, None)
+
             # kill the process
             process.Kill() 
 
         # Terminate the Debugger
-        #lldb.SBDebugger.Terminate()
         debugger.Terminate()
+
+    # Print the breakpoint information
+    printBreakStats()
 
 if __name__ == '__main__':
     main(sys.argv[1:])
