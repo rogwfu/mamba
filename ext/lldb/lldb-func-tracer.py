@@ -27,6 +27,7 @@ def printBreakStats(SIG, FRM):
     global process
     global debugger 
 
+    print "Inside the printBreakStats Function"
     root = ET.Element("fuzz.io")
     for breakpoint in target.breakpoint_iter():
         for breakpointLocation in breakpoint:
@@ -123,8 +124,8 @@ def main(argv):
                             thread = lldbutil.get_stopped_thread(process, lldb.eStopReasonBreakpoint)
                             if thread == None:
                                 print "Error: No Stopped Thread"
-                                process.Continue()
-                                exit(1)
+                                done = True
+                                printBreakStats(None, None)
                             else:
                                 process.Continue()
                         elif state == lldb.eStopReasonSignal:

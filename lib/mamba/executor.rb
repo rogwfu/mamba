@@ -14,7 +14,7 @@ module Mamba
             "lldb" => "python #{ENV['HOME']}" + File::SEPARATOR + ".mamba" + File::SEPARATOR + "lldb-func-tracer.py -s %s -x %s -- " 
 		}
 
-		@@killSignal = "USR1"
+		@@mambaSignal = "USR1"
 
         # ./valgrind --tool=rufus --object=%s --xml=yes --xml-file=%s Executable
         # ./lldb-func-tracer.py -s CorePDF -- /Applications/Preview.app/Contents/MacOS/Preview
@@ -37,7 +37,7 @@ module Mamba
 					# Try to kill the applescript process to eliminate zombies
 					begin
 						Process.kill(0, appscriptPid)
-						Process.kill("INT", appscriptPid)
+						Process.kill(@@mambaSignal , appscriptPid)
 						Process.wait(appscriptPid)
 					rescue
 					end
@@ -93,7 +93,7 @@ module Mamba
 					# Replace Rufus tool with callgrind for Markov tracing	
 					if(fuzzerConfig["Fitness Function"].include?("M")) then
 						@@supportedTracers["valgrind"].gsub!(/rufus/, "callgrind --callgrind-out-file=/dev/null")
-						@@killSignal = "INFO"
+						@@mambaSignal = "INFO"
 					end
 			end
 
@@ -117,7 +117,7 @@ module Mamba
 			# Cleanup the application
 			begin
 				Process.kill(0, @runningPid)
-				Process.kill(@@killSignal, @runningPid)
+				Process.kill(@@mambaSignal, @runningPid)
 				Process.wait(@runningPid)
 			rescue 
 			ensure
