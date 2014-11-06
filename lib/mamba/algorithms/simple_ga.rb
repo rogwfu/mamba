@@ -73,9 +73,15 @@ module Mamba
 						chromosomeID = chromosomeID.to_s()
 						traceFile = @testSetMappings[chromosomeID] + ".trace.xml"
 						runtime = @executor.lldb(@logger, @testSetMappings[chromosomeID], @timeout, @objectDisassembly.attributes.name, traceFile)  
-						@objectDisassembly.lldb_coverage(traceFile)
-						fitness = @objectDisassembly.evaluate(runtime)
-						@logger.info("Member #{chromosomeID} Fitness: #{fitness.to_s('F')}")
+						fitness = 0
+						if File.exists?(traceFile) then
+						  @objectDisassembly.lldb_coverage(traceFile)
+						  fitness = @objectDisassembly.evaluate(runtime)
+						  @logger.info("Member #{chromosomeID} Fitness: #{fitness.to_s('F')}")
+						else
+						  @logger.info("Error: #{traceFile} does not exist")
+						end
+
 						@population.push(Chromosome.new(chromosomeID, fitness))
 						@reporter.numCasesRun = @reporter.numCasesRun + 1
 						@reporter.currentTestCase = @testSetMappings[chromosomeID].split(File::SEPARATOR)[-1] 

@@ -10,11 +10,11 @@ module Mamba
 		@@supportedTracers = 
 			{
 			"run"  => "%s%s",  # Hack for now to simplify code
-            "lldb" => "python #{ENV['HOME']}" + File::SEPARATOR + ".mamba" + File::SEPARATOR + "lldb-func-tracer.py -w %s -s %s -x %s -- " 
+            "lldb" => "python #{ENV['HOME']}" + File::SEPARATOR + ".mamba" + File::SEPARATOR + "lldb-func-tracer.py -s %s -x %s -- " 
 		}
 
 		# Dynamically define cli executors
-		def self.define_cli_executors(deliveryMethod, application)
+		def self.define_cli_executors(appMonitor, deliveryMethod, application)
 			@@supportedTracers.each do |tracer, options|
 				# @param [Logger] Instance of a log4r logger
 				# @param [String] Filename of test case to run
@@ -22,8 +22,8 @@ module Mamba
 				# @param [String] Filename to log trace information for valgrind emulation
 				# @returns [String] The amount of time the test case ran  
 				define_method(tracer.to_sym()) do |log, newTestCase, timeout= 0, objectName="", traceFile=""|
-					log.info("Running Test Case: #{newTestCase}, #{timeout}")
-					runner = "#{@@supportedTracers[tracer]} #{application} #{deliveryMethod} #{newTestCase}" % [timeout, objectName, traceFile]
+					log.info("Running Test Case: #{newTestCase}")
+					runner = "#{@@supportedTracers[tracer]} #{application} #{deliveryMethod} #{newTestCase}" % [objectName, traceFile]
 					log.info("Runner was: #{runner}")
 					args = runner.split(' ')
 
@@ -31,11 +31,9 @@ module Mamba
 					@runningPid  = POSIX::Spawn::spawn(*args, :out => ["logs/application-out.log", File::CREAT|File::WRONLY|File::APPEND], 
   														  :err => ["logs/application-err.log", File::CREAT|File::WRONLY|File::APPEND])
 					File.new("app.pid." + @runningPid.to_s(), "w+").close()
+					runtime = self.send(appMonitor.to_sym)
 
-					# Wait for a return
-					stat = Process::waitpid(@runningPid)
 					application_cleanup()
-					runtime = 0
 					return(runtime.to_s())
 				end
 			end
@@ -49,6 +47,14 @@ module Mamba
 		# @param [Hash] Configuration Hash of a specific fuzzer 
 		def initialize(app, deliveryMethod, timeout, log, fuzzerConfig)
 			@application = app
+			@timeout = timeout
+
+			# Create the function symbol to kill an application under test
+			if(@timeout < 1) then
+				appMonitor = "cpu_scale"
+			else
+				appMonitor = "cpu_sleep"
+			end
 		
 			# Create the execution lambdas 
 			case deliveryMethod 
@@ -56,7 +62,7 @@ module Mamba
 				Mamba::Executor.define_appscript_executors(appMonitor, app)
 			when /^cli#/
 				deliveryMethod.gsub!(/^cli#/, '')
-				Mamba::Executor.define_cli_executors(deliveryMethod, app)
+				Mamba::Executor.define_cli_executors(appMonitor, deliveryMethod, app)
 			else
 				log.fatal("Unknown executor type: #{deliveryMethod}")
 				exit(1) # fix this to throw some kind of error
@@ -67,16 +73,18 @@ module Mamba
 
 		# Kill the application under test
 		def application_cleanup()
-			# Cleanup the application
-#			begin
-#				Process.kill(0, @runningPid)
-#				Process.kill(@@mambaSignal, @runningPid)
-#				Process.wait(@runningPid)
-#			rescue 
-#			ensure
-		  # Remove the process file
-		  FileUtils.rm_f("app.pid." + @runningPid.to_s())
-#			end
+		  begin
+			Process.kill(0, @runningPid)
+			Process.kill("SIGTERM", @runningPid)
+			Timeout::timeout(2) { 
+			  Process.wait2(@runningPid)
+			}
+		  rescue 
+			Process.kill("SIGKILL", @runningPid)
+		  ensure
+			# Remove the process file
+			FileUtils.rm_f("app.pid." + @runningPid.to_s())
+		  end
 		end
 
 		# Monitor CPU to determine lull in processing
@@ -101,8 +109,8 @@ module Mamba
 #		end
 #
 #		# Basically an alias for Kernel.sleep to facilitate Executor class metaprogramming
-#		def cpu_sleep()
-#			sleep(@timeout)
-#		end
+		def cpu_sleep()
+			sleep(@timeout)
+		end
 	end
 end

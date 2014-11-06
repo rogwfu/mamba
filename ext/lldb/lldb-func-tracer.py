@@ -3,12 +3,12 @@
 # [  0] B5B5215F-38C0-364D-BDA4-35D674FFCEC4 0x00007fff81cf0000 /System/Library/PrivateFrameworks/CorePDF.framework/Versions/A/CorePDF 
 
 import sys
+import signal
 #sys.path.append("/Applications/Xcode.app/Contents/SharedFrameworks/LLDB.framework/Resources/Python")
 import lldb
 import lldbutil 
 import os
 import optparse
-from datetime import datetime, timedelta
 import numpy as np
 from lxml import etree as ET
 
@@ -21,7 +21,7 @@ debugger = None
 # Signal handler to print statistics
 # Format: <hit><funcname>auto_zone_start_monitor</funcname><offset>0x1080</offset></hit>
 # Debugging: print breakpointLocation
-def printBreakStats():
+def printBreakStats(signal, frame):
     global target
     global xmlTrace
     global process
@@ -50,13 +50,16 @@ def printBreakStats():
     traceFile.close()
 
     # kill the process
-    process.Kill() 
+    process.Destroy() 
 
     # Terminate the Debugger
     debugger.Terminate()
 
     # Exit the program
-    sys.exit()
+    os._exit(0)
+
+# Install the signal handler
+signal.signal(signal.SIGTERM, printBreakStats)
 
 def main(argv):
     description='''Records hit traces for all functions of a specific shared library'''
@@ -69,7 +72,6 @@ def main(argv):
     parser.add_option('-s', '--shlib', type='string', dest='shlibs', metavar='SHLIB', help='Specify the shared library to trace functions')
     parser.add_option('-t', '--event-timeout', type='int', dest='event_timeout', metavar='SEC', help='Specify the timeout in seconds to wait for process state change events.', default=lldb.UINT32_MAX)
     parser.add_option('-x', '--xmlfile', type='string', dest='xmlfile', metavar='XML', help='Specify an XML file to write lldb traces')
-    parser.add_option('-w', '--waittime', type='int', dest='waittime', metavar='WAIT', help='Specify a wait time for the program under test')
     try:
         (options, args) = parser.parse_args(argv)
     except:
@@ -104,10 +106,6 @@ def main(argv):
 
         process = target.Launch(launch_info, error) 
 
-        # Create the timer to monitor execution
-        period = timedelta(seconds=options.waittime)
-        expireTime = datetime.now() + period
-
         if process and process.GetProcessID() != lldb.LLDB_INVALID_PROCESS_ID:
             state = process.GetState ()
             pid = process.GetProcessID()
@@ -117,7 +115,7 @@ def main(argv):
             process.GetBroadcaster().AddListener(listener, lldb.SBProcess.eBroadcastBitStateChanged)
             stop_idx = 0
             done = False
-            while not done and (datetime.now() < expireTime):
+            while not done:
                 event = lldb.SBEvent()
                 if listener.WaitForEvent(options.event_timeout, event):
                         state = lldb.SBProcess.GetStateFromEvent (event)
@@ -154,13 +152,13 @@ def main(argv):
                             done = True
 
             # kill the process
-            process.Kill() 
+            process.Destroy() 
 
         # Terminate the Debugger
         debugger.Terminate()
 
     # Print the breakpoint information
-    printBreakStats()
+    printBreakStats(None, None)
 
 if __name__ == '__main__':
     main(sys.argv[1:])
