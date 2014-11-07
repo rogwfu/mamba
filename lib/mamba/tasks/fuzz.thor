@@ -1,3 +1,6 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
 require 'rubygems'
 require 'mamba'
 require 'daemons'

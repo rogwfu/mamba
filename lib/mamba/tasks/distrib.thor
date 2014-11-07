@@ -1,3 +1,6 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
 require 'mkmf'
 require 'socket'
 
@@ -12,11 +15,13 @@ module Mamba
 		# @todo Switch on mongodb os information
 		def dstart() 
 			say "Mamba Fuzzing Framework: Starting Mongodb database", :blue
-			mongoPath = [ENV['GEM_HOME'], "gems", "mamba-" + @@version, "ext", "mongodb", "mongodb-osx-x86_64-1.8.2-rc3", "bin"].join(File::SEPARATOR)
-			mongod = find_executable0("mongod", mongoPath + File::PATH_SEPARATOR + ENV['PATH'])
+#			mongoPath = [ENV['GEM_HOME'], "gems", "mamba-" + @@version, "ext", "mongodb", "mongodb-osx-x86_64-1.8.2-rc3", "bin"].join(File::SEPARATOR)
+#			mongod = find_executable0("mongod", mongoPath + File::PATH_SEPARATOR + ENV['PATH'])
+			mongod = find_executable0("mongod", ENV['PATH'])
 			storageDir = Dir.pwd + File::SEPARATOR + "databases" + File::SEPARATOR
+			pidFile = storageDir + File::SEPARATOR + "mongod.pid"
 			logFile = storageDir + "mongodb.log"
-			system("#{mongod} --fork --logpath #{logFile} --logappend --dbpath #{storageDir}")
+			system("#{mongod} --fork --logpath #{logFile} --logappend --dbpath #{storageDir} --pidfilepath #{pidFile}")
 		end	
 
 		desc "dstop", "Stop the Mongodb database for distribution"
@@ -24,11 +29,11 @@ module Mamba
 		def dstop() 
 			say "Mamba Fuzzing Framework: Stopping Mongodb database", :blue
 			storageDir = Dir.pwd + File::SEPARATOR + "databases" + File::SEPARATOR
-			lockFile = storageDir + "mongod.lock"
-			if(File.exists?(lockFile)) then
-				lock = File.new(lockFile, "r")
-				pid = lock.readline().to_i()
-				lock.close()
+			pidFile = storageDir + File::SEPARATOR + "mongod.pid"
+			if(File.exists?(pidFile)) then
+				pfile = File.new(pidFile, "r")
+				pid = pfile.readline().to_i()
+				pfile.close()
 				Process.kill("SIGTERM", pid)
 			else
 				say "Error: Mongodb Database not running", :red
