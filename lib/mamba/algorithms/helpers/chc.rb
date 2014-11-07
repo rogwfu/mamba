@@ -117,10 +117,14 @@ module Mamba
 						traceFile = value + ".trace.xml"
 						#runtime = @executor.valgrind(@logger, value, @objectDisassembly.attributes.name, traceFile)  
 						runtime = @executor.lldb(@logger, value, @timeout, @objectDisassembly.attributes.name, traceFile)  
-						#@objectDisassembly.valgrind_coverage(traceFile)
-						@objectDisassembly.lldb_coverage(traceFile)
-						fitness = @objectDisassembly.evaluate(runtime)
-						@logger.info("Member value Fitness: #{fitness.to_s('F')}")
+						fitness = 0
+						if File.exists?(traceFile) then
+						  @objectDisassembly.lldb_coverage(traceFile)
+						  fitness = @objectDisassembly.evaluate(runtime)
+						  @logger.info("Member value Fitness: #{fitness.to_s('F')}")
+						else
+						  @logger.info("Error: #{traceFile} does not exist")
+						end
 						@population.push(Chromosome.new("#{key}", fitness, true))
 						@reporter.numCasesRun = @reporter.numCasesRun + 1
 					end
