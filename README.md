@@ -85,6 +85,15 @@ apt-get -y install clang-3.4 clang-3.4-doc libclang-common-3.4-dev libclang-3.4-
 ln -s /usr/bin/lldb-3.4 /usr/local/bin/lldb
 ```
 
+* Install Erlang
+```bash
+wget https://packages.erlang-solutions.com/erlang-solutions_1.0_all.deb
+sudo dpkg -i erlang-solutions_1.0_all.deb
+sudo apt-get -y update 
+sudo apt-get install erlang
+sudo apt-get install zip
+```
+
 * Install mongodb
 ```bash
 apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 7F0CEB10
@@ -100,6 +109,7 @@ echo 'deb http://www.rabbitmq.com/debian/ testing main' | tee /etc/apt/sources.l
 apt-get update
 apt-get install -y rabbitmq-server
 service rabbitmq-server stop
+apt-get install -y xsltproc
 ```
 ### Mac OS X
 * bundle install

@@ -29,17 +29,17 @@ else
 	raise "Error: Unsupported Operating System (#{RbConfig::CONFIG["host_os"]})"
 end
 
-# Copy the files to the local path (need to make this more dynamic
 installDir = ENV['HOME'] +  File::SEPARATOR + ".mamba"
 unless File.directory?(installDir)
   FileUtils.mkdir_p(installDir)
 end
 
-# Download, Extract, and Make rabbitmq (if needed)
+# Download, Extract, and Make rabbitmq (if needed) - fix for globall installed rabbitmq-server, only use .mamba's
 if(!find_executable("rabbitmq-server")) then
-	system("#{tools["curl"]} -O #{rabbitmqURL}") 
-	system("#{tools["tar"]} -C #{ENV['USER']}/.mamba xvzf #{rabbitmqURL.split('/')[-1]}")
-	system("cd #{rabbitmqURL.split('/')[-1].gsub(/\.tar\.gz$/, "")} ; make ")
+	system("#{tools["curl"]} -o " + installDir + File::SEPARATOR + "rabbitmq-server.tar.gz #{rabbitmqURL}") 
+	system("cd #{installDir} ; #{tools["tar"]} xvzf rabbitmq-server.tar.gz")
+	system("cd #{installDir}#{File::SEPARATOR}rabbitmq-server-3.4.1 ; make")
+#	system("cd #{rabbitmqURL.split('/')[-1].gsub(/\.tar\.gz$/, "")} ; make ")
 end
 
 # Appease packaging library
