@@ -7,6 +7,7 @@ require 'mamba/storage'
 require 'mamba/random-generator'
 require 'log4r'
 require 'uuidtools'
+require 'bunny'
 
 # @author Roger Seagle, Jr. 
 module Mamba
@@ -47,70 +48,111 @@ module Mamba
 			@organizer = mambaConfig[:organizer]
 		end
 
+		# Initialize a channel to use with rabbitmq
+		# @return [type] A channel to rabbitmq
+		def init_amqp_channel()
+		  # Create a channel for amqp communication
+		  begin 
+			channel  = @amqpConnection.create_channel 
+		  rescue Bunny::TCPConnectionFailed, Bunny::PossibleAuthenticationFailureError => e
+			@logger.info("Exception during connection: #{e}")
+		  end
+
+		  # return 
+		  return(channel)
+		end
+
+		# Initialize a new amqp exchange
+		# @param [Bunny::Channel] An instance of a AMQP channel 
+		# @param [String] The name of the exchange 
+		# @param [String] The exchange type to create
+		def init_amqp_exchange(chan, name, extype)
+		  begin
+			exchange = chan.exchange(name, {:type => extype})
+		  rescue Bunny::TCPConnectionFailed, Bunny::PossibleAuthenticationFailureError => e
+			@logger.info("Exception during connection: #{e}")
+		  end
+
+		  return(exchange)
+		end
+
 		# Create queues for messaging between nodes and coordinating fuzzing efforts
-		# @param [AMQP::Client] Established connection to a rabbitmq server
-		def initialize_queues(connection)
-			#
-			# Create new channel
-			#
-			@channel  = AMQP::Channel.new(connection)
-			@channel2  = AMQP::Channel.new(connection)
+		# @return [Array] Array of threads associated to AMQP queues 
+		def init_amqp()
 
-			#
-			# Create a new fanout channel
-			#
-			@topic_exchange = @channel2.topic("#{@uuid}.topic")
-			@direct_exchange = @channel.direct("")
-			@channel.prefetch(1)
+		  @amqpThreads = Array.new()
 
-			#
-			# Setup Direct Queues
-			#
-			@queueHash = Hash.new()
-			["testcases"].each do |queueName|
-				@queue    = @channel.queue("#{@uuid}.testcases", :auto_delete => true)
-				@queue.bind(@direct_exchange).subscribe(:ack => true, &method(queueName.to_sym()))
+		  # Start Queueing and callback (EventMachine loop running here)
+		  begin 
+			@amqpConnection = Bunny.new(:host => @amqpServer, :vhost => "/", :user => "newuser", :pass => "newuser")
+			@amqpConnection.start
+		  rescue Bunny::TCPConnectionFailed, Bunny::PossibleAuthenticationFailureError => e
+			@logger.info("Exception during connection: #{e}")
+		  end
+
+		  # Setup Direct Queues (remoteLogging)
+		  ["testcases", "seed_test_cases", "results", "commands", "crashes"].each do |queueName|
+			@amqpThreads << Thread.new do
+			  send(queueName.to_sym())
 			end
-
-			#
-			# Setup Topic Queues
-			#
-			["commands", "crashes", "remoteLogging", "results"].each do |channelName|
-				@queueHash[channelName] = @channel2.queue(UUIDTools::UUID.timestamp_create.to_s() + ".#{channelName}", :auto_delete => true)
-				@queueHash[channelName].bind(@topic_exchange, :key => channelName).subscribe(&method(channelName.to_sym()))
-			end
-
-			#
-			# Setup Distributed Crash Notification
-			#
-			@reporter.topic_exchange = @topic_exchange
+		  end
+		  
 		end
 		
-		# Pass through to the reporter, need to fix this
-		# @param [AMQP::Protocol::Header] Header of an amqp message
-		# @param [String] Payload of an amqp message (Crash file information)
-		def crashes(header, payload)
-			@logger.info("Got notification of a crash: #{payload}")
-			@reporter.remote_notification(header, payload)
-		end
-
 		# Handler for remote commands sent via rabbitmq (used for shutdown)
 		# @param [AMQP::Protocol::Header] Header of an amqp message
 		# @param [String] Payload of an amqp message (the command)
-		def commands(header, payload)
+		def commands()
+		  chan = init_amqp_channel()
+		  topic = init_amqp_exchange(chan, "#{@uuid}.topic", "topic") 
+
+		  timestamp = UUIDTools::UUID.timestamp_create.to_s()
+		  q = chan.queue("#{timestamp}.commands").bind(topic, :routing_key => "commands")
+		  q.subscribe(:block => true) do |delivery_info, header, payload|
 			case payload
 			when /^shutdown$/
-				EventMachine.stop_event_loop()
+			  # Exit all of the other Threads
+			  @amqpThreads.each do |thread|
+				thread.exit unless thread == Thread.current
+			  end
+
+			  # Exit the current thread
+			  Thread.current.exit()
 			else
-				@logger.warn("Unrecognized remote command: #{payload}")
+			  @logger.warn("Unrecognized remote command: #{payload}")
 			end
+		  end
 		end
 
+		# Pass through to the reporter, need to fix this
+		# @param [AMQP::Protocol::Header] Header of an amqp message
+		# @param [String] Payload of an amqp message (Crash file information)
+		def crashes()
+		  chan = init_amqp_channel()
+		  topic = init_amqp_exchange(chan, "#{@uuid}.topic", "topic") 
+
+		  timestamp = UUIDTools::UUID.timestamp_create.to_s()
+		  q = chan.queue("#{timestamp}.crashes").bind(topic, :routing_key => "crashes")
+		  q.subscribe(:block => true) do |delivery_info, header, payload|
+
+			@logger.info("Got notification of a crash: #{payload}")
+			#@reporter.remote_notification(header, payload)
+		  end
+		end
+		
 		# Handler for any remote logging events sent via rabbitmq (used for shutdown)
 		# @param [AMQP::Protocol::Header] Header of an amqp message
 		# @param [String] Payload of an amqp message (the message to log)
-		def remoteLogging(header, payload)
+		def remoteLogging()
+		  chan = init_amqp_channel()
+		  topic = init_amqp_exchange(chan, "#{@uuid}.topic", "topic") 
+
+		  timestamp = UUIDTools::UUID.timestamp_create.to_s()
+		  q = chan.queue("#{timestamp}.remoteLogging").bind(topic, :routing_key => "log")
+		  q.subscribe(:block => true) do |delivery_info, header, payload|
 			@logger.info("Cluster Message: #{payload}")
+		  end
+
 		end
 
 		# Report the status of the fuzzer run (Start Time, Elapsed Time, Number of Test Cases, Number of Crashes, and Crashes themselves)
@@ -153,3 +195,39 @@ module Mamba
 		end
 	end
 end
+
+	# Create a new fanout exchange 
+#			topic = init_amqp_exchange(chan, "#{@uuid.topic}", "topic") 
+
+#			begin
+#			  @topic_exchange = @channel2.topic("#{@uuid}.topic", :auto_delete => true)
+#			rescue Bunny::TCPConnectionFailed, Bunny::PossibleAuthenticationFailureError => e
+#			  @logger.info("Exception during connection: #{e}")
+#			end
+#
+#			@direct_exchange = @channel.direct("testcases")
+#			@channel.prefetch(1)
+#			@logger.info("REMOVE: Finished with the Exchanges")
+#
+#			# Setup Direct Queues
+#			@queueHash = Hash.new()
+#			["testcases"].each do |queueName|
+#				@logger.info("REMOVE: Before queue")
+#			end
+#			@logger.info("REMOVE: Added testcase queue")
+#
+#			# Setup Topic Queues
+#			timestamp = UUIDTools::UUID.timestamp_create.to_s()
+#			["commands", "crashes", "remoteLogging", "results"].each do |channelName|
+#				@logger.info("REMOVE: Before creating the new queue:" + timestamp + ".#{channelName}")
+#				@queueHash[channelName] = @channel2.queue(timestamp + ".#{channelName}", :auto_delete => true)
+#				@logger.info("REMOVE: After creating the new queue #{channelName}")
+#				amqpThreads << Thread.new do
+#				  @queueHash[channelName].bind(@topic_exchange, :block => true, :key => channelName).subscribe(&method(channelName.to_sym()))
+#				end
+#			end
+#			@logger.info("Topic queues added")
+#
+#			# Setup Distributed Crash Notification
+#			@reporter.topic_exchange = @topic_exchange
+

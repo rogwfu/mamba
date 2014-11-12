@@ -35,11 +35,10 @@ unless File.directory?(installDir)
 end
 
 # Download, Extract, and Make rabbitmq (if needed) - fix for globall installed rabbitmq-server, only use .mamba's
-if(!find_executable("rabbitmq-server")) then
+if(!File.exists?("#{installDir}#{File::SEPARATOR}rabbitmq-server-3.4.1")) then
 	system("#{tools["curl"]} -o " + installDir + File::SEPARATOR + "rabbitmq-server.tar.gz #{rabbitmqURL}") 
 	system("cd #{installDir} ; #{tools["tar"]} xvzf rabbitmq-server.tar.gz")
 	system("cd #{installDir}#{File::SEPARATOR}rabbitmq-server-3.4.1 ; make")
-#	system("cd #{rabbitmqURL.split('/')[-1].gsub(/\.tar\.gz$/, "")} ; make ")
 end
 
 # Appease packaging library

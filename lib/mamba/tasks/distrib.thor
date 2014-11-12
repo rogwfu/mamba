@@ -46,11 +46,20 @@ module Mamba
 			say "Mamba Fuzzing Framework: Starting rabbitmq queues", :blue
 			rabbitmqPath = [ENV['HOME'], ".mamba", "rabbitmq-server-3.4.1", "scripts"].join(File::SEPARATOR)
 			rabbitmq = find_executable0("rabbitmq-server", rabbitmqPath + File::PATH_SEPARATOR + ENV['PATH'])
+			rabbitmqctl = find_executable0("rabbitmqctl", rabbitmqPath + File::PATH_SEPARATOR + ENV['PATH'])
 			queueBaseDir = Dir.pwd + File::SEPARATOR + "queues"
 			queueLogDir = Dir.pwd + File::SEPARATOR + "logs" + File::SEPARATOR + "rabbitmq"
 			hostname = Socket::gethostname.split('.')[0] 
-			say "env RABBITMQ_NODENAME=fuzzer@#{hostname} RABBITMQ_MNESIA_BASE=#{queueBaseDir} RABBITMQ_LOG_BASE=#{queueLogDir} #{rabbitmq} -detached" 
+
+			# Start up the queue
 			system("env RABBITMQ_NODENAME=fuzzer@#{hostname} RABBITMQ_MNESIA_BASE=#{queueBaseDir} RABBITMQ_LOG_BASE=#{queueLogDir} #{rabbitmq} -detached")
+			sleep(5)
+
+			# Create a new user for connections
+			system("#{rabbitmqctl} -n fuzzer@#{hostname} add_user newuser newuser")
+
+			# Add permissions for the user
+			system("#{rabbitmqctl} -n fuzzer@#{hostname} set_permissions -p / newuser \".*\" \".*\" \".*\"")
 		end	
 
 		desc "qreset", "Resetting the rabbitmq queueing system"
@@ -80,7 +89,13 @@ module Mamba
 			rabbitmqPath = [ENV['HOME'], ".mamba", "rabbitmq-server-3.4.1", "scripts"].join(File::SEPARATOR)
 			rabbitmqctl = find_executable0("rabbitmqctl", rabbitmqPath + File::PATH_SEPARATOR + ENV['PATH'])
 			hostname = Socket::gethostname.split('.')[0] 
+
+			# Delete the new user for connections
+			system("#{rabbitmqctl} -n fuzzer@#{hostname} -n fuzzer@#{hostname} delete_user newuser")
+
+			# Stop the queue
 			system("#{rabbitmqctl} -n fuzzer@#{hostname} stop")
+
 		end
 
 		desc "start", "Start all distributed fuzzing components"

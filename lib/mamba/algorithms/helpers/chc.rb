@@ -175,7 +175,8 @@ module Mamba
 					@testSetMappings.each_value do |testFile|
 						chromosomeSize = File.size?(testFile)
 						if(chromosomeSize == nil) then
-							@logger.info("This doesn't exist: #{testFile}")
+							@logger.info("This doesn't exist or its size is 0: #{testFile}")
+							chromosomeSize = 0
 						end
 						if(chromosomeSize > largestChromosomeSize) then
 							largestChromosomeSize = chromosomeSize

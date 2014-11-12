@@ -15,7 +15,7 @@ group :development do
   gem "uuidtools", "~> 2.1"
   gem "rubyzip", "~> 0.9"
   gem "log4r", "~> 1.1"
-  gem "directory_watcher", "~> 1.5"
+  gem "directory_watcher", "= 1.4.1"
   gem "bson_ext", "~> 1.11"
   gem "mongo", "~> 1.11"
   gem "amqp", "~> 1.5"
@@ -27,4 +27,5 @@ group :development do
   gem "iconv", "~> 1.0"
   gem "coveralls", "~> 0.7"
   gem "posix-spawn", "~> 0.3"
+  gem "bunny", "~>1.6"
 end

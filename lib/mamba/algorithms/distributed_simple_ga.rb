@@ -4,15 +4,12 @@ module Mamba
 
 			# Function to run the fuzzing 
 			def fuzz()
-				AMQP.start(:host => @amqpServer) do |connection|
-					initialize_queues(connection)
-
-					if(@organizer) then
-						seed do |testCaseNumber|
-							seed_distributed(testCaseNumber)
-						end
-					end
-				end
+			  @logger.info("REMOVE: Starting to fuzz")
+			  @logger.info("REMOVE: AMQP Server is #{@amqpServer}")
+			  qconnection = Bunny.new(:host => @amqpServer, :vhost => "/", :user => "newuser", :pass => "newuser")
+			  qconnection.start
+			  amqpThreads = initialize_queues(qconnection)
+			  amqpThreads.each(&:join)
 			end
 
 
@@ -97,9 +94,9 @@ module Mamba
 			# @param [String] The test case number
 			def seed_distributed(testCaseNumber)
 				testCaseID = @nextGenerationNumber.to_s() + "." + testCaseNumber
-#				@logger.info("Test Case number is: #{testCaseNumber}")
-#				@logger.info("Class is: #{testCaseNumber.class}")
-#				@logger.info("Inspect: #{@testSetMappings.inspect()}")
+				@logger.info("Test Case number is: #{testCaseNumber}")
+				@logger.info("Class is: #{testCaseNumber.class}")
+				@logger.info("Inspect: #{@testSetMappings.inspect()}")
 				remoteTestCaseFilename = @testSetMappings[testCaseNumber].split(File::SEPARATOR)[-1]
 				@storage.dbHandle.put(File.open(@testSetMappings[testCaseNumber]), :_id => testCaseID, :filename => remoteTestCaseFilename)
 				@direct_exchange.publish(testCaseID, :routing_key => @queue.name)

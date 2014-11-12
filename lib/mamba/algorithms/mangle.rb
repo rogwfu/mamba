@@ -70,9 +70,8 @@ module Mamba
 			# @param [Fixnum] The current number test case being generated
 			# @return [String] New test case filename
 			def mangle_test_case(testCaseNumber)
-				#
+			  @logger.info("Mangling the test case")
 				# Extract the necessary section of the file
-				#
 				secData = clone_section() 
 
 				count = rand(@mangleConfig['Header Size']/10).to_i()
