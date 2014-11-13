@@ -7,140 +7,134 @@ require 'rbconfig'
 
 #@author Roger Seagle
 module Mamba
-	class CLI < Thor
-		include Thor::Actions
+  class CLI < Thor
+	include Thor::Actions
 
-		default_task :create
-		check_unknown_options!()
+	default_task :create
+	check_unknown_options!()
 
-		desc "create", "Create a Mamba instance"
-		method_option :app,          :default => "/Applications/Preview.app/Contents/MacOS/Preview", :option => :required, :type => :string, :aliases => "-a", :desc => "Path to an executable (ex. /Applications/Preview.app/Contents/MacOS/Preview)" 
-		method_option :distributed,  :default => false,		:type => :boolean, 	:aliases => "-d", :desc => "Set the fuzzer type as distributed " 
-		method_option :executor,     :default => "appscript", 	:aliases => "-e", :type => :string, :desc => "Type of executor to use (cli, appscript)" 
-		method_option :port,         :default => 27017, 	:type => :numeric, 	:aliases => "-p", :desc => "Port for distributed fuzzing"  
-		method_option :timeout,      :default => 0, 		:type => :numeric, 	:aliases => "-t", :desc => "Time to run an executable for each testcase in seconds (ex. 20)" 
-		method_option :server,       :default => "fuzz.io", :aliases => "-s", :desc => "Server address for distributed fuzzing (ex. fuzz.io)", :type => :string 
-		method_option :type,         :default => "Mangle", 	:aliases => "-y", :type => :string, :desc => "Type of fuzzer to create (Supported Types: #{Mamba::Algorithms.constants.select(){|algorithm| algorithm !~/^Distributed/ and algorithm !~/^Helpers/}.map!() {|algoSym| algoSym.to_s()}.sort!()})"
+	desc "create", "Create a Mamba instance"
+	method_option :app,          :default => "/Applications/Preview.app/Contents/MacOS/Preview", :option => :required, :type => :string, :aliases => "-a", :desc => "Path to an executable (ex. /Applications/Preview.app/Contents/MacOS/Preview)" 
+	method_option :distributed,  :default => false,		:type => :boolean, 	:aliases => "-d", :desc => "Set the fuzzer type as distributed " 
+	method_option :executor,     :default => "cli", 	:aliases => "-e", :type => :string, :desc => "Type of executor to use (cli, appscript)" 
+	method_option :port,         :default => 27017, 	:type => :numeric, 	:aliases => "-p", :desc => "Port for distributed fuzzing"  
+	method_option :timeout,      :default => 0, 		:type => :numeric, 	:aliases => "-t", :desc => "Time to run an executable for each testcase in seconds (ex. 20)" 
+	method_option :server,       :default => "fuzz.io", :aliases => "-s", :desc => "Server address for distributed fuzzing (ex. fuzz.io)", :type => :string 
+	method_option :type,         :default => "Mangle", 	:aliases => "-y", :type => :string, :desc => "Type of fuzzer to create (Supported Types: #{Mamba::Algorithms.constants.select(){|algorithm| algorithm !~/^Distributed/ and algorithm !~/^Helpers/}.map!() {|algoSym| algoSym.to_s()}.sort!()})"
 
-		# Create a fuzzing environment with the associated settings 
-		# @param [String, #read] top-level directory to create for the fuzzing envionment (defaults to: mamba-fuzzer)
-		def create(name="mamba-fuzzer")
-			say "Mamba Fuzzing Framework Initializing Environment....", :blue
+	# Create a fuzzing environment with the associated settings 
+	# @param [String, #read] top-level directory to create for the fuzzing envionment (defaults to: mamba-fuzzer)
+	def create(name="mamba-fuzzer")
+	  say "Mamba Fuzzing Framework Initializing Environment....", :blue
 
-			#
-			# Check for Operating System Support
-			#
-			if(!supported_os?()) then
-				say "Error: Unsupported Operating System (#{RbConfig::CONFIG["host_os"]})", :red
-				exit(1)
-			end
+	  # Check for Operating System Support
+	  if(!supported_os?()) then
+		say "Error: Unsupported Operating System (#{RbConfig::CONFIG["host_os"]})", :red
+		exit(1)
+	  end
 
-			#
-			# Validate Parameters Given
-			#
-			mambaConfig = generate_config()
-			validate_params(mambaConfig)
+	  # Validate Parameters Given
+	  mambaConfig = generate_config()
+	  validate_params(mambaConfig)
 
-			%w(analysis configs databases disassemblies logs models queues tests).each do |dirname|
-				empty_directory name + "/" + dirname
-			end
+	  mambaConfig[:server] = first_public_ipv4() 
 
-			#
-			# Copy the Thor Tasks
-			#
-			Mamba::CLI.source_root(File.dirname(__FILE__))
-			directory "../lib/mamba/tasks", "#{name}/tasks"
+	  %w(analysis configs databases disassemblies logs models queues tests).each do |dirname|
+		empty_directory name + "/" + dirname
+	  end
 
-			#
-			# Create the Mamba Configuration File
-			#
-			create_file "#{name}/configs/Mamba.yml" do
-				YAML::dump(mambaConfig)
-			end
+	  # Copy the Thor Tasks
+	  Mamba::CLI.source_root(File.dirname(__FILE__))
+	  directory "../lib/mamba/tasks", "#{name}/tasks"
 
-			#
-			# Create the Fuzzer Configuration File
-			#
-			create_file "#{name}/configs/#{mambaConfig[:type]}.yml" do
-				Kernel.const_get("Mamba").const_get("Algorithms").const_get(mambaConfig[:type]).generate_config()
-			end
-		end
+	  # Create the Mamba Configuration File
+	  create_file "#{name}/configs/Mamba.yml" do
+		YAML::dump(mambaConfig)
+	  end
 
-		no_tasks do
-			# Validate whether Mamba supports the running OS
-			# @return [Fixnum] nil if not supported, offset of string otherwise 
-			def supported_os?()
-				return(RbConfig::CONFIG["host_os"] =~ /^darwin(10|11|12|13|14)\.\d+\.\d+$/ or RbConfig::CONFIG["host_os"] =~ /linux-gnu/)
-			end
-
-			# Validates parameters given to the mamba command line tool for illegal values
-			# @param [Hash] Mamba configuration
-			def validate_params(mambaConfig)
-				#
-				# Validate the Executors
-				#
-				if(mambaConfig[:executor] != "appscript" and mambaConfig[:executor] !~ /^cli#/) then
-					say "Error: Unsupported Executor (#{mambaConfig[:executor]})", :red
-					exit(1)	
-				end
-
-				validate_algorithm_type(mambaConfig[:type])
-			end
-
-			# Ensure fuzzing algorithm is implemented with required inheritance and methods
-			# @params [String] The algorithm for fuzzing
-			def validate_algorithm_type(type)
-				algorithmsConst = Kernel.const_get("Mamba").const_get("Algorithms")
-
-				#
-				# Validate if defined
-				#
-				if(!algorithmsConst.const_defined?(type)) then
-					say "Error: Unsupported fuzzing algorithm (#{type})", :red
-					exit(1)	
-				end
-
-				#
-				# Validate methods
-				#
-				if(!algorithmsConst.const_get(type).respond_to?("generate_config")) then
-					say "Error: Unsupported fuzzing algorithm (#{type}) - Missing generate_config() method", :red
-					exit(1)
-				end
-
-				if(!algorithmsConst.const_get(type).method_defined?("fuzz")) then
-					say "Error: Unsupported fuzzing algorithm (#{type}) - Missing fuzz() method", :red
-					exit(1)
-				end
-
-				#
-				# Validate algorithms inheritance
-				#
-				if(!algorithmsConst.const_get(type).ancestors.to_s().include?("Mamba::Fuzzer")) then
-					say "Error: Unsupported fuzzing algorithm (#{type}) - Does not inherit from Mamba::Fuzzer", :red
-					exit(1)
-				end
-
-			end
-
-			# Generate a hash containing the mamba configuration settings
-			# @return [Hash] configuration settings
-			def generate_config()
-				uuid = "fz" + UUIDTools::UUID.timestamp_create.to_s().gsub("-", "")
-				config = {app: options[:app], executor: options[:executor], os: RbConfig::CONFIG["host_os"], timeout: options[:timeout], type: options[:type], uuid: uuid}
-
-				#
-				# Check for distributed Fuzzing
-				#
-				if(options[:distributed]) then
-					fuzzerType =  "Distributed" + options[:type]
-					config = {app: options[:app], executor: options[:executor], os: RbConfig::CONFIG["host_os"], timeout: options[:timeout], type: fuzzerType, uuid: uuid, organizer: true,  port: options[:port], server: options[:server]}
-				end
-
-				return(config)
-			end
-		end
+	  # Create the Fuzzer Configuration File
+	  create_file "#{name}/configs/#{mambaConfig[:type]}.yml" do
+		Kernel.const_get("Mamba").const_get("Algorithms").const_get(mambaConfig[:type]).generate_config()
+	  end
 	end
+
+	no_tasks do
+	
+	  # http://stackoverflow.com/questions/42566/getting-the-hostname-or-ip-in-ruby-on-rails
+	  def first_public_ipv4
+		  ip = Socket.ip_address_list.detect{|intf| intf.ipv4? and !intf.ipv4_loopback? and !intf.ipv4_multicast? and !intf.ipv4_private?}
+
+		  if ip.nil?
+			return "fuzz.io"
+		  else
+			return ip.ip_address
+		  end
+	  end
+
+	  # Validate whether Mamba supports the running OS
+	  # @return [Fixnum] nil if not supported, offset of string otherwise 
+	  def supported_os?()
+		return(RbConfig::CONFIG["host_os"] =~ /^darwin(10|11|12|13|14)\.\d+\.\d+$/ or RbConfig::CONFIG["host_os"] =~ /linux-gnu/)
+	  end
+
+	  # Validates parameters given to the mamba command line tool for illegal values
+	  # @param [Hash] Mamba configuration
+	  def validate_params(mambaConfig)
+		# Validate the Executors
+		if(mambaConfig[:executor] != "appscript" and mambaConfig[:executor] !~ /^cli/) then
+		  say "Error: Unsupported Executor (#{mambaConfig[:executor]})", :red
+		  exit(1)	
+		end
+
+		validate_algorithm_type(mambaConfig[:type])
+	  end
+
+	  # Ensure fuzzing algorithm is implemented with required inheritance and methods
+	  # @params [String] The algorithm for fuzzing
+	  def validate_algorithm_type(type)
+		algorithmsConst = Kernel.const_get("Mamba").const_get("Algorithms")
+
+		# Validate if defined
+		if(!algorithmsConst.const_defined?(type)) then
+		  say "Error: Unsupported fuzzing algorithm (#{type})", :red
+		  exit(1)	
+		end
+
+		# Validate methods
+		if(!algorithmsConst.const_get(type).respond_to?("generate_config")) then
+		  say "Error: Unsupported fuzzing algorithm (#{type}) - Missing generate_config() method", :red
+		  exit(1)
+		end
+
+		if(!algorithmsConst.const_get(type).method_defined?("fuzz")) then
+		  say "Error: Unsupported fuzzing algorithm (#{type}) - Missing fuzz() method", :red
+		  exit(1)
+		end
+
+		# Validate algorithms inheritance
+		if(!algorithmsConst.const_get(type).ancestors.to_s().include?("Mamba::Fuzzer")) then
+		  say "Error: Unsupported fuzzing algorithm (#{type}) - Does not inherit from Mamba::Fuzzer", :red
+		  exit(1)
+		end
+
+	  end
+
+	  # Generate a hash containing the mamba configuration settings
+	  # @return [Hash] configuration settings
+	  def generate_config()
+		uuid = "fz" + UUIDTools::UUID.timestamp_create.to_s().gsub("-", "")
+		config = {app: options[:app], executor: options[:executor], os: RbConfig::CONFIG["host_os"], timeout: options[:timeout], type: options[:type], uuid: uuid}
+
+		# Check for distributed Fuzzing
+		if(options[:distributed]) then
+		  fuzzerType =  "Distributed" + options[:type]
+		  config = {app: options[:app], executor: options[:executor], os: RbConfig::CONFIG["host_os"], timeout: options[:timeout], type: fuzzerType, uuid: uuid, organizer: true,  port: options[:port], server: options[:server]}
+		end
+
+		return(config)
+	  end
+	end
+  end
 end
 
 Mamba::CLI.start()

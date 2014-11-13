@@ -61,7 +61,8 @@ module Mamba
 		when /^appscript$/ 
 		  Mamba::Executor.define_appscript_executors(appMonitor, app)
 		when /^cli#/
-		  deliveryMethod.gsub!(/^cli#/, '')
+		  deliveryMethod.gsub!(/^cli/, '')
+		  deliveryMethod.gsub!(/^#/, '')
 		  Mamba::Executor.define_cli_executors(appMonitor, deliveryMethod, app)
 		else
 		  log.fatal("Unknown executor type: #{deliveryMethod}")
