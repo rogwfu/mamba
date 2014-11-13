@@ -5,69 +5,69 @@ require 'mongo'
 require 'fileutils'
 
 module Mamba
-	module Tools
-		# Class to generate coverage graphs 
-		class Coverage 
-			# Create an instance of the coverage class
-			# @param [String] The name of the disassembly file
-			def initialize(disassemblyFile)
-				# Read the disassembly file
-				@disassembly = YAML::load(File.open(config['disassembly']))
-				@disassembly.disName.chomp!()
+  module Tools
+	# Class to generate coverage graphs 
+	class Coverage 
+	  # Create an instance of the coverage class
+	  # @param [String] The name of the disassembly file
+	  def initialize(disassemblyFile)
+		# Read the disassembly file
+		@disassembly = YAML::load(File.open(config['disassembly']))
+		@disassembly.disName.chomp!()
 
-				# Read the configuration files
-				@mambaConfig = YAML.load_file("configs/Mamba.yml")
-				@fuzzerConfig = YAML.load_file("configs/#{@mambaConfig['type']}.yml")
+		# Read the configuration files
+		@mambaConfig = YAML.load_file("configs/Mamba.yml")
+		@fuzzerConfig = YAML.load_file("configs/#{@mambaConfig['type']}.yml")
 
-				#if(@mambaConfig['type'] ~= /^Distributed/) then
-					# Setup the database connections
-				#	database = Mongo::Connection.new(@mambaConfig['server'], @mambaConfig['port']).db(@mambaConfig['uuid'])
-				#	@grid = Mongo::Grid.new(database)
-				#end
+		#if(@mambaConfig['type'] ~= /^Distributed/) then
+		# Setup the database connections
+		#	database = Mongo::Connection.new(@mambaConfig['server'], @mambaConfig['port']).db(@mambaConfig['uuid'])
+		#	@grid = Mongo::Grid.new(database)
+		#end
 
-				# Start the matlab files
-				@matlabFileSpace = File.open("function_coverage_space.m", "wb")
-				@matlabFilePercentage = File.open("function_coverage_percentage.m", "wb")
+		# Start the matlab files
+		@matlabFileSpace = File.open("function_coverage_space.m", "wb")
+		@matlabFilePercentage = File.open("function_coverage_percentage.m", "wb")
 
-				return(self)
-			end
+		return(self)
+	  end
 
-			def calculate_coverage()
-				@matlabFileSpace.write(matlab_header())
-				@matlabFilePercentage.write(matlab_header())
+	  def calculate_coverage()
+		@matlabFileSpace.write(matlab_header())
+		@matlabFilePercentage.write(matlab_header())
 
-				@fuzzerConfig["Maximum Generations"].times do |generationNumber|
+		@fuzzerConfig["Maximum Generations"].times do |generationNumber|
 
-				end
+		end
 
-				@matlabFileSpace.close()
-				@matlabFilePercentage.close()
-			end
+		@matlabFileSpace.close()
+		@matlabFilePercentage.close()
+	  end
 
-			private
+	  private
 
-			def matlab_header()
-				header = <<HEADER
+	  def matlab_header()
+		header = <<HEADER
 				lightGray = [0.8 0.8 0.8];
-	
+
 				% Set global properties of the figure
 				fh = figure(); % returns the handle to the figure object
 				hold on 
 HEADER
-			end
+	  end
 
-			def matlab_footer_percentage(libDisas, numGens, fitFunc)
+	  def matlab_footer_percentage(libDisas, numGens, fitFunc)
 
-				y = $percentageArr.join(",")
+		y = $percentageArr.join(",")
 
-				# Thats a hack
-				xArr = Array.new()
-				numGens.times do |gen|
-					xArr.push(gen)
-				end
-				x = xArr.join(",")
+		# Thats a hack
+		xArr = Array.new()
+		numGens.times do |gen|
+		  xArr.push(gen)
+		end
+		x = xArr.join(",")
 
-				footer = <<FOOTER
+		footer = <<FOOTER
 
 				X = [#{x}];
 				Y=[#{y}];
@@ -98,10 +98,10 @@ HEADER
 				print(gcf, '-dpdf', 'function_coverage_percentage.pdf');
 FOOTER
 
-			end
+	  end
 
-			def matlab_footer_time_space(libDisas, numGens, fitFunc)
-				footer = <<FOOTER
+	  def matlab_footer_time_space(libDisas, numGens, fitFunc)
+		footer = <<FOOTER
 				% Set Titles
 				title({'Function Coverage Graph' ; 'Function: #{fitFunc}'});
 				funcTit = xlabel('Functions');
@@ -127,8 +127,7 @@ FOOTER
 				print(gcf, '-dpdf', 'function_coverage_space.pdf');
 
 FOOTER
-			end
-
-		end
+	  end
 	end
+  end
 end
