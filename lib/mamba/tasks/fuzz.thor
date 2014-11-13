@@ -15,28 +15,24 @@ class Fuzz < Thor
 	def start()
 		say "Mamba Fuzzing Framework Starting....", :blue
 
-		#
 		# Daemonize the current process
-		#
 		daemonOptions = {
 			:app_name	=> "MambaFuzzingFramework",
 			:multiple	=> false,
 			:dir_mode	=> :normal,
 			:dir		=> FileUtils.pwd(),
 			:log_dir   => "#{FileUtils.pwd()}#{File::SEPARATOR}logs",
-			:backtrace  => true
+			:backtrace  => true,
+			:log_output => true
+
 		}
 
-		#
 		# Read environments configuration
-		#
 		mambaConfig = read_config()
 		validate_params(mambaConfig)
 		pwd = Dir.pwd() 
 
-		#
 		# Create a daemon process
-		#
 		Daemons.daemonize(daemonOptions)
 		Dir.chdir(pwd)
 

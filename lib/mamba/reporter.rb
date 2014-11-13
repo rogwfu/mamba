@@ -1,5 +1,5 @@
-require 'directory_watcher'
 require 'rbconfig'
+require 'listen'
 
 module Mamba
 	class Reporter
@@ -17,30 +17,18 @@ module Mamba
 			@currentTestCase = 0
 			@startTime = Time.now()
 			@crashes =  Hash.new()
-			@watcher = DirectoryWatcher.new(os_crash_dir(), :pre_load => true)
-			@watcher.interval = 2.0
-
-			#
+			  
 			# Check for distributed notification
-			#
 			if(distributed) then
 				detectionFunction = "add_detected_crash_remote"
 			else
 				detectionFunction = "add_detected_crash"
 			end
 
-			#
 			# Set the watching function
-			#
-			@watcher.add_observer do |*args|
-				args.each do |event|
-					#
-					# Check for an added file
-					#
-					if(event[:type] == :added) then
-						self.send(detectionFunction, event)
-					end
-				end
+			crash_dir = os_crash_dir()
+			@watcher = Listen.to(crash_dir) do |modified, added, removed|
+			  send(detectionFunction, added)
 			end
 
 			# Install the real time reporter signal handler
@@ -54,21 +42,28 @@ module Mamba
 		# Adds a newly detected crash to the metrics
 		# @param [Event] Information about a file system event
 		def add_detected_crash(event)
+			@reporter_logger.info("REMOVE: Detected a crash: #{event}")
 			crash = Hash.new()
-			crash['CrashReport'] = event[:path]
-			crash['ProbTestCase'] = @currentTestCase
+			crash['CrashReport'] = event[0]
+#			crash['ProbTestCase'] = @currentTestCase
 			crash['CrashTime'] = Time.now().strftime("%B %d, %Y - %I:%M:%S %p")
 
-			#
 			# Add it to the global crashes
-			#
-			@crashes[@currentTestCase] = crash
+#			@crashes[@currentTestCase] = crash
+			@crashes[crash['CrashTime']] = crash
 		end
 
 		# Notify cluster of a detected crash 
 		# @param [Event] Information about a file system event
 		def add_detected_crash_remote(event)
-			@topic_exchange.publish("#{event[:path]}+#{@currentTestCase}+#{Time.now()}", :key => "crashes")
+#			@topic_exchange.publish("#{event[:path]}+#{@currentTestCase}+#{Time.now()}", :key => "crashes")
+			@reporter_logger.info("REMOVE: Detected a crash: #{event}")
+			crash = Hash.new()
+			crash['CrashReport'] = event[0]
+			crash['CrashTime'] = Time.now().strftime("%B %d, %Y - %I:%M:%S %p")
+	
+			# Add it to the global crashes
+			@crashes[crash['CrashTime']] = crash
 		end
 
 		# Handle remote notification of crashes from other nodes
@@ -120,7 +115,7 @@ module Mamba
 			when /^darwin(10|11|12|13|14)\.\d+\.\d+$/
 				return("/Users/#{ENV['USER']}/Library/Logs/DiagnosticReports")
 			when /^linux-gnu$/
-				return("/var/crash")
+				return("/var/crash/")
 			else
 				raise "Error: Unsupported Operating System (#{RbConfig::CONFIG["host_os"]})"
 			end

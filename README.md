@@ -111,13 +111,33 @@ apt-get install -y rabbitmq-server
 service rabbitmq-server stop
 apt-get install -y xsltproc
 ```
+
+
 ### Mac OS X
 * bundle install
 * Install Erlang:
 ** Option 1: brew install erlang
 ** Option 2: wget -O erlang.tar.gz "http://www.erlang.org/download/otp_src_R16B01.tar.gz" ; tar xvzf erlang.tar.gz ; cd otp_src_R16B01 ; ./configure ; make ; sudo make install 
 
-*
+### Crash Detection
+
+Ubuntu
+------
+For now, it is best to disable apport.  This requirement is due to (https://bugs.launchpad.net/ubuntu/+source/apport/+bug/798083).  To disable apport:
+
+```bash
+sudo sed -i.bak s/enabled=1/enabled=0/g /etc/default/apport
+sudo service apport stop
+```
+Now set the core_pattern for the fuzzing framework to detect.  Right now its hardcoded to /var/crash, so one possible configuration is:
+
+```bash
+ulimit -c unlimited
+sudo echo "/var/crash/core.%e.%p.%h.%t" > /proc/sys/kernel/core_pattern
+```
+
+OS X
+------
 ## Copyright
 
 Copyright (c) 2011 Roger Seagle. See LICENSE.txt for

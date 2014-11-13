@@ -38,7 +38,11 @@ module Mamba
 			else
 				@reporter = Reporter.new()
 			end
-			@reporter.watcher.start()
+			
+			@logger.info("Starting the reporter watching thread")
+
+			# Start the monitoring
+			@reporter.watcher.start
 		end
 
 		# Create a storage handler for mongodb filesystem
