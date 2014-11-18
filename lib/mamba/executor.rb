@@ -9,7 +9,7 @@ module Mamba
 	# Hash For supported executors
 	@@supportedTracers = 
 	{
-	  "run"  => "%s%s",  # Hack for now to simplify code
+	  "run"  => "",  # Hack for now to simplify code (User must put %s in run string to signify where to put the test case)
 	  "lldb" => "python #{ENV['HOME']}" + File::SEPARATOR + ".mamba" + File::SEPARATOR + "lldb-func-tracer.py -s %s -x %s -- " 
 	}
 
@@ -23,18 +23,32 @@ module Mamba
 		  # @returns [String] The amount of time the test case ran  
 		  define_method(tracer.to_sym()) do |log, newTestCase, timeout= 0, objectName="", traceFile=""|
 			log.info("Running Test Case: #{newTestCase}")
-		  runner = "#{@@supportedTracers[tracer]} #{application} #{deliveryMethod} #{newTestCase}" % [objectName, traceFile]
-		  log.info("Runner was: #{runner}")
-		  args = runner.split(' ')
+		  	#runner = "#{@@supportedTracers[tracer]} #{application} #{deliveryMethod} #{newTestCase}" % [objectName, traceFile]
+			runner = ""
+			case tracer
+			when "run"
+		  		runner = "#{@@supportedTracers[tracer]} #{application} #{deliveryMethod}" % [newTestCase]
+			when "lldb"
+#				if deliveryMethod.include?("%s") then
+#		  		runner = "#{@@supportedTracers[tracer]} #{application} #{deliveryMethod}" % [objectName, traceFile, newTestCase]
+#				else
+		  		runner = "#{@@supportedTracers[tracer]} #{application} #{deliveryMethod} #{newTestCase}" % [objectName, traceFile]
+#				end
+			else
+			  log.info("Unsupported Tracer!")
+			  exit(1)
+			end
+		  	log.info("Runner was: #{runner}")
+		  	args = runner.split(' ')
 
-		  # Spwan the fuzzing process
-		  @runningPid  = POSIX::Spawn::spawn(*args, :out => ["logs/application-out.log", File::CREAT|File::WRONLY|File::APPEND], 
-											 :err => ["logs/application-err.log", File::CREAT|File::WRONLY|File::APPEND])
-		  File.new("app.pid." + @runningPid.to_s(), "w+").close()
-		  runtime = self.send(appMonitor.to_sym)
+		  	# Spwan the fuzzing process
+		  	@runningPid  = POSIX::Spawn::spawn(*args, :out => ["logs/application-out.log", File::CREAT|File::WRONLY|File::APPEND], 
+								  :err => ["logs/application-err.log", File::CREAT|File::WRONLY|File::APPEND])
+		  	File.new("app.pid." + @runningPid.to_s(), "w+").close()
+		  	runtime = self.send(appMonitor.to_sym)
 
-		  application_cleanup()
-		  return(runtime.to_s())
+		  	application_cleanup()
+		  	return(runtime.to_s())
 		  end
 		end
 	  end
