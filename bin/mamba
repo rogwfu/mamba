@@ -62,7 +62,7 @@ module Mamba
 	
 	  # http://stackoverflow.com/questions/42566/getting-the-hostname-or-ip-in-ruby-on-rails
 	  def first_public_ipv4
-		  ip = Socket.ip_address_list.detect{|intf| intf.ipv4? and !intf.ipv4_loopback? and !intf.ipv4_multicast? and !intf.ipv4_private?}
+		  ip = Socket.ip_address_list.detect{|intf| intf.ipv4? and !intf.ipv4_loopback? and !intf.ipv4_multicast?}
 
 		  if ip.nil?
 			return "fuzz.io"
