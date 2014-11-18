@@ -16,7 +16,7 @@ module Mamba
 	desc "create", "Create a Mamba instance"
 	method_option :app,          :default => "/Applications/Preview.app/Contents/MacOS/Preview", :option => :required, :type => :string, :aliases => "-a", :desc => "Path to an executable (ex. /Applications/Preview.app/Contents/MacOS/Preview)" 
 	method_option :distributed,  :default => false,		:type => :boolean, 	:aliases => "-d", :desc => "Set the fuzzer type as distributed " 
-	method_option :executor,     :default => "cli", 	:aliases => "-e", :type => :string, :desc => "Type of executor to use (cli, appscript)" 
+	method_option :executor,     :default => "cli#%s", 	:aliases => "-e", :type => :string, :desc => "Type of executor to use (cli, appscript)" 
 	method_option :port,         :default => 27017, 	:type => :numeric, 	:aliases => "-p", :desc => "Port for distributed fuzzing"  
 	method_option :timeout,      :default => 0, 		:type => :numeric, 	:aliases => "-t", :desc => "Time to run an executable for each testcase in seconds (ex. 20)" 
 	method_option :server,       :default => "fuzz.io", :aliases => "-s", :desc => "Server address for distributed fuzzing (ex. fuzz.io)", :type => :string 
