@@ -30,11 +30,11 @@ module Mamba
 			when "run"
 		  		runner = "#{@@supportedTracers[tracer]} #{application} #{deliveryMethod}" % [newTestCase]
 			when "lldb"
-#				if deliveryMethod.include?("%s") then
-#		  		runner = "#{@@supportedTracers[tracer]} #{application} #{deliveryMethod}" % [objectName, traceFile, newTestCase]
-#				else
-		  		runner = "#{@@supportedTracers[tracer]} #{application} #{deliveryMethod} #{newTestCase}" % [objectName, traceFile]
-#				end
+			  if deliveryMethod.include?("%s") then
+				runner = "#{@@supportedTracers[tracer]} #{application} #{deliveryMethod}" % [objectName, traceFile, newTestCase]
+			  else
+				runner = "#{@@supportedTracers[tracer]} #{application} #{deliveryMethod} #{newTestCase}" % [objectName, traceFile]
+			  end
 			else
 			  log.info("Unsupported Tracer!")
 			  exit(1)
