@@ -1,177 +1,251 @@
-# Notes:
-# (lldb) image list CorePDF
-# [  0] B5B5215F-38C0-364D-BDA4-35D674FFCEC4 0x00007fff81cf0000 /System/Library/PrivateFrameworks/CorePDF.framework/Versions/A/CorePDF 
-
-import sys
-import signal
-#sys.path.append("/Applications/Xcode.app/Contents/SharedFrameworks/LLDB.framework/Resources/Python")
+from optparse import OptionParser
 import lldb
-import lldbutil 
-import os
-import optparse
-import numpy as np
+import lldbutil
+import sys
 from lxml import etree as ET
+import os
 
-# Global Variables necessary for signal handling 
-target = None
-xmlTrace = None
-process = None
-debugger = None
+class Action(object):
+    """Class that encapsulates actions to take when a thread stops for a reason."""
+    def __init__(self, callback = None, callback_owner = None):
+        self.callback = callback
+        self.callback_owner = callback_owner
+    def ThreadStopped (self, thread):
+        assert False, "performance.Action.ThreadStopped(self, thread) must be overridden in a subclass"
 
-# Signal handler to print statistics
-# Format: <hit><funcname>auto_zone_start_monitor</funcname><offset>0x1080</offset></hit>
-# Debugging: print breakpointLocation
-def printBreakStats(signal, frame):
-    global target
-    global xmlTrace
-    global process
-    global debugger 
+class BreakpointAction(Action):
+    def __init__(self, callback = None, callback_owner = None, name = None, module = None, file = None, line = None, breakpoint = None):
+        Action.__init__(self, callback, callback_owner)
+        self.modules = lldb.SBFileSpecList()
+        self.files = lldb.SBFileSpecList()
+        self.breakpoints = list()
+        # "module" can be a list or a string
+        if breakpoint:
+            self.breakpoints.append(breakpoint)
+        else:
+            if module:
+                if isinstance(module, types.ListType):
+                    for module_path in module:
+                        self.modules.Append(lldb.SBFileSpec(module_path, False))
+                elif isinstance(module, types.StringTypes):
+                    self.modules.Append(lldb.SBFileSpec(module, False))
+            if name:
+                # "file" can be a list or a string
+                if file:
+                    if isinstance(file, types.ListType):
+                        self.files = lldb.SBFileSpecList()
+                        for f in file:
+                            self.files.Append(lldb.SBFileSpec(f, False))
+                    elif isinstance(file, types.StringTypes):
+                        self.files.Append(lldb.SBFileSpec(file, False))
+                self.breakpoints.append (self.target.BreakpointCreateByName(name, self.modules, self.files))
+            elif file and line:
+                self.breakpoints.append (self.target.BreakpointCreateByLocation(file, line))
 
-    root = ET.Element("fuzz.io")
-    for breakpoint in target.breakpoint_iter():
-        for breakpointLocation in breakpoint:
-            # Hack since I can't find a GetHitCount() for a SBBreakpointLocation
-            breakPointLocationInfo = str(breakpointLocation).split(",")
-            blFuncName = breakPointLocationInfo[0].split("=")[1] 
-            blLoadAddress = hex(breakpointLocation.GetAddress().GetFileAddress())
-            blHitCount = breakPointLocationInfo[3].split("=")[1]
-            blHitCount = int(blHitCount)
-            if(blHitCount > 0):
-                hit = ET.SubElement(root, 'hit')
-                funcname = ET.SubElement(hit, "funcname")
-                funcname.text = blFuncName
-                offset = ET.SubElement(hit, "offset")
-                offset.text = blLoadAddress
-                count = ET.SubElement(hit, "count")
-                count.text = str(blHitCount) 
+    def ThreadStopped (self, thread):
+        if thread.GetStopReason() == lldb.eStopReasonBreakpoint:
+#            for bp in self.breakpoints:
+#                if bp.GetID() == thread.GetStopReasonDataAtIndex(0):
+            if self.callback:
+                if self.callback_owner:
+                    self.callback (self.callback_owner, thread)
+                else:
+                    self.callback (thread)
+                return True
+        return False
 
-    traceFile = open(xmlTrace, "w")
-    ET.ElementTree(root).write(traceFile, pretty_print=True, xml_declaration=True) 
-    traceFile.close()
+class TestCase:
+    """Class that aids in running performance tests."""
+    def __init__(self):
+        self.verbose = False 
+        self.debugger = lldb.SBDebugger.Create()
+        self.target = None
+        self.process = None
+        self.thread = None
+        self.launch_info = None
+        self.done = False
+        self.listener = self.debugger.GetListener()
+        self.user_actions = list()
+        self.builtin_actions = list()
+        self.bp_id_to_dict = dict()
 
-    # kill the process
-    process.Destroy() 
+    def Setup(self, args, env_vars=None):
+        self.launch_info = lldb.SBLaunchInfo(args)
+        if env_vars:
+            self.launch_info.SetEnvironmentEntries(env_vars, True)
+    
+    def Launch(self):
+        if self.target:
+            error = lldb.SBError()
+            self.process = self.target.Launch (self.launch_info, error)
+            if not error.Success():
+                print "error: %s" % error.GetCString()
+            if self.process:
+                self.process.GetBroadcaster().AddListener(self.listener, lldb.SBProcess.eBroadcastBitStateChanged | lldb.SBProcess.eBroadcastBitInterrupt)
+                return True
+        return False
 
-    # Terminate the Debugger
-    debugger.Terminate()
+    def WaitForNextProcessEvent (self):
+        event = None
+        if self.process:
+            while event is None:
+                process_event = lldb.SBEvent()
+                if self.listener.WaitForEvent (lldb.UINT32_MAX, process_event):
+                    state = lldb.SBProcess.GetStateFromEvent (process_event)
+                    if self.verbose:
+                        print "event = %s" % (lldb.SBDebugger.StateAsCString(state))
+                    if lldb.SBProcess.GetRestartedFromEvent(process_event):
+                        continue
+                    if state == lldb.eStateInvalid or state == lldb.eStateDetached or state == lldb.eStateCrashed or  state == lldb.eStateUnloaded or state == lldb.eStateExited:
+                        event = process_event
+                        self.done = True
+                    elif state == lldb.eStateConnected or state == lldb.eStateAttaching or state == lldb.eStateLaunching or state == lldb.eStateRunning or state == lldb.eStateStepping or state == lldb.eStateSuspended:
+                        continue
+                    elif state == lldb.eStateStopped:
+                        event = process_event
+                        call_test_step = True
+                        fatal = False
+                        selected_thread = False
+                        for thread in self.process:
+                            frame = thread.GetFrameAtIndex(0)
+                            select_thread = False
 
-    # Exit the program
-    os._exit(0)
+                            stop_reason = thread.GetStopReason()
+                            if self.verbose:
+                                print "tid = %#x pc = %#x " % (thread.GetThreadID(),frame.GetPC()),
+                            if stop_reason == lldb.eStopReasonNone:
+                                if self.verbose:
+                                    print "none"
+                                elif stop_reason == lldb.eStopReasonTrace:
+                                    select_thread = True
+                                if self.verbose:
+                                    print "trace"
+                                elif stop_reason == lldb.eStopReasonPlanComplete:
+                                    select_thread = True
+                                if self.verbose:
+                                    print "plan complete"
+                                elif stop_reason == lldb.eStopReasonThreadExiting:
+                                    if self.verbose:
+                                        print "thread exiting"
+                                    elif stop_reason == lldb.eStopReasonExec:
+                                        if self.verbose:
+                                            print "exec"
+                                        elif stop_reason == lldb.eStopReasonInvalid:
+                                            if self.verbose:
+                                                print "invalid"
+                                            elif stop_reason == lldb.eStopReasonException:
+                                                select_thread = True
+                                if self.verbose:
+                                    print "exception"
+                                fatal = True
+                            elif stop_reason == lldb.eStopReasonBreakpoint:
+                                select_thread = True
+                                bp_id = thread.GetStopReasonDataAtIndex(0)
+                                bp_loc_id = thread.GetStopReasonDataAtIndex(1)
+                                if self.verbose:
+                                    print "breakpoint id = %d.%d" % (bp_id, bp_loc_id)
+                                elif stop_reason == lldb.eStopReasonWatchpoint:
+                                    select_thread = True
+                                if self.verbose:
+                                    print "watchpoint id = %d" % (thread.GetStopReasonDataAtIndex(0))
+                                elif stop_reason == lldb.eStopReasonSignal:
+                                    select_thread = True
+                                if self.verbose:
+                                    print "signal %d" % (thread.GetStopReasonDataAtIndex(0))
 
-# Install the signal handler
-signal.signal(signal.SIGTERM, printBreakStats)
+                            if select_thread and not selected_thread:
+                                self.thread = thread
+                                selected_thread = self.process.SetSelectedThread(thread)
 
-def main(argv):
+                            for action in self.user_actions:
+                                action.ThreadStopped (thread)
+
+                        if fatal:
+                            sys.exit(1)
+        return event
+
+class TesterTestCase(TestCase):
+    def __init__(self, xmlfile):
+        TestCase.__init__(self)
+        self.verbose = True
+        self.num_steps = 5
+        self.xml_file = xmlfile
+
+    def BreakpointHit(self, thread):
+        bp_id = thread.GetStopReasonDataAtIndex(0)
+        loc_id = thread.GetStopReasonDataAtIndex(1)
+        print "Breakpoint %i.%i hit: %s" % (bp_id, loc_id, thread.process.target.FindBreakpointByID(bp_id))
+        thread.Resume()
+        thread.process.Continue()
+
+    def Run(self, exe, args, pipeout, shared_lib, env_vars=None):
+        self.Setup(args, env_vars)
+        self.target = self.debugger.CreateTargetWithFileAndArch(exe, lldb.LLDB_ARCH_DEFAULT)
+        if self.target:
+            self.user_actions.append(BreakpointAction(breakpoint=shared_lib, callback=TesterTestCase.BreakpointHit, callback_owner=self))
+            lib_breakpoints = self.target.BreakpointCreateByRegex(".", shared_lib)
+
+            if self.Launch():
+                os.write(pipeout, "%s\n" % self.process.GetProcessID())
+                while not self.done:
+                    self.WaitForNextProcessEvent()
+            else:
+                 print "error: failed to launch process"
+        else:
+            print "error: failed to create target with '%s'" % (args)
+    
+    def BreakStats(self):
+        root = ET.Element("fuzz.io")
+        for breakpoint in self.target.breakpoint_iter():
+            for breakpointLocation in breakpoint:
+                # Hack since I can't find a GetHitCount() for a SBBreakpointLocation
+                breakPointLocationInfo = str(breakpointLocation).split(",")
+                blFuncName = breakPointLocationInfo[0].split("=")[1] 
+                blLoadAddress = hex(breakpointLocation.GetAddress().GetFileAddress())
+                blHitCount = breakPointLocationInfo[3].split("=")[1]
+                blHitCount = int(blHitCount)
+                if(blHitCount > 0):
+                    hit = ET.SubElement(root, 'hit')
+                    funcname = ET.SubElement(hit, "funcname")
+                    funcname.text = blFuncName
+                    offset = ET.SubElement(hit, "offset")
+                    offset.text = blLoadAddress
+                    count = ET.SubElement(hit, "count")
+                    count.text = str(blHitCount) 
+
+        traceFile = open(self.xml_file, "w")
+        ET.ElementTree(root).write(traceFile, pretty_print=True, xml_declaration=True) 
+        traceFile.close()
+
+if __name__ == '__main__':
     description='''Records hit traces for all functions of a specific shared library'''
-    epilog='''Examples:
-        % ./lldb-test.py -x lldbtrace.xml -s sharedlibrary -- /Applications/Preview.app/Contents/MacOS/Preview
-            '''
-    parser = optparse.OptionParser(description=description, prog='lldb-func-tracer.py',usage='usage: lldb-func-tracer.py [options] -- program [arg1 arg2]', epilog=epilog)
-    optparse.OptionParser.format_epilog = lambda self, formatter: self.epilog
+    epilog='''Examples:% ./lldb-test.py -x lldbtrace.xml -s sharedlibrary -- /Applications/Preview.app/Contents/MacOS/Preview'''
+    parser = OptionParser(description=description, prog='lldb-func-tracer.py',usage='usage: lldb-func-tracer.py [options] -- program [arg1 arg2]', epilog=epilog)
+#    OptionParser.format_epilog = lambda self, formatter: self.epilog
     parser.add_option('-e', '--environment', action='append', type='string', metavar='ENV', dest='env_vars', help='Environment variables to set in the inferior process when launching a process.')
+    parser.add_option('-p', '--pipe', type='string', metavar='PIPE', dest='pipe', help='Specify the pipe for interprocess communication with the mamba fuzzing framework.')
     parser.add_option('-s', '--shlib', type='string', dest='shlibs', metavar='SHLIB', help='Specify the shared library to trace functions')
     parser.add_option('-t', '--event-timeout', type='int', dest='event_timeout', metavar='SEC', help='Specify the timeout in seconds to wait for process state change events.', default=lldb.UINT32_MAX)
     parser.add_option('-x', '--xmlfile', type='string', dest='xmlfile', metavar='XML', help='Specify an XML file to write lldb traces')
     try:
-        (options, args) = parser.parse_args(argv)
-    except:
-        return
+        (options, args) = parser.parse_args()
+    except Exception, e:
+        print e
+        sys.exit(1)
 
-    global process 
-    global xmlTrace
-    global target
-    global debugger 
+    # Initialize the debugger
+    lldb.SBDebugger.Initialize()
 
     # Set the executable
     exe = args.pop(0)
 
-    # Create a new debugger instance
-    debugger = lldb.SBDebugger.Create()
+    # Set the testcase
+    test = TesterTestCase(options.xmlfile)
+
+    pipeout = os.open(options.pipe, os.O_WRONLY)
+    test.Run(exe, args, pipeout, options.shlibs, options.env_vars)
     
-    # When we step or continue, don't return from the function until the process 
-    # stops. We do this by setting the async mode to false.
-#    debugger.SetAsync (False)
+    test.BreakStats()
 
-    launch_info = None
-    launch_info = lldb.SBLaunchInfo(args)
-    if options.env_vars:
-        launch_info.SetEnvironmentEntries(options.env_vars, True)
-
-    # Setup a target to debug
-    xmlTrace = options.xmlfile
-    target = debugger.CreateTargetWithFileAndArch(exe, lldb.LLDB_ARCH_DEFAULT)
-    if target:
-        error = lldb.SBError()
-        lib_breakpoints = target.BreakpointCreateByRegex(".", options.shlibs)	
-
-        process = target.Launch(launch_info, error) 
-
-        if process and process.GetProcessID() != lldb.LLDB_INVALID_PROCESS_ID:
-            state = process.GetState ()
-            pid = process.GetProcessID()
-            listener = lldb.SBListener("event_listener")
-
-            # sign up for process state change events
-            process.GetBroadcaster().AddListener(listener, lldb.SBProcess.eBroadcastBitStateChanged)
-            stop_idx = 0
-            done = False
-            while not done:
-                event = lldb.SBEvent()
-                if listener.WaitForEvent(options.event_timeout, event):
-                        state = lldb.SBProcess.GetStateFromEvent (event)
-                        if state == lldb.eStateStopped:
-                            thread = lldbutil.get_stopped_thread(process, lldb.eStopReasonBreakpoint)
-                            if thread == None:
-                                print "No Stopped Thread"
-                                process.Continue()
-                            else:
-                                process.Continue()
-                        elif state == lldb.eStopReasonSignal:
-                            next
-                        elif state == lldb.eStateRunning:
-                            next
-                        elif state == lldb.eStateExited:
-                            done = True
-                            exit_desc = process.GetExitDescription()
-                            if exit_desc:
-                                print "process %u exited with status %u: %s" % (pid, process.GetExitStatus (), exit_desc)
-                            else:
-                                print "process %u exited with status %u" % (pid, process.GetExitStatus ())
-                        elif state == lldb.eStateCrashed:
-                            process.Continue()
-                        elif state == lldb.eStateUnloaded:
-                            done = True
-                        elif state == lldb.eStateConnected:
-                            print "process connected"
-                        elif state == lldb.eStateAttaching:
-                            print "process attaching"
-                        elif state == lldb.eStateLaunching:
-                            print "process launching"
-                        else:
-                            print "Stopped"
-                            done = True
-
-            # kill the process
-            process.Destroy() 
-
-        # Terminate the Debugger
-        debugger.Terminate()
-
-    # Print the breakpoint information
-    printBreakStats(None, None)
-
-if __name__ == '__main__':
-    main(sys.argv[1:])
-
-# Got To know functions
-
-#triple = "x86_64-apple-macosx"
-#module = target.AddModule ("/usr/lib/system/libsystem_c.dylib", triple, None, "/build/server/a/libsystem_c.dylib.dSYM")
-#target.SetSectionLoadAddress(module.FindSection("__TEXT"), 0x7fff83f32000)
-#                                for sec in target.module[options.shlibs].section_iter():
-#                                        if sec.GetName() == ".text" or sec.GetName() == "__TEXT":
-#                                                print sec
-#                                                print sec.GetLoadAddress(target)
-#                                exit(0)
-                                #print "Breakpoint"
-
+    # Destroy the debugger instance
+    lldb.SBDebugger.Terminate()
