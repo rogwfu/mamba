@@ -1,4 +1,5 @@
 require 'posix/spawn'
+require 'process_exists'
 
 module Mamba
   class Executor
@@ -10,7 +11,7 @@ module Mamba
 	@@supportedTracers = 
 	{
 	  "run"  => "",  # Hack for now to simplify code (User must put %s in run string to signify where to put the test case)
-	  "lldb" => "python #{ENV['HOME']}" + File::SEPARATOR + ".mamba" + File::SEPARATOR + "lldb-func-tracer.py -s %s -x %s -- " 
+	  "lldb" => "python #{ENV['HOME']}" + File::SEPARATOR + ".mamba" + File::SEPARATOR + "lldb-func-tracer.py -p fuzzpipe -s %s -x %s -- " 
 	}
 
 	  # Dynamically define cli executors
@@ -45,9 +46,21 @@ module Mamba
 		  	@runningPid  = POSIX::Spawn::spawn(*args, :out => ["logs/application-out.log", File::CREAT|File::WRONLY|File::APPEND], 
 								  :err => ["logs/application-err.log", File::CREAT|File::WRONLY|File::APPEND])
 		  	File.new("app.pid." + @runningPid.to_s(), "w+").close()
-		  	runtime = self.send(appMonitor.to_sym)
+			# Setup a named pipe to retreive the UUT pid
+			pidPipe = File.open("fuzzpipe", 'r')
 
-		  	application_cleanup()
+			# Wait for the tracer to return a pid
+			continue = true
+			while continue
+			  appPid = pidPipe.gets()
+			  if appPid
+				continue = false
+			  end
+			end
+			appPid =~ /(\d+)/
+		  	runtime = self.send(appMonitor.to_sym)
+			pidPipe.close()	
+		  	application_cleanup($1.to_i())
 		  	return(runtime.to_s())
 		  end
 		end
@@ -87,19 +100,21 @@ module Mamba
 	  private
 
 	  # Kill the application under test
-	  def application_cleanup()
-		begin
-		  Process.kill(0, @runningPid)
-		  Process.kill("SIGTERM", @runningPid)
-		  Timeout::timeout(2) { 
-			Process.wait2(@runningPid)
-		  }
-		rescue 
-		  Process.kill("SIGKILL", @runningPid)
-		ensure
-		  # Remove the process file
-		  FileUtils.rm_f("app.pid." + @runningPid.to_s())
+	  def application_cleanup(appPid)
+		if Process.exists?(appPid)
+		  Process.kill("SIGKILL", appPid)
 		end
+
+		begin
+		  Timeout.timeout(2) do
+			Process.wait2(@runningPid)
+		  end
+		rescue Timeout::Error
+		  Process.kill("SIGKILL", @runningPid)
+		end
+
+		# Remove the process file
+		FileUtils.rm_f("app.pid." + @runningPid.to_s())
 	  end
 
 	  # Monitor CPU to determine lull in processing

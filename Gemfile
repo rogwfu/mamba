@@ -28,4 +28,5 @@ group :development do
   gem "coveralls", "~> 0.7"
   gem "posix-spawn", "~> 0.3"
   gem "bunny", "~>1.6"
+  gem "process_exists", "~>0.1"
 end
