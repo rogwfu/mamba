@@ -170,6 +170,7 @@ class TesterTestCase(TestCase):
         self.verbose = True
         self.num_steps = 5
         self.xml_file = xmlfile
+        self.shared_lib = None
 
     def BreakpointHit(self, thread):
         bp_id = thread.GetStopReasonDataAtIndex(0)
@@ -181,6 +182,7 @@ class TesterTestCase(TestCase):
     def Run(self, exe, args, pipeout, shared_lib, env_vars=None):
         self.Setup(args, env_vars)
         self.target = self.debugger.CreateTargetWithFileAndArch(exe, lldb.LLDB_ARCH_DEFAULT)
+        self.shared_lib = shared_lib
         if self.target:
             self.user_actions.append(BreakpointAction(breakpoint=shared_lib, callback=TesterTestCase.BreakpointHit, callback_owner=self))
             lib_breakpoints = self.target.BreakpointCreateByRegex(".", shared_lib)
@@ -196,6 +198,20 @@ class TesterTestCase(TestCase):
     
     def BreakStats(self):
         root = ET.Element("fuzz.io")
+        secStartAddr = None
+        secEndAddr = None
+
+        # Do not record hits at start and end addresses
+        print self.shared_lib
+        for sec in self.target.module[self.shared_lib].section_iter():
+            if sec.GetName() == ".text" or sec.GetName() == "__TEXT":
+#            [0x0000000000033240-0x00000000000c0c08) libbfd-2.22-system.so..text
+                secInfo = str(sec).split("-")
+                secEndAddr = secInfo[1].split(")")[0]
+                secStartAddr = secInfo[0].split("[")[1]
+                print secEndAddr
+                print secStartAddr
+
         for breakpoint in self.target.breakpoint_iter():
             for breakpointLocation in breakpoint:
                 # Hack since I can't find a GetHitCount() for a SBBreakpointLocation
@@ -204,7 +220,7 @@ class TesterTestCase(TestCase):
                 blLoadAddress = hex(breakpointLocation.GetAddress().GetFileAddress())
                 blHitCount = breakPointLocationInfo[3].split("=")[1]
                 blHitCount = int(blHitCount)
-                if(blHitCount > 0):
+                if(blHitCount > 0) and (int(blLoadAddress, 16) != int(secEndAddr, 16)) and (int(blLoadAddress, 16) != int(secStartAddr, 16)):
                     hit = ET.SubElement(root, 'hit')
                     funcname = ET.SubElement(hit, "funcname")
                     funcname.text = blFuncName
