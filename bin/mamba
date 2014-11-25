@@ -56,6 +56,13 @@ module Mamba
 	  create_file "#{name}/configs/#{mambaConfig[:type]}.yml" do
 		Kernel.const_get("Mamba").const_get("Algorithms").const_get(mambaConfig[:type]).generate_config()
 	  end
+
+	  # Create the fifo for lldb -> fuzzer comms
+      output = `mkfifo #{name}/fuzzpipe`
+	  if not File.exists?("#{name}/fuzzpipe") then
+		say "FIFO not created (#{output})\n", :red
+		say "Please create a fifo named #{name}/fuzzpipe", :read
+	  end
 	end
 
 	no_tasks do
