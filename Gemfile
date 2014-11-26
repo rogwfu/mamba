@@ -20,7 +20,7 @@ group :development do
   gem "mongo", "~> 1.11"
   gem "amqp", "~> 1.5"
   gem "hpricot", "~> 0.8"
-  gem "plympton", "~> 1.1"
+  gem "plympton", "= 1.1.1"
   gem "amatch", "~> 0.3"
   gem "nokogiri", "~> 1.6"
   gem "rake-compiler", "~> 0.9"
