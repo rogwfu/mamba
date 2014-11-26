@@ -167,7 +167,7 @@ class TestCase:
 class TesterTestCase(TestCase):
     def __init__(self, xmlfile):
         TestCase.__init__(self)
-        self.verbose = True
+        self.verbose = False 
         self.num_steps = 5
         self.xml_file = xmlfile
         self.shared_lib = None
@@ -175,7 +175,7 @@ class TesterTestCase(TestCase):
     def BreakpointHit(self, thread):
         bp_id = thread.GetStopReasonDataAtIndex(0)
         loc_id = thread.GetStopReasonDataAtIndex(1)
-        print "Breakpoint %i.%i hit: %s" % (bp_id, loc_id, thread.process.target.FindBreakpointByID(bp_id))
+#        print "Breakpoint %i.%i hit: %s" % (bp_id, loc_id, thread.process.target.FindBreakpointByID(bp_id))
         thread.Resume()
         thread.process.Continue()
 
@@ -202,15 +202,12 @@ class TesterTestCase(TestCase):
         secEndAddr = None
 
         # Do not record hits at start and end addresses
-        print self.shared_lib
         for sec in self.target.module[self.shared_lib].section_iter():
             if sec.GetName() == ".text" or sec.GetName() == "__TEXT":
 #            [0x0000000000033240-0x00000000000c0c08) libbfd-2.22-system.so..text
                 secInfo = str(sec).split("-")
                 secEndAddr = secInfo[1].split(")")[0]
                 secStartAddr = secInfo[0].split("[")[1]
-                print secEndAddr
-                print secStartAddr
 
         for breakpoint in self.target.breakpoint_iter():
             for breakpointLocation in breakpoint:
@@ -220,7 +217,7 @@ class TesterTestCase(TestCase):
                 blLoadAddress = hex(breakpointLocation.GetAddress().GetFileAddress())
                 blHitCount = breakPointLocationInfo[3].split("=")[1]
                 blHitCount = int(blHitCount)
-                if(blHitCount > 0) and (int(blLoadAddress, 16) != int(secEndAddr, 16)) and (int(blLoadAddress, 16) != int(secStartAddr, 16)):
+                if(blHitCount > 0) and (int(blLoadAddress[:-1], 16) != int(secEndAddr, 16)) and (int(blLoadAddress[:-1], 16) != int(secStartAddr, 16)):
                     hit = ET.SubElement(root, 'hit')
                     funcname = ET.SubElement(hit, "funcname")
                     funcname.text = blFuncName
