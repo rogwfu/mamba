@@ -13,6 +13,9 @@ module Mamba
 	  DEFAULT_INITIAL_POPULATION_FILE = "tests" + File::SEPARATOR + "testset.zip"
 	  MAX_FILE_SIZE = 524288000 # Maximum of 500MB 
 
+	  @@evolvedMutex = Mutex.new()
+	  @@evolvedCV = ConditionVariable.new()
+
 	  # Generate the YAML configuration file for Simple Genetic Algorithm Fuzzer
 	  def self.generate_config()
 		simpleGAConfig = Hash.new()
