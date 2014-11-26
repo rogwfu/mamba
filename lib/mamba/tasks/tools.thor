@@ -107,7 +107,7 @@ class Tools < Thor
 		say "Error: Analysis script (func-auto.py) not found in #{ENV['PATH']}", :red
 		exit(1)
 	  end
-	  return(Gem.bin_path('plympton-refactor', 'func-auto.py'))
+	  return(Gem.bin_path('plympton', 'func-auto.py'))
 	end
 
 	# Make sure the requested file exists
