@@ -102,9 +102,6 @@ module Mamba
 
 		  # Post test case results 0.1.2 (Generation.Chromosome:Fitness)
 		  topic.publish(testCaseID + ":" + fitness.to_s('F'), :key => "results")
-
-		  # Acknowledge the test case is done
-		  header.ack()	
 		end
 	  end
 
