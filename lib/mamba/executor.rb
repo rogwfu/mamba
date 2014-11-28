@@ -61,6 +61,15 @@ module Mamba
 		  	runtime = self.send(appMonitor.to_sym)
 			pidPipe.close()	
 		  	application_cleanup($1.to_i())
+			
+			# Ensure a trace file exists when necessary (FIXME)
+			if tracer == "lldb" then
+				if not File.exists?(traceFile) then
+				  File.open(traceFile, 'w') do |fh|
+					fh.write("<?xml version='1.0' encoding='ASCII'?><fuzz.io></fuzz.io>")	
+				  end
+				end
+			end
 		  	return(runtime.to_s())
 		  end
 		end
@@ -100,6 +109,7 @@ module Mamba
 	  private
 
 	  # Kill the application under test
+	  # @param [Integer] The process ID of the program under test
 	  def application_cleanup(appPid)
 		if Process.exists?(appPid)
 		  Process.kill("SIGKILL", appPid)

@@ -4,14 +4,16 @@ module Mamba
 
 	  # Function to run the fuzzing 
 	  def fuzz()
+		
+		# Signal the testcase thread to seed
+		if(@organizer) then
+		  seed()
+		end
+
 		# Initialize rabbitmq 
 		init_amqp()
 
-		# Signal the testcase thread to seed
-		if(@organizer) then
-		  @@evolvedCV.signal()
-		end
-
+		@logger.info("REMOVE: in the fuzz method after signaling")
 		# Wait for the fuzzing to finish
 		@amqpThreads.each(&:join)
 		@logger.info("Exiting normally")
@@ -38,10 +40,10 @@ module Mamba
 		  if(@organizer)
 			@population.push(Chromosome.new(chromosomeInfo, BigDecimal.new(fitness)))
 
+			@logger.info("REMOVE: Population size is: #{@population.size()}")
+
 			# Check for condition to stop and condition to stop and evolve
 			if(@population.size == @simpleGAConfig['Population Size']) then
-			  @@evolvedMutex.synchronize do
-				@@evolvedCV.wait(@@evolvedMutex)
 
 				@logger.info(@population.inspect())
 				statistics()
@@ -52,9 +54,7 @@ module Mamba
 				else
 				  topic.publish("shutdown", :key => "commands")
 				end # end evolving
-			  end # end mutex
-			  # Signal to start seeding again
-			  @@evolvedCV.signal()
+				@requireSeeding = true
 			end # end population size check
 		  end
 		end
@@ -119,25 +119,30 @@ module Mamba
 		chan = init_amqp_channel()
 		direct = init_amqp_exchange(chan, "testcases", "direct") 
 
+		@logger.info("REMOVE: Waiting on the queue")
 		# Loop until a queue is listening
 		while not @amqpConnection.queue_exists?("testcases")
 		  sleep(0.2)
 		end
+		@logger.info("REMOVE: Queue came online")
 
 		# Only the organizer can seed tests
 		if(@organizer)
+
+		  # Yuck! Initiallly seed the population
 		  loop do 
 			# Need a while loop for forever, plus figure out how to get the testcases
 			# Determine how to seed the tests
-			@@evolvedMutex.synchronize do
-			  @@evolvedCV.wait(@@evolvedMutex)
+			if (@requireSeeding) then 
+			  @logger.info("REMOVE: seed_test_cases inside the cv + mutex: #{@testSetMappings}")
 			  @testSetMappings.each_key do |testCaseNumber|
 				testCaseID = @nextGenerationNumber.to_s() + "." + testCaseNumber
 				@logger.info("Test Case number is: #{testCaseNumber}")
 				@logger.info("Class is: #{testCaseNumber.class}")
-				@logger.info("Inspect: #{@testSetMappings.inspect()}")
+#				@logger.info("Inspect: #{@testSetMappings.inspect()}")
 				remoteTestCaseFilename = @testSetMappings[testCaseNumber].split(File::SEPARATOR)[-1]
 				@storage.dbHandle.put(File.open(@testSetMappings[testCaseNumber]), :_id => testCaseID, :filename => remoteTestCaseFilename)
+				@logger.info("REMOVE: Stored it!")
 				begin 
 				  direct.publish(testCaseID, :routing_key => "testcases")
 				  direct.on_return do |basic_return, properties, payload|
@@ -148,9 +153,7 @@ module Mamba
 				  @logger.info("Exception during connection: #{e.class}: #{e.message}")
 				end
 			  end # end looping over testset mappings
-			end # end mute synchronize
-			# Signal that seeding has finished
-			@@evolvedCV.signal()
+			end # end require seeding variable 
 		  end # end infinite loop
 		end # end if organizer
 	  end

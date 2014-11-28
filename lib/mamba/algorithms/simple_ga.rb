@@ -13,9 +13,6 @@ module Mamba
 	  DEFAULT_INITIAL_POPULATION_FILE = "tests" + File::SEPARATOR + "testset.zip"
 	  MAX_FILE_SIZE = 524288000 # Maximum of 500MB 
 
-	  @@evolvedMutex = Mutex.new()
-	  @@evolvedCV = ConditionVariable.new()
-
 	  # Generate the YAML configuration file for Simple Genetic Algorithm Fuzzer
 	  def self.generate_config()
 		simpleGAConfig = Hash.new()
@@ -58,6 +55,7 @@ module Mamba
 		@temporaryMappings = Hash.new()
 		@nextGenerationNumber = 0
 		@objectDisassembly = Plympton::Disassembly.new(@simpleGAConfig['Disassembly'], @simpleGAConfig['Fitness Function'])
+		@requireSeeding = true
 	  end
 
 	  # Run the fuzzing job
@@ -73,6 +71,7 @@ module Mamba
 			traceFile = @testSetMappings[chromosomeID] + ".trace.xml"
 			runtime = @executor.lldb(@logger, @testSetMappings[chromosomeID], @timeout, @objectDisassembly.attributes.name, traceFile)  
 			fitness = 0
+			# FIXME: Tracefile should always exist, the executor application_cleanup() should ensure it
 			if File.exists?(traceFile) then
 			  @objectDisassembly.lldb_coverage(traceFile)
 			  fitness = @objectDisassembly.evaluate(runtime)
