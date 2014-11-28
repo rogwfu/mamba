@@ -40,7 +40,7 @@ module Mamba
 		  if(@organizer)
 			@population.push(Chromosome.new(chromosomeInfo, BigDecimal.new(fitness)))
 
-			@logger.info("REMOVE: Population size is: #{@population.size()}")
+#			@logger.info("REMOVE: Population size is: #{@population.size()}")
 
 			# Check for condition to stop and condition to stop and evolve
 			if(@population.size == @simpleGAConfig['Population Size']) then
@@ -54,7 +54,7 @@ module Mamba
 				else
 				  topic.publish("shutdown", :key => "commands")
 				end # end evolving
-				@requireSeeding = true
+				@@requireSeeding = true
 			end # end population size check
 		  end
 		end
@@ -133,7 +133,7 @@ module Mamba
 		  loop do 
 			# Need a while loop for forever, plus figure out how to get the testcases
 			# Determine how to seed the tests
-			if (@requireSeeding) then 
+			if (@@requireSeeding) then 
 			  @logger.info("REMOVE: seed_test_cases inside the cv + mutex: #{@testSetMappings}")
 			  @testSetMappings.each_key do |testCaseNumber|
 				testCaseID = @nextGenerationNumber.to_s() + "." + testCaseNumber
@@ -153,6 +153,7 @@ module Mamba
 				  @logger.info("Exception during connection: #{e.class}: #{e.message}")
 				end
 			  end # end looping over testset mappings
+			@@requireSeeding = false
 			end # end require seeding variable 
 		  end # end infinite loop
 		end # end if organizer

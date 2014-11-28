@@ -55,7 +55,7 @@ module Mamba
 		@temporaryMappings = Hash.new()
 		@nextGenerationNumber = 0
 		@objectDisassembly = Plympton::Disassembly.new(@simpleGAConfig['Disassembly'], @simpleGAConfig['Fitness Function'])
-		@requireSeeding = true
+		@@requireSeeding = true
 	  end
 
 	  # Run the fuzzing job
